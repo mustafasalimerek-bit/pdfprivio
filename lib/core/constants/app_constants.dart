@@ -10,10 +10,11 @@ class AppConstants {
   static const String termsOfServiceUrl =
       'https://mustafasalimerek-bit.github.io/erekstudio-legal/pdfkitsy/terms_en.html';
 
-  // Apple App Store ID — set after ASC app is created
-  static const String appStoreId = '';
-  // Google Play Store package
+  // Apple App Store ID (App Store Connect)
+  static const String appStoreId = '6769270643';
+  // Google Play Store
   static const String playStorePackage = 'com.erekstudio.pdfkitsy';
+  static const String playConsoleAppId = '4976288492451327073';
 
   // IAP product IDs — same across stores so client code does not branch
   static const String iapLifetimeProductId = 'pdfkitsy_pro_lifetime';
