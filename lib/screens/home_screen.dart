@@ -5,6 +5,7 @@ import '../core/theme/colors.dart';
 import '../data/services/haptics_service.dart';
 import 'compress/compress_screen.dart';
 import 'merge/merge_screen.dart';
+import 'split/split_screen.dart';
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
@@ -55,10 +56,17 @@ class HomeScreen extends ConsumerWidget {
                 );
               },
             ),
-            const _ComingSoonTile(
+            _ToolTile(
               icon: Icons.content_cut_outlined,
               title: 'Split PDF',
-              subtitle: 'Extract pages or split by size',
+              subtitle: 'Extract range, every N pages, or N parts',
+              isFree: true,
+              onTap: () {
+                HapticsService.instance.tap();
+                Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const SplitScreen()),
+                );
+              },
             ),
             const _ComingSoonTile(
               icon: Icons.draw_outlined,
