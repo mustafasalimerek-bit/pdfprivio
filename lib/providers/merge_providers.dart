@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../core/utils/result.dart';
 import '../data/models/pdf_document.dart';
+import '../data/models/pdf_page_ref.dart';
 import '../data/services/pdf_metadata_service.dart';
 import '../data/services/pdf_thumbnail_service.dart';
 
@@ -79,3 +80,49 @@ final mergeTotalPagesProvider = Provider<int>((ref) {
 
 /// Progress of the active merge, 0.0–1.0, or null when idle.
 final mergeProgressProvider = StateProvider<double?>((_) => null);
+
+/// Customized page selection that supersedes doc-level merge when non-empty.
+///
+/// Empty list = user hasn't customized; merge runs in plain doc-level mode.
+/// Non-empty = user has hand-picked / reordered pages on the grid screen.
+class MergePageRefs extends StateNotifier<List<PdfPageRef>> {
+  MergePageRefs() : super(const []);
+
+  /// Expand every page from every workspace doc into a flat ordered list.
+  /// Called when the user enters page-level mode so they start from a
+  /// sensible baseline (all pages in current doc order).
+  void initializeFromWorkspace(List<PdfDocument> docs) {
+    final refs = <PdfPageRef>[];
+    for (final doc in docs) {
+      for (var i = 0; i < doc.pageCount; i++) {
+        refs.add(PdfPageRef(document: doc, pageIndex: i));
+      }
+    }
+    state = refs;
+  }
+
+  void reorder(int oldIndex, int newIndex) {
+    final adjustedNew = newIndex > oldIndex ? newIndex - 1 : newIndex;
+    final list = [...state];
+    final item = list.removeAt(oldIndex);
+    list.insert(adjustedNew, item);
+    state = list;
+  }
+
+  void removeAt(int index) {
+    state = [...state]..removeAt(index);
+  }
+
+  /// Clear the customization. Merge falls back to doc-level mode.
+  void reset() => state = const [];
+}
+
+final mergePageRefsProvider =
+    StateNotifierProvider<MergePageRefs, List<PdfPageRef>>(
+  (_) => MergePageRefs(),
+);
+
+/// True when the user has hand-picked pages and merge should use page-level.
+final hasPageCustomizationProvider = Provider<bool>((ref) {
+  return ref.watch(mergePageRefsProvider).isNotEmpty;
+});

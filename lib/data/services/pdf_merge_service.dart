@@ -8,6 +8,7 @@ import 'package:syncfusion_flutter_pdf/pdf.dart' as sf;
 import '../../core/utils/cancellation_token.dart';
 import '../../core/utils/result.dart';
 import '../models/pdf_document.dart';
+import '../models/pdf_page_ref.dart';
 
 /// Merges multiple PDFs into one, preserving each source page's original
 /// trim size (so a Letter page in source #1 stays Letter in the output even
@@ -79,6 +80,88 @@ class PdfMergeService {
     } finally {
       out?.dispose();
     }
+  }
+
+  /// Granular variant: assemble the output from a specific ordered list of
+  /// pages (potentially crossing source documents). Used by the page-level
+  /// merge screen where the user has hand-picked which pages to include.
+  ///
+  /// We keep the most-recently-used source document open (cache of one) so
+  /// runs where pages are grouped by source — the common case — don't pay
+  /// the parsing cost on every page.
+  Future<Result<File>> mergePages({
+    required List<PdfPageRef> pages,
+    String? outputName,
+    void Function(double)? onProgress,
+    CancellationToken? cancel,
+  }) async {
+    if (pages.isEmpty) {
+      return Err(FailureKind.unknown, 'No pages to merge');
+    }
+
+    sf.PdfDocument? out;
+    sf.PdfDocument? cachedSrc;
+    String? cachedSrcPath;
+
+    try {
+      out = sf.PdfDocument();
+      out.pageSettings.margins.all = 0;
+      if (out.pages.count > 0) {
+        out.pages.removeAt(0);
+      }
+
+      for (var i = 0; i < pages.length; i++) {
+        if (cancel?.isCancelled ?? false) {
+          return Err(FailureKind.cancelled, 'Cancelled by user');
+        }
+
+        final ref = pages[i];
+
+        // Load source on first use or when the previous cached source was
+        // a different document.
+        if (cachedSrcPath != ref.document.path) {
+          cachedSrc?.dispose();
+          final bytes = await ref.document.file.readAsBytes();
+          cachedSrc = sf.PdfDocument(inputBytes: bytes);
+          cachedSrcPath = ref.document.path;
+        }
+
+        final srcPage = cachedSrc!.pages[ref.pageIndex];
+        out.pageSettings.size = srcPage.size;
+        final dst = out.pages.add();
+        dst.graphics.drawPdfTemplate(srcPage.createTemplate(), Offset.zero);
+        onProgress?.call((i + 1) / pages.length);
+      }
+
+      final outputBytes = await out.save();
+      final outFile = await _writeOutput(
+        outputBytes,
+        outputName ?? _suggestOutputNameForPages(pages),
+      );
+      return Ok(outFile);
+    } catch (e) {
+      final lower = e.toString().toLowerCase();
+      if (lower.contains('password') || lower.contains('encrypt')) {
+        return Err(FailureKind.needsPassword,
+            'One of the source PDFs is password-protected',
+            cause: e);
+      }
+      return Err(FailureKind.unknown, 'Merge failed', cause: e);
+    } finally {
+      cachedSrc?.dispose();
+      out?.dispose();
+    }
+  }
+
+  String _suggestOutputNameForPages(List<PdfPageRef> pages) {
+    final uniqueDocs = <String>{};
+    for (final p in pages) {
+      uniqueDocs.add(p.document.displayName);
+    }
+    if (uniqueDocs.length == 1) {
+      return '${uniqueDocs.first}_selected';
+    }
+    return '${uniqueDocs.first}_and_${uniqueDocs.length - 1}_more';
   }
 
   Future<void> _appendSource(sf.PdfDocument out, File source) async {

@@ -14,6 +14,7 @@ import '../../providers/merge_providers.dart';
 import '../../widgets/pdf_doc_tile.dart';
 import '../../widgets/privacy_badge.dart';
 import '../../widgets/progress_overlay.dart';
+import 'merge_pages_screen.dart';
 import 'merge_result_screen.dart';
 
 class MergeScreen extends ConsumerStatefulWidget {
@@ -35,11 +36,15 @@ class _MergeScreenState extends ConsumerState<MergeScreen> {
     );
     if (result == null) return;
 
-    final files = result.paths
-        .whereType<String>()
-        .map((p) => File(p))
-        .toList();
+    final files =
+        result.paths.whereType<String>().map((p) => File(p)).toList();
     if (files.isEmpty) return;
+
+    // Adding new docs invalidates a prior page-level customization, so we
+    // clear it. The user can re-enter Customize and start fresh.
+    if (ref.read(hasPageCustomizationProvider)) {
+      ref.read(mergePageRefsProvider.notifier).reset();
+    }
 
     final failed = await ref.read(mergeWorkspaceProvider.notifier).add(files);
     if (failed.isNotEmpty && mounted) {
@@ -72,6 +77,15 @@ class _MergeScreenState extends ConsumerState<MergeScreen> {
     );
   }
 
+  Future<void> _customizePages() async {
+    HapticsService.instance.tap();
+    await Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => const MergePagesScreen()),
+    );
+    // No further action needed — page refs persist in the provider and the
+    // merge button below picks them up automatically.
+  }
+
   Future<void> _merge() async {
     final docs = ref.read(mergeWorkspaceProvider);
     if (docs.length < 2) return;
@@ -81,15 +95,31 @@ class _MergeScreenState extends ConsumerState<MergeScreen> {
     _activeCancel = cancel;
     ref.read(mergeProgressProvider.notifier).state = 0;
 
-    final result = await PdfMergeService.instance.merge(
-      documents: docs,
-      onProgress: (p) {
-        if (mounted) {
-          ref.read(mergeProgressProvider.notifier).state = p;
-        }
-      },
-      cancel: cancel,
-    );
+    final pageRefs = ref.read(mergePageRefsProvider);
+    final usePageLevel = pageRefs.isNotEmpty;
+
+    final Result<File> result;
+    if (usePageLevel) {
+      result = await PdfMergeService.instance.mergePages(
+        pages: pageRefs,
+        onProgress: (p) {
+          if (mounted) {
+            ref.read(mergeProgressProvider.notifier).state = p;
+          }
+        },
+        cancel: cancel,
+      );
+    } else {
+      result = await PdfMergeService.instance.merge(
+        documents: docs,
+        onProgress: (p) {
+          if (mounted) {
+            ref.read(mergeProgressProvider.notifier).state = p;
+          }
+        },
+        cancel: cancel,
+      );
+    }
 
     if (!mounted) return;
     ref.read(mergeProgressProvider.notifier).state = null;
@@ -103,13 +133,14 @@ class _MergeScreenState extends ConsumerState<MergeScreen> {
             builder: (_) => MergeResultScreen(
               outputFile: value,
               sourceCount: docs.length,
+              pageCount: usePageLevel ? pageRefs.length : null,
             ),
           ),
         );
-        // Clear the workspace once the user has dismissed the result —
-        // re-opening Merge from the home tile should feel like a fresh start.
+        // Fresh-start for the next visit.
         if (mounted) {
           ref.read(mergeWorkspaceProvider.notifier).clear();
+          ref.read(mergePageRefsProvider.notifier).reset();
         }
       case Err<File>(:final kind, :final message):
         HapticsService.instance.error();
@@ -129,6 +160,8 @@ class _MergeScreenState extends ConsumerState<MergeScreen> {
     final docs = ref.watch(mergeWorkspaceProvider);
     final totalPages = ref.watch(mergeTotalPagesProvider);
     final progress = ref.watch(mergeProgressProvider);
+    final pageRefs = ref.watch(mergePageRefsProvider);
+    final hasCustom = pageRefs.isNotEmpty;
     final canMerge = docs.length >= 2 && progress == null;
 
     return Scaffold(
@@ -140,6 +173,7 @@ class _MergeScreenState extends ConsumerState<MergeScreen> {
               onPressed: () {
                 HapticsService.instance.tap();
                 ref.read(mergeWorkspaceProvider.notifier).clear();
+                ref.read(mergePageRefsProvider.notifier).reset();
               },
               child: const Text('Clear'),
             ),
@@ -163,18 +197,27 @@ class _MergeScreenState extends ConsumerState<MergeScreen> {
                       : _DocList(
                           docs: docs,
                           totalPages: totalPages,
+                          customPageCount: hasCustom ? pageRefs.length : null,
                           onAdd: _pickFiles,
+                          onCustomize:
+                              docs.length >= 2 ? _customizePages : null,
                         ),
                 ),
                 if (canMerge)
-                  _MergeButton(count: docs.length, onTap: _merge),
+                  _MergeButton(
+                    count: docs.length,
+                    customPageCount: hasCustom ? pageRefs.length : null,
+                    onTap: _merge,
+                  ),
               ],
             ),
           ),
           if (progress != null)
             ProgressOverlay(
               progress: progress,
-              title: 'Merging ${docs.length} PDFs',
+              title: hasCustom
+                  ? 'Merging ${pageRefs.length} pages'
+                  : 'Merging ${docs.length} PDFs',
               subtitle: 'Processing on this device — no upload',
               onCancel: () {
                 _activeCancel?.cancel();
@@ -218,7 +261,8 @@ class _EmptyState extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             const Text(
-              'Add two or more PDFs. Drag to reorder before merging.',
+              'Add two or more PDFs. Drag to reorder, '
+              'or customize page-by-page before merging.',
               textAlign: TextAlign.center,
               style: TextStyle(color: AppColors.textSecondary),
             ),
@@ -245,12 +289,16 @@ class _EmptyState extends StatelessWidget {
 class _DocList extends ConsumerWidget {
   final List<PdfDocument> docs;
   final int totalPages;
+  final int? customPageCount;
   final VoidCallback onAdd;
+  final VoidCallback? onCustomize;
 
   const _DocList({
     required this.docs,
     required this.totalPages,
+    required this.customPageCount,
     required this.onAdd,
+    required this.onCustomize,
   });
 
   @override
@@ -263,7 +311,9 @@ class _DocList extends ConsumerWidget {
             children: [
               Expanded(
                 child: Text(
-                  '${docs.length} PDFs · $totalPages page${totalPages == 1 ? '' : 's'} total',
+                  customPageCount != null
+                      ? '$customPageCount pages chosen from ${docs.length} PDFs'
+                      : '${docs.length} PDFs · $totalPages page${totalPages == 1 ? '' : 's'} total',
                   style: const TextStyle(
                     fontSize: 13,
                     color: AppColors.textSecondary,
@@ -278,6 +328,36 @@ class _DocList extends ConsumerWidget {
             ],
           ),
         ),
+        if (onCustomize != null)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+            child: SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: onCustomize,
+                icon: Icon(
+                  customPageCount != null
+                      ? Icons.check_circle
+                      : Icons.grid_view_outlined,
+                  size: 18,
+                ),
+                label: Text(
+                  customPageCount != null
+                      ? 'Edit page selection'
+                      : 'Customize pages',
+                ),
+                style: OutlinedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  side: BorderSide(
+                    color: customPageCount != null
+                        ? AppColors.primary
+                        : AppColors.border,
+                  ),
+                  foregroundColor: AppColors.primary,
+                ),
+              ),
+            ),
+          ),
         Expanded(
           child: ReorderableListView.builder(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
@@ -288,6 +368,10 @@ class _DocList extends ConsumerWidget {
               ref
                   .read(mergeWorkspaceProvider.notifier)
                   .reorder(oldIndex, newIndex);
+              // Reordering docs invalidates page-level customization.
+              if (ref.read(hasPageCustomizationProvider)) {
+                ref.read(mergePageRefsProvider.notifier).reset();
+              }
             },
             itemBuilder: (context, index) {
               final doc = docs[index];
@@ -297,6 +381,9 @@ class _DocList extends ConsumerWidget {
                 onRemove: () {
                   HapticsService.instance.select();
                   ref.read(mergeWorkspaceProvider.notifier).removeAt(index);
+                  if (ref.read(hasPageCustomizationProvider)) {
+                    ref.read(mergePageRefsProvider.notifier).reset();
+                  }
                 },
                 reorderHandle: ReorderableDragStartListener(
                   index: index,
@@ -319,12 +406,20 @@ class _DocList extends ConsumerWidget {
 
 class _MergeButton extends StatelessWidget {
   final int count;
+  final int? customPageCount;
   final VoidCallback onTap;
 
-  const _MergeButton({required this.count, required this.onTap});
+  const _MergeButton({
+    required this.count,
+    required this.customPageCount,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
+    final label = customPageCount != null
+        ? 'Merge $customPageCount pages'
+        : 'Merge $count PDFs';
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
       child: SizedBox(
@@ -339,7 +434,7 @@ class _MergeButton extends StatelessWidget {
             ),
           ),
           child: Text(
-            'Merge $count PDFs',
+            label,
             style: const TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w700,

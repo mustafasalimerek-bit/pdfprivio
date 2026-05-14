@@ -53,6 +53,7 @@ dependencies:
   google_fonts: ^6.2.1
   flutter_svg: ^2.0.10+1
   flutter_native_splash: ^2.4.0
+  reorderable_grid_view: ^2.2.8
 
   # Utilities
   intl: ^0.20.0

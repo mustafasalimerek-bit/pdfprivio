@@ -13,10 +13,15 @@ class MergeResultScreen extends StatelessWidget {
   final File outputFile;
   final int sourceCount;
 
+  /// Set when the user hand-picked pages instead of using doc-level merge —
+  /// changes the subheader from "N PDFs combined" to "N pages combined".
+  final int? pageCount;
+
   const MergeResultScreen({
     super.key,
     required this.outputFile,
     required this.sourceCount,
+    this.pageCount,
   });
 
   Future<void> _share(BuildContext context) async {
@@ -81,7 +86,9 @@ class MergeResultScreen extends StatelessWidget {
               const SizedBox(height: 4),
               Center(
                 child: Text(
-                  '$sourceCount PDFs combined · ${formatBytes(size)}',
+                  pageCount != null
+                      ? '$pageCount pages · ${formatBytes(size)}'
+                      : '$sourceCount PDFs combined · ${formatBytes(size)}',
                   style: const TextStyle(
                     color: AppColors.textSecondary,
                   ),
