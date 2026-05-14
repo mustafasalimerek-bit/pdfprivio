@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../core/theme/colors.dart';
 import '../data/services/haptics_service.dart';
 import 'bates/bates_screen.dart';
+import 'compare/compare_screen.dart';
 import 'compress/compress_screen.dart';
 import 'delete_pages/delete_pages_screen.dart';
 import 'extract_text/extract_text_screen.dart';
@@ -186,6 +187,18 @@ class HomeScreen extends ConsumerWidget {
                   MaterialPageRoute(
                     builder: (_) => const ExtractTextScreen(),
                   ),
+                );
+              },
+            ),
+            _ToolTile(
+              icon: Icons.compare_arrows,
+              title: 'Compare PDFs',
+              subtitle: 'Redline two versions — added & removed text',
+              isFree: true,
+              onTap: () {
+                HapticsService.instance.tap();
+                Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const CompareScreen()),
                 );
               },
             ),
