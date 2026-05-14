@@ -8,9 +8,11 @@ import 'compress/compress_screen.dart';
 import 'delete_pages/delete_pages_screen.dart';
 import 'image_to_pdf/image_to_pdf_screen.dart';
 import 'merge/merge_screen.dart';
+import 'password/password_screen.dart';
 import 'rotate/rotate_screen.dart';
 import 'sign/sign_screen.dart';
 import 'split/split_screen.dart';
+import 'watermark/watermark_screen.dart';
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
@@ -130,6 +132,30 @@ class HomeScreen extends ConsumerWidget {
                 HapticsService.instance.tap();
                 Navigator.of(context).push(
                   MaterialPageRoute(builder: (_) => const BatesScreen()),
+                );
+              },
+            ),
+            _ToolTile(
+              icon: Icons.lock_outline,
+              title: 'Password protect',
+              subtitle: 'AES-256 encrypt or unlock — pick auto-detects',
+              isFree: true,
+              onTap: () {
+                HapticsService.instance.tap();
+                Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const PasswordScreen()),
+                );
+              },
+            ),
+            _ToolTile(
+              icon: Icons.water_drop_outlined,
+              title: 'Watermark',
+              subtitle: 'CONFIDENTIAL / DRAFT — diagonal, center, or tile',
+              isFree: true,
+              onTap: () {
+                HapticsService.instance.tap();
+                Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const WatermarkScreen()),
                 );
               },
             ),
