@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../core/theme/colors.dart';
 import '../data/services/haptics_service.dart';
 import 'compress/compress_screen.dart';
+import 'delete_pages/delete_pages_screen.dart';
 import 'image_to_pdf/image_to_pdf_screen.dart';
 import 'merge/merge_screen.dart';
 import 'rotate/rotate_screen.dart';
@@ -91,6 +92,18 @@ class HomeScreen extends ConsumerWidget {
                 HapticsService.instance.tap();
                 Navigator.of(context).push(
                   MaterialPageRoute(builder: (_) => const RotateScreen()),
+                );
+              },
+            ),
+            _ToolTile(
+              icon: Icons.delete_sweep_outlined,
+              title: 'Delete pages',
+              subtitle: 'Pick the pages to drop, keep the rest',
+              isFree: true,
+              onTap: () {
+                HapticsService.instance.tap();
+                Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const DeletePagesScreen()),
                 );
               },
             ),
