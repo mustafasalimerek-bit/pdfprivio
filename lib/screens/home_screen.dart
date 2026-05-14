@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../core/theme/colors.dart';
 import '../data/services/haptics_service.dart';
 import 'compress/compress_screen.dart';
+import 'image_to_pdf/image_to_pdf_screen.dart';
 import 'merge/merge_screen.dart';
 import 'split/split_screen.dart';
 
@@ -65,6 +66,18 @@ class HomeScreen extends ConsumerWidget {
                 HapticsService.instance.tap();
                 Navigator.of(context).push(
                   MaterialPageRoute(builder: (_) => const SplitScreen()),
+                );
+              },
+            ),
+            _ToolTile(
+              icon: Icons.image_outlined,
+              title: 'Image to PDF',
+              subtitle: 'Photos, receipts, screenshots → one PDF',
+              isFree: true,
+              onTap: () {
+                HapticsService.instance.tap();
+                Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const ImageToPdfScreen()),
                 );
               },
             ),
