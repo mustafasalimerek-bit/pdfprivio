@@ -6,6 +6,7 @@ import '../data/services/haptics_service.dart';
 import 'bates/bates_screen.dart';
 import 'compress/compress_screen.dart';
 import 'delete_pages/delete_pages_screen.dart';
+import 'extract_text/extract_text_screen.dart';
 import 'image_to_pdf/image_to_pdf_screen.dart';
 import 'merge/merge_screen.dart';
 import 'password/password_screen.dart';
@@ -159,16 +160,19 @@ class HomeScreen extends ConsumerWidget {
                 );
               },
             ),
-            const _ComingSoonTile(
-              icon: Icons.draw_outlined,
-              title: 'Sign PDF',
-              subtitle: 'Add your signature, single or bulk',
-            ),
-            const _ComingSoonTile(
-              icon: Icons.search,
-              title: 'OCR + Search',
-              subtitle: 'Make scans searchable, find any word',
-              isPro: true,
+            _ToolTile(
+              icon: Icons.text_snippet_outlined,
+              title: 'Extract text',
+              subtitle: 'Pull text out — born-digital PDFs only',
+              isFree: true,
+              onTap: () {
+                HapticsService.instance.tap();
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => const ExtractTextScreen(),
+                  ),
+                );
+              },
             ),
           ],
         ),
@@ -255,79 +259,6 @@ class _ToolTile extends StatelessWidget {
               ],
             ),
           ),
-        ),
-      ),
-    );
-  }
-}
-
-class _ComingSoonTile extends StatelessWidget {
-  final IconData icon;
-  final String title;
-  final String subtitle;
-  final bool isPro;
-
-  const _ComingSoonTile({
-    required this.icon,
-    required this.title,
-    required this.subtitle,
-    this.isPro = false,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6),
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: AppColors.surface,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppColors.border),
-        ),
-        child: Row(
-          children: [
-            Container(
-              width: 44,
-              height: 44,
-              decoration: BoxDecoration(
-                color: AppColors.textTertiary.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Icon(icon, color: AppColors.textTertiary),
-            ),
-            const SizedBox(width: 14),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Text(
-                        title,
-                        style: const TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w700,
-                          color: AppColors.textSecondary,
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      if (isPro) const _Pill(label: 'PRO', color: AppColors.proBadge),
-                    ],
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    subtitle,
-                    style: const TextStyle(
-                      fontSize: 13,
-                      color: AppColors.textTertiary,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const _Pill(label: 'SOON', color: AppColors.textTertiary),
-          ],
         ),
       ),
     );
