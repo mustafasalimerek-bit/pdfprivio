@@ -6,6 +6,7 @@ import '../data/services/haptics_service.dart';
 import 'compress/compress_screen.dart';
 import 'image_to_pdf/image_to_pdf_screen.dart';
 import 'merge/merge_screen.dart';
+import 'rotate/rotate_screen.dart';
 import 'split/split_screen.dart';
 
 class HomeScreen extends ConsumerWidget {
@@ -78,6 +79,18 @@ class HomeScreen extends ConsumerWidget {
                 HapticsService.instance.tap();
                 Navigator.of(context).push(
                   MaterialPageRoute(builder: (_) => const ImageToPdfScreen()),
+                );
+              },
+            ),
+            _ToolTile(
+              icon: Icons.rotate_right_outlined,
+              title: 'Rotate pages',
+              subtitle: 'Fix sideways scans or flip a PDF',
+              isFree: true,
+              onTap: () {
+                HapticsService.instance.tap();
+                Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const RotateScreen()),
                 );
               },
             ),
