@@ -8,6 +8,7 @@ import 'delete_pages/delete_pages_screen.dart';
 import 'image_to_pdf/image_to_pdf_screen.dart';
 import 'merge/merge_screen.dart';
 import 'rotate/rotate_screen.dart';
+import 'sign/sign_screen.dart';
 import 'split/split_screen.dart';
 
 class HomeScreen extends ConsumerWidget {
@@ -104,6 +105,18 @@ class HomeScreen extends ConsumerWidget {
                 HapticsService.instance.tap();
                 Navigator.of(context).push(
                   MaterialPageRoute(builder: (_) => const DeletePagesScreen()),
+                );
+              },
+            ),
+            _ToolTile(
+              icon: Icons.draw_outlined,
+              title: 'Sign PDF',
+              subtitle: 'Draw, place, save — audit-trail included',
+              isFree: true,
+              onTap: () {
+                HapticsService.instance.tap();
+                Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const SignScreen()),
                 );
               },
             ),

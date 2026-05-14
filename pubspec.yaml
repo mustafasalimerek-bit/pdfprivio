@@ -55,6 +55,10 @@ dependencies:
   flutter_native_splash: ^2.4.0
   reorderable_grid_view: ^2.2.8
 
+  # Signature capture for Sign tool
+  signature: ^5.5.0
+  crypto: ^3.0.3
+
   # Utilities
   intl: ^0.20.0
   url_launcher: ^6.2.6
