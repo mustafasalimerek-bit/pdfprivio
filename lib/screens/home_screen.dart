@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../core/theme/colors.dart';
 import '../data/services/haptics_service.dart';
+import 'compress/compress_screen.dart';
 import 'merge/merge_screen.dart';
 
 class HomeScreen extends ConsumerWidget {
@@ -42,15 +43,22 @@ class HomeScreen extends ConsumerWidget {
                 );
               },
             ),
+            _ToolTile(
+              icon: Icons.compress_outlined,
+              title: 'Compress PDF',
+              subtitle: 'Shrink for email — keep quality',
+              isFree: true,
+              onTap: () {
+                HapticsService.instance.tap();
+                Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const CompressScreen()),
+                );
+              },
+            ),
             const _ComingSoonTile(
               icon: Icons.content_cut_outlined,
               title: 'Split PDF',
               subtitle: 'Extract pages or split by size',
-            ),
-            const _ComingSoonTile(
-              icon: Icons.compress_outlined,
-              title: 'Compress PDF',
-              subtitle: 'Reduce file size, keep quality',
             ),
             const _ComingSoonTile(
               icon: Icons.draw_outlined,
