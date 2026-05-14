@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../core/theme/colors.dart';
 import '../data/services/haptics_service.dart';
+import 'bates/bates_screen.dart';
 import 'compress/compress_screen.dart';
 import 'delete_pages/delete_pages_screen.dart';
 import 'image_to_pdf/image_to_pdf_screen.dart';
@@ -117,6 +118,18 @@ class HomeScreen extends ConsumerWidget {
                 HapticsService.instance.tap();
                 Navigator.of(context).push(
                   MaterialPageRoute(builder: (_) => const SignScreen()),
+                );
+              },
+            ),
+            _ToolTile(
+              icon: Icons.tag,
+              title: 'Bates numbering',
+              subtitle: 'Sequential page IDs — legal discovery standard',
+              isFree: true,
+              onTap: () {
+                HapticsService.instance.tap();
+                Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const BatesScreen()),
                 );
               },
             ),
