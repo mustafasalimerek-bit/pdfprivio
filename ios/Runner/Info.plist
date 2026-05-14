@@ -66,5 +66,20 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>PDFKitsy reads photos only when you pick images to turn into a PDF. Files never leave your device.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>PDFKitsy uses the camera when you scan a document or capture an image for a PDF. Captures stay on this device.</string>
+	<!-- Google AdMob test app ID. Replace with the real PDFKitsy app ID
+	     once we register it in AdMob console, before shipping. -->
+	<key>GADApplicationIdentifier</key>
+	<string>ca-app-pub-3940256099942544~1458002511</string>
+	<key>SKAdNetworkItems</key>
+	<array>
+		<dict>
+			<key>SKAdNetworkIdentifier</key>
+			<string>cstr6suwn9.skadnetwork</string>
+		</dict>
+	</array>
 </dict>
 </plist>
