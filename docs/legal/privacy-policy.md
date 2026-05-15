@@ -3,7 +3,7 @@
 **Last updated:** 2026-05-15
 **Effective date:** 2026-05-15
 **Operator:** Erek Studio (Mustafa Salim Erek, sole proprietor)
-**Contact:** privacy@pdfwork.app  (← change to your real email before publishing)
+**Contact:** mustafasalimerek@gmail.com  (← change to your real email before publishing)
 **App:** PDFWork (iOS / Android), bundle id `com.erekstudio.pdfwork`
 
 This policy describes what data PDFWork does and does not collect, why, and what choices you have. It is written to be readable; the short version is at the top.
@@ -106,7 +106,7 @@ None of this leaves your device unless you explicitly tap "Share" inside PDFWork
 
 ## 5. Children's privacy
 
-PDFWork is not directed at children under 13 (or the equivalent minimum age in your country). We do not knowingly collect personal information from children. If you believe a child has used PDFWork in a way that needed consent, contact us at privacy@pdfwork.app.
+PDFWork is not directed at children under 13 (or the equivalent minimum age in your country). We do not knowingly collect personal information from children. If you believe a child has used PDFWork in a way that needed consent, contact us at mustafasalimerek@gmail.com.
 
 ## 6. Your rights
 
@@ -117,7 +117,7 @@ Depending on where you live (EU/UK/Switzerland under GDPR, California under CCPA
 - Withdraw consent at any time via the in-app Settings screen.
 - Lodge a complaint with your local data protection authority.
 
-To exercise these rights, email privacy@pdfwork.app from the email account you'd like the response sent to. We will respond within 30 days.
+To exercise these rights, email mustafasalimerek@gmail.com from the email account you'd like the response sent to. We will respond within 30 days.
 
 ## 7. Data sales
 
@@ -137,7 +137,7 @@ If we update this policy in a way that meaningfully changes what we collect or h
 
 ## 11. Contact
 
-- Email: privacy@pdfwork.app
+- Email: mustafasalimerek@gmail.com
 - Postal: Erek Studio, [your address — fill in before publishing]
 
 We will respond to all good-faith privacy requests within 30 days.

@@ -77,7 +77,7 @@ Apple asks per-data-type: (a) collected? (b) linked to identity? (c) used for tr
 
 ## Question 4: Privacy Policy URL
 
-Put `https://pdfwork.app/privacy` (once the page is up at that path).
+Put `https://mustafasalimerek-bit.github.io/pdfwork/privacy/` (once the page is up at that path).
 
 Same URL goes into:
 - App Store Connect → App Privacy → Privacy Policy URL

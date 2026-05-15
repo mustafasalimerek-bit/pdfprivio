@@ -124,7 +124,7 @@ MADE BY EREK STUDIO
 
 Built by an independent developer in Istanbul. No VC, no growth team,
 no dark patterns. If a feature is missing or a bug bites you, email
-support@pdfwork.app and you'll hear back from a human within a day.
+mustafasalimerek@gmail.com and you'll hear back from a human within a day.
 ```
 
 About 2900 chars — leaves headroom for tweaks. Apple counts characters
@@ -160,10 +160,10 @@ in a v1.1 metadata-only release.
 ## Support URL (required)
 
 ```
-https://pdfwork.app/support
+mailto:mustafasalimerek@gmail.com
 ```
 
-For v1: a single page with the email address `support@pdfwork.app` and
+For v1: a single page with the email address `mustafasalimerek@gmail.com` and
 the Privacy Policy + ToS links. Apple verifies the URL resolves at
 review time, so the page MUST be live before submission.
 
@@ -172,7 +172,7 @@ review time, so the page MUST be live before submission.
 ## Marketing URL (optional but recommended)
 
 ```
-https://pdfwork.app
+https://mustafasalimerek-bit.github.io/pdfwork/
 ```
 
 The landing page. Drives ProductHunt and Reddit traffic.
@@ -182,7 +182,7 @@ The landing page. Drives ProductHunt and Reddit traffic.
 ## Privacy Policy URL (required)
 
 ```
-https://pdfwork.app/privacy
+https://mustafasalimerek-bit.github.io/pdfwork/privacy/
 ```
 
 Maps to `docs/legal/privacy-policy.md` in this repo. Host it as plain
@@ -292,8 +292,8 @@ taps Scan or Image to PDF. Tracking (NSUserTrackingUsageDescription) is
 requested only after the GDPR/UMP consent form, per Google's UMP
 guidelines.
 
-Privacy Policy: https://pdfwork.app/privacy
-Terms of Service: https://pdfwork.app/terms
+Privacy Policy: https://mustafasalimerek-bit.github.io/pdfwork/privacy/
+Terms of Service: https://mustafasalimerek-bit.github.io/pdfwork/terms/
 ```
 
 This pre-empts the most common reasons reviewers ask follow-up

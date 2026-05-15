@@ -3,7 +3,7 @@
 **Last updated:** 2026-05-15
 **Effective date:** 2026-05-15
 **Operator:** Erek Studio (Mustafa Salim Erek, sole proprietor)
-**Contact:** support@pdfwork.app  (← change to your real email before publishing)
+**Contact:** mustafasalimerek@gmail.com  (← change to your real email before publishing)
 **App:** PDFWork (iOS / Android)
 
 By installing or using PDFWork, you agree to these terms. If you don't agree, don't use the app.
@@ -103,7 +103,7 @@ These terms are governed by the laws of the Republic of Turkey (where Erek Studi
 
 ## 13. Contact
 
-Email: support@pdfwork.app
+Email: mustafasalimerek@gmail.com
 
 ---
 
