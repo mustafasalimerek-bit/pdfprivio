@@ -618,6 +618,7 @@ class _NumberStepper extends StatelessWidget {
           children: [
             _IconStepperButton(
               icon: Icons.remove,
+              tooltip: 'Decrease',
               enabled: value > min,
               onTap: () => onChanged(value - 1),
             ),
@@ -634,6 +635,7 @@ class _NumberStepper extends StatelessWidget {
             ),
             _IconStepperButton(
               icon: Icons.add,
+              tooltip: 'Increase',
               enabled: value < max,
               onTap: () => onChanged(value + 1),
             ),
@@ -648,11 +650,13 @@ class _IconStepperButton extends StatelessWidget {
   final IconData icon;
   final bool enabled;
   final VoidCallback onTap;
+  final String tooltip;
 
   const _IconStepperButton({
     required this.icon,
     required this.enabled,
     required this.onTap,
+    required this.tooltip,
   });
 
   @override
@@ -661,6 +665,7 @@ class _IconStepperButton extends StatelessWidget {
       opacity: enabled ? 1 : 0.35,
       child: IconButton(
         icon: Icon(icon),
+        tooltip: tooltip,
         onPressed: enabled
             ? () {
                 HapticsService.instance.tap();

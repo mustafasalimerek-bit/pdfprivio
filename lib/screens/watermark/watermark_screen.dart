@@ -104,6 +104,8 @@ class _WatermarkScreenState extends ConsumerState<WatermarkScreen> {
           MaterialPageRoute(
             builder: (_) => MergeResultScreen(
               outputFile: value,
+              toolLabel: 'Watermarked',
+              toolIdForUsage: 'watermark',
               sourceCount: 1,
               pageCount: doc.pageCount,
             ),

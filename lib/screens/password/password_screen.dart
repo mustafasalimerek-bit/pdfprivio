@@ -142,6 +142,8 @@ class _PasswordScreenState extends ConsumerState<PasswordScreen> {
             builder: (_) => MergeResultScreen(
               outputFile: value,
               sourceCount: 1,
+              toolLabel: 'Password',
+              toolIdForUsage: 'password',
             ),
           ),
         );
@@ -486,6 +488,7 @@ class _PasswordField extends StatelessWidget {
             obscure ? Icons.visibility_outlined : Icons.visibility_off_outlined,
             color: AppColors.textTertiary,
           ),
+          tooltip: obscure ? 'Show password' : 'Hide password',
           onPressed: onToggleObscure,
         ),
       ),

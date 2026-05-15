@@ -22,6 +22,7 @@ class CompareResultScreen extends StatelessWidget {
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.close),
+          tooltip: 'Close',
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: const Text('Differences'),

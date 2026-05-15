@@ -98,6 +98,8 @@ class _DeletePagesScreenState extends ConsumerState<DeletePagesScreen> {
           MaterialPageRoute(
             builder: (_) => MergeResultScreen(
               outputFile: value,
+              toolLabel: 'Pages deleted',
+              toolIdForUsage: 'delete_pages',
               sourceCount: 1,
               pageCount: keptCount,
             ),

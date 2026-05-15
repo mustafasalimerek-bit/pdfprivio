@@ -1,4 +1,4 @@
-# PDFKitsy
+# PDFWork
 
 Offline PDF tools for iOS and Android. Merge, split, compress, sign, OCR — all on-device, no cloud uploads, no subscription required.
 
@@ -19,8 +19,8 @@ Offline PDF tools for iOS and Android. Merge, split, compress, sign, OCR — all
 
 ## Bundle
 
-- iOS: `com.erekstudio.pdfkitsy`
-- Android: `com.erekstudio.pdfkitsy`
+- iOS: `com.erekstudio.pdfwork`
+- Android: `com.erekstudio.pdfwork`
 
 ## Development
 

@@ -100,6 +100,8 @@ class _RotateScreenState extends ConsumerState<RotateScreen> {
             builder: (_) => MergeResultScreen(
               outputFile: value,
               sourceCount: 1,
+              toolLabel: 'Rotated',
+              toolIdForUsage: 'rotate',
             ),
           ),
         );

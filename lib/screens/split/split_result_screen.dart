@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -6,12 +7,34 @@ import 'package:share_plus/share_plus.dart';
 
 import '../../core/theme/colors.dart';
 import '../../core/utils/format_bytes.dart';
+import '../../data/services/ads_service.dart';
 import '../../data/services/haptics_service.dart';
+import '../../data/services/recent_files_service.dart';
+import '../../data/services/usage_limits_service.dart';
 import '../../widgets/privacy_badge.dart';
 
-class SplitResultScreen extends StatelessWidget {
+class SplitResultScreen extends StatefulWidget {
   final List<File> files;
   const SplitResultScreen({super.key, required this.files});
+
+  @override
+  State<SplitResultScreen> createState() => _SplitResultScreenState();
+}
+
+class _SplitResultScreenState extends State<SplitResultScreen> {
+  @override
+  void initState() {
+    super.initState();
+    // Record each split output to the recents carousel. Even if the user
+    // produced 20 parts, we cap to the most recent N inside the service.
+    for (final f in widget.files) {
+      RecentFilesService.instance.record(
+        file: f,
+        toolLabel: 'Split',
+      );
+    }
+    UsageLimitsService.instance.recordUse('split');
+  }
 
   Future<void> _shareAll(BuildContext context) async {
     HapticsService.instance.tap();
@@ -21,7 +44,7 @@ class SplitResultScreen extends StatelessWidget {
         : null;
     await SharePlus.instance.share(
       ShareParams(
-        files: files.map((f) => XFile(f.path)).toList(),
+        files: widget.files.map((f) => XFile(f.path)).toList(),
         sharePositionOrigin: origin,
       ),
     );
@@ -47,11 +70,15 @@ class SplitResultScreen extends StatelessWidget {
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.close),
-          onPressed: () => Navigator.of(context).pop(),
+          tooltip: 'Close',
+          onPressed: () {
+            Navigator.of(context).pop();
+            unawaited(AdsService.instance.maybeShowInterstitial());
+          },
         ),
         title: const Text('Done'),
         actions: [
-          if (files.length > 1)
+          if (widget.files.length > 1)
             TextButton.icon(
               onPressed: () => _shareAll(context),
               icon: const Icon(Icons.share_outlined, size: 18),
@@ -81,9 +108,9 @@ class SplitResultScreen extends StatelessWidget {
             const SizedBox(height: 14),
             Center(
               child: Text(
-                files.length == 1
+                widget.files.length == 1
                     ? '1 file ready'
-                    : '${files.length} files ready',
+                    : '${widget.files.length} files ready',
                 style: const TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.w800,
@@ -96,9 +123,9 @@ class SplitResultScreen extends StatelessWidget {
             Expanded(
               child: ListView.builder(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
-                itemCount: files.length,
+                itemCount: widget.files.length,
                 itemBuilder: (context, index) {
-                  final f = files[index];
+                  final f = widget.files[index];
                   return _OutputTile(
                     file: f,
                     onShare: () => _shareOne(context, f),
@@ -115,7 +142,10 @@ class SplitResultScreen extends StatelessWidget {
               child: SizedBox(
                 width: double.infinity,
                 child: TextButton(
-                  onPressed: () => Navigator.of(context).pop(),
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                    unawaited(AdsService.instance.maybeShowInterstitial());
+                  },
                   child: const Text('Done'),
                 ),
               ),
@@ -192,11 +222,13 @@ class _OutputTile extends StatelessWidget {
           ),
           IconButton(
             icon: const Icon(Icons.open_in_new, size: 20),
+            tooltip: 'Open',
             onPressed: onOpen,
             color: AppColors.textSecondary,
           ),
           IconButton(
             icon: const Icon(Icons.share_outlined, size: 20),
+            tooltip: 'Share',
             onPressed: onShare,
             color: AppColors.primary,
           ),

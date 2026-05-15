@@ -7,6 +7,7 @@
 .atom/
 .build/
 .buildlog/
+.claude/
 .history
 .svn/
 .swiftpm/
@@ -52,3 +53,21 @@ android/app/google-services.json
 ios/Podfile.lock
 ios/Pods/
 ios/.symlinks/
+
+# Local backups
+*.bak.*
+
+# Android release signing (secret — never commit)
+*.jks
+*.keystore
+key.properties
+android/key.properties
+
+# Firebase admin SDK service accounts (secret — never commit)
+service-account*.json
+firebase-adminsdk-*.json
+
+# Env files
+.env
+.env.*
+!.env.example

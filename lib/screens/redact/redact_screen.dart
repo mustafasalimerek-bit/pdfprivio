@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:file_picker/file_picker.dart';
@@ -14,11 +15,24 @@ import '../../data/models/pdf_document.dart';
 import '../../data/services/haptics_service.dart';
 import '../../data/services/pdf_metadata_service.dart';
 import '../../data/services/pdf_redact_service.dart';
+import '../../data/services/recent_files_service.dart';
+import '../../widgets/disclaimer_banner.dart';
 import '../../widgets/privacy_badge.dart';
 import '../../widgets/progress_overlay.dart';
 
 class RedactScreen extends ConsumerStatefulWidget {
-  const RedactScreen({super.key});
+  final PdfDocument? initialDoc;
+  final List<String>? initialSearches;
+  final bool initialCaseSensitive;
+  final String? heroTitle;
+
+  const RedactScreen({
+    super.key,
+    this.initialDoc,
+    this.initialSearches,
+    this.initialCaseSensitive = false,
+    this.heroTitle,
+  });
 
   @override
   ConsumerState<RedactScreen> createState() => _RedactScreenState();
@@ -29,9 +43,20 @@ class _RedactScreenState extends ConsumerState<RedactScreen> {
   final List<String> _searches = [];
   final TextEditingController _input = TextEditingController();
   bool _caseSensitive = false;
+  bool _makeSearchable = true;
   double? _progress;
   String? _status;
   CancellationToken? _cancel;
+
+  @override
+  void initState() {
+    super.initState();
+    _doc = widget.initialDoc;
+    _caseSensitive = widget.initialCaseSensitive;
+    if (widget.initialSearches != null) {
+      _searches.addAll(widget.initialSearches!.toSet());
+    }
+  }
 
   @override
   void dispose() {
@@ -104,6 +129,7 @@ class _RedactScreenState extends ConsumerState<RedactScreen> {
       input: doc,
       searchTexts: _searches,
       caseSensitive: _caseSensitive,
+      makeSearchable: _makeSearchable,
       onProgress: (p, m) {
         if (!mounted) return;
         setState(() {
@@ -124,6 +150,10 @@ class _RedactScreenState extends ConsumerState<RedactScreen> {
     switch (result) {
       case Ok(:final value):
         HapticsService.instance.success();
+        unawaited(RecentFilesService.instance.record(
+          file: value.file,
+          toolLabel: 'Redacted',
+        ));
         await Navigator.of(context).push(
           MaterialPageRoute(
             builder: (_) => _RedactResultScreen(outcome: value),
@@ -331,11 +361,11 @@ class _RedactScreenState extends ConsumerState<RedactScreen> {
                             Container(
                               padding: const EdgeInsets.all(12),
                               decoration: BoxDecoration(
-                                color: AppColors.warning
+                                color: AppColors.success
                                     .withValues(alpha: 0.08),
                                 borderRadius: BorderRadius.circular(10),
                                 border: Border.all(
-                                  color: AppColors.warning
+                                  color: AppColors.success
                                       .withValues(alpha: 0.3),
                                 ),
                               ),
@@ -343,26 +373,43 @@ class _RedactScreenState extends ConsumerState<RedactScreen> {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Icon(
-                                    Icons.warning_amber_rounded,
+                                    Icons.verified_outlined,
                                     size: 16,
-                                    color: AppColors.warning,
+                                    color: AppColors.success,
                                   ),
                                   SizedBox(width: 8),
                                   Expanded(
                                     child: Text(
-                                      "Visual redaction only — text data "
-                                      "remains in the PDF and can be "
-                                      "recovered with technical tools. For "
-                                      "court-grade redaction, run the output "
-                                      "through a true-redaction tool too.",
+                                      "Real redaction: matched words are "
+                                      "rasterized into the page and the "
+                                      "original text layer is removed. "
+                                      "Copy-paste, Cmd+F, and PDF parsers "
+                                      "all see only black bars.",
                                       style: TextStyle(
                                         fontSize: 11,
-                                        color: AppColors.warning,
+                                        color: AppColors.success,
                                       ),
                                     ),
                                   ),
                                 ],
                               ),
+                            ),
+                            const SizedBox(height: 10),
+                            _SearchableToggle(
+                              value: _makeSearchable,
+                              onChanged: (v) {
+                                HapticsService.instance.select();
+                                setState(() => _makeSearchable = v);
+                              },
+                            ),
+                            const SizedBox(height: 10),
+                            const DisclaimerBanner(
+                              message: 'Redactions cover the matching '
+                                  'words on each page. Embedded objects, '
+                                  'attached files, metadata, and prior '
+                                  'versions are not touched — open the '
+                                  'output in another viewer to verify '
+                                  'before sending externally.',
                             ),
                           ],
                         ),
@@ -442,8 +489,10 @@ class _EmptyState extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             const Text(
-              'Search and cover names, account numbers, addresses, or '
-              "any string. We'll black out every line that matches.",
+              'Search names, account numbers, addresses, or any string. '
+              'Matches are rasterized into the page and the original '
+              "text layer is removed — Cmd+F can't find them, copy-paste "
+              "returns nothing.",
               textAlign: TextAlign.center,
               style: TextStyle(color: AppColors.textSecondary),
             ),
@@ -555,6 +604,7 @@ class _RedactResultScreen extends StatelessWidget {
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.close),
+          tooltip: 'Close',
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: const Text('Done'),
@@ -591,8 +641,8 @@ class _RedactResultScreen extends StatelessWidget {
                 child: Text(
                   noMatches
                       ? 'No matches found'
-                      : '${outcome.matchesFound} line'
-                          '${outcome.matchesFound == 1 ? '' : 's'} redacted',
+                      : '${outcome.matchesFound} redaction'
+                          '${outcome.matchesFound == 1 ? '' : 's'} applied',
                   style: const TextStyle(
                     fontSize: 22,
                     fontWeight: FontWeight.w800,
@@ -611,6 +661,15 @@ class _RedactResultScreen extends StatelessWidget {
               ),
               const SizedBox(height: 16),
               const Center(child: PrivacyBadge()),
+              if (!noMatches) ...[
+                const SizedBox(height: 14),
+                const DisclaimerBanner(
+                  message: 'Before sharing externally: open the output '
+                      "in a different viewer (e.g. Preview, Adobe) and "
+                      'check no PII bleeds through embedded objects, '
+                      'attachments, or metadata.',
+                ),
+              ],
               const Spacer(),
               FilledButton.icon(
                 onPressed: () => _share(context),
@@ -638,6 +697,74 @@ class _RedactResultScreen extends StatelessWidget {
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class _SearchableToggle extends StatelessWidget {
+  final bool value;
+  final ValueChanged<bool> onChanged;
+  const _SearchableToggle({required this.value, required this.onChanged});
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: () => onChanged(!value),
+      borderRadius: BorderRadius.circular(10),
+      child: Container(
+        padding: const EdgeInsets.fromLTRB(10, 8, 6, 8),
+        decoration: BoxDecoration(
+          color: value
+              ? AppColors.primary.withValues(alpha: 0.06)
+              : AppColors.surface,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(
+            color: value
+                ? AppColors.primary.withValues(alpha: 0.4)
+                : AppColors.border,
+          ),
+        ),
+        child: Row(
+          children: [
+            Icon(
+              Icons.find_in_page_outlined,
+              size: 18,
+              color: value ? AppColors.primary : AppColors.textSecondary,
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Keep non-redacted text searchable',
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  Text(
+                    value
+                        ? 'OCR runs on the redacted output — Cmd+F still '
+                            'works on everything except the black bars'
+                        : 'Output is an image-only PDF — fastest, smallest, '
+                            'but Cmd+F finds nothing',
+                    style: const TextStyle(
+                      fontSize: 11,
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Switch.adaptive(
+              value: value,
+              onChanged: onChanged,
+              activeThumbColor: AppColors.primary,
+            ),
+          ],
         ),
       ),
     );

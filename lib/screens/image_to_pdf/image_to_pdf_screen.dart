@@ -86,6 +86,8 @@ class _ImageToPdfScreenState extends ConsumerState<ImageToPdfScreen> {
             builder: (_) => MergeResultScreen(
               outputFile: value,
               sourceCount: _images.length,
+              toolLabel: 'Image to PDF',
+              toolIdForUsage: 'image_to_pdf',
             ),
           ),
         );
@@ -358,6 +360,7 @@ class _ImageTile extends StatelessWidget {
           ),
           IconButton(
             icon: const Icon(Icons.close, size: 18),
+            tooltip: 'Remove image',
             onPressed: onRemove,
             color: AppColors.textSecondary,
           ),

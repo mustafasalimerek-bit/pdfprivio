@@ -12,6 +12,7 @@ import '../../data/models/pdf_document.dart';
 import '../../data/services/haptics_service.dart';
 import '../../data/services/pdf_metadata_service.dart';
 import '../../data/services/pdf_text_extract_service.dart';
+import '../../data/services/usage_limits_service.dart';
 import '../../widgets/privacy_badge.dart';
 import '../../widgets/progress_overlay.dart';
 import 'extract_text_result_screen.dart';
@@ -93,6 +94,7 @@ class _ExtractTextScreenState extends ConsumerState<ExtractTextScreen> {
     switch (result) {
       case Ok(:final value):
         HapticsService.instance.success();
+        UsageLimitsService.instance.recordUse('extract_text');
         await Navigator.of(context).push(
           MaterialPageRoute(
             builder: (_) => ExtractTextResultScreen(

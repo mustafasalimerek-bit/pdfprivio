@@ -133,6 +133,8 @@ class _MergeScreenState extends ConsumerState<MergeScreen> {
             builder: (_) => MergeResultScreen(
               outputFile: value,
               sourceCount: docs.length,
+              toolLabel: 'Merged',
+              toolIdForUsage: 'merge',
               pageCount: usePageLevel ? pageRefs.length : null,
             ),
           ),

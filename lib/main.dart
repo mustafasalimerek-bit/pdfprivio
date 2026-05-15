@@ -9,6 +9,9 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'app.dart';
+import 'data/services/ads_service.dart';
+import 'data/services/purchase_service.dart';
+import 'data/services/usage_limits_service.dart';
 
 Future<void> main() async {
   await runZonedGuarded<Future<void>>(() async {
@@ -27,8 +30,23 @@ Future<void> main() async {
       return true;
     };
 
-    // Analytics off by default; UMP consent flow flips it on when user agrees.
+    // Analytics off until consent flow says otherwise. Consent gathering
+    // (UMP + ATT) runs inside the UI's _BootGate after onboarding so the
+    // user sees a welcome explanation BEFORE being asked to accept ads
+    // or tracking — Apple's recommended UX and a better conversion rate
+    // than launching straight into prompts.
     await FirebaseAnalytics.instance.setAnalyticsCollectionEnabled(false);
+
+    // Purchase + usage-limits boot. Init runs StoreKit availability
+    // check and silent restore so the home grid renders with the right
+    // lock state on the very first frame.
+    await PurchaseService.instance.init();
+    await UsageLimitsService.instance.pruneOldEntries();
+    // AdsService.init() pre-loads the first interstitial and wires the
+    // Pro-purchase listener that drops cached ads when users upgrade.
+    // Safe to call before consent — internal calls are silent no-ops
+    // until MobileAds.initialize() succeeds inside ConsentService.gather().
+    await AdsService.instance.init();
 
     await SystemChrome.setPreferredOrientations([
       DeviceOrientation.portraitUp,
@@ -36,7 +54,7 @@ Future<void> main() async {
 
     runApp(
       const ProviderScope(
-        child: PdfKitsyApp(),
+        child: PdfWorkApp(),
       ),
     );
   }, (error, stack) {

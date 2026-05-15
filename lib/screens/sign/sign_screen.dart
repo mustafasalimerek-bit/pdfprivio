@@ -13,6 +13,7 @@ import '../../data/services/haptics_service.dart';
 import '../../data/services/pdf_metadata_service.dart';
 import '../../data/services/pdf_sign_service.dart';
 import '../../data/services/pdf_thumbnail_service.dart';
+import '../../widgets/disclaimer_banner.dart';
 import '../../widgets/privacy_badge.dart';
 import '../../widgets/progress_overlay.dart';
 import '../../widgets/signature_pad_dialog.dart';
@@ -114,6 +115,8 @@ class _SignScreenState extends ConsumerState<SignScreen> {
           MaterialPageRoute(
             builder: (_) => MergeResultScreen(
               outputFile: value,
+              toolLabel: 'Signed',
+              toolIdForUsage: 'sign',
               sourceCount: 1,
             ),
           ),
@@ -372,6 +375,14 @@ class _SignSetup extends StatelessWidget {
               borderSide: const BorderSide(color: AppColors.primary),
             ),
           ),
+        ),
+        const SizedBox(height: 14),
+        const DisclaimerBanner(
+          message: 'PDFWork embeds a SHA-256 hash + UTC timestamp as an '
+              "audit footer, but it isn't a certified e-signature "
+              'service. Legal binding depends on jurisdiction, the '
+              'transaction type, and recipient acceptance. For '
+              'high-stakes contracts, also use a service like DocuSign.',
         ),
         const SizedBox(height: 8),
       ],

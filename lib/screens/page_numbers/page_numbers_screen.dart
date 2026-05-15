@@ -111,6 +111,8 @@ class _PageNumbersScreenState extends ConsumerState<PageNumbersScreen> {
           MaterialPageRoute(
             builder: (_) => MergeResultScreen(
               outputFile: value,
+              toolLabel: 'Numbered',
+              toolIdForUsage: 'page_numbers',
               sourceCount: 1,
               pageCount: doc.pageCount,
             ),

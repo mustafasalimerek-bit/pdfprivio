@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -6,10 +7,13 @@ import 'package:share_plus/share_plus.dart';
 
 import '../../core/theme/colors.dart';
 import '../../core/utils/format_bytes.dart';
+import '../../data/services/ads_service.dart';
 import '../../data/services/haptics_service.dart';
+import '../../data/services/recent_files_service.dart';
+import '../../data/services/usage_limits_service.dart';
 import '../../widgets/privacy_badge.dart';
 
-class MergeResultScreen extends StatelessWidget {
+class MergeResultScreen extends StatefulWidget {
   final File outputFile;
   final int sourceCount;
 
@@ -17,12 +21,45 @@ class MergeResultScreen extends StatelessWidget {
   /// changes the subheader from "N PDFs combined" to "N pages combined".
   final int? pageCount;
 
+  /// Short label that goes on the recent-files chip. Defaults to "Merged"
+  /// for backwards compat with the original caller; every new caller
+  /// (Image to PDF, Scan, OCR, Form Fill, etc.) passes its own.
+  final String toolLabel;
+
+  /// Optional UsageLimitsService tool id. When set, mounting this
+  /// screen records one daily use against the free-tier quota. Pro
+  /// users are bypassed inside the service. Pro-only tools (Form Fill,
+  /// Bates) intentionally pass null — they never count against quota
+  /// because their gate is the paywall, not a counter.
+  final String? toolIdForUsage;
+
   const MergeResultScreen({
     super.key,
     required this.outputFile,
     required this.sourceCount,
     this.pageCount,
+    this.toolLabel = 'Merged',
+    this.toolIdForUsage,
   });
+
+  @override
+  State<MergeResultScreen> createState() => _MergeResultScreenState();
+}
+
+class _MergeResultScreenState extends State<MergeResultScreen> {
+  @override
+  void initState() {
+    super.initState();
+    // Fire-and-forget: surfacing this on the home screen is best-effort.
+    RecentFilesService.instance.record(
+      file: widget.outputFile,
+      toolLabel: widget.toolLabel,
+    );
+    final usageId = widget.toolIdForUsage;
+    if (usageId != null) {
+      UsageLimitsService.instance.recordUse(usageId);
+    }
+  }
 
   Future<void> _share(BuildContext context) async {
     HapticsService.instance.tap();
@@ -32,7 +69,7 @@ class MergeResultScreen extends StatelessWidget {
         : null;
     await SharePlus.instance.share(
       ShareParams(
-        files: [XFile(outputFile.path)],
+        files: [XFile(widget.outputFile.path)],
         sharePositionOrigin: origin,
       ),
     );
@@ -40,17 +77,27 @@ class MergeResultScreen extends StatelessWidget {
 
   Future<void> _open() async {
     HapticsService.instance.tap();
-    await OpenFilex.open(outputFile.path);
+    await OpenFilex.open(widget.outputFile.path);
+  }
+
+  /// Pop the result screen, then fire-and-forget interstitial. Standard
+  /// google_mobile_ads pattern: the ad overlays whatever destination the
+  /// pop lands on, so the user gets back to home immediately and the ad
+  /// shows over it. Pro users + cooldown'd users get no-op silently.
+  void _closeWithAd() {
+    Navigator.of(context).pop();
+    unawaited(AdsService.instance.maybeShowInterstitial());
   }
 
   @override
   Widget build(BuildContext context) {
-    final size = outputFile.statSync().size;
+    final size = widget.outputFile.statSync().size;
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.close),
-          onPressed: () => Navigator.of(context).pop(),
+          tooltip: 'Close',
+          onPressed: _closeWithAd,
         ),
         title: const Text('Done'),
       ),
@@ -86,9 +133,9 @@ class MergeResultScreen extends StatelessWidget {
               const SizedBox(height: 4),
               Center(
                 child: Text(
-                  pageCount != null
-                      ? '$pageCount pages · ${formatBytes(size)}'
-                      : '$sourceCount PDFs combined · ${formatBytes(size)}',
+                  widget.pageCount != null
+                      ? '${widget.pageCount} pages · ${formatBytes(size)}'
+                      : '${widget.sourceCount} PDFs combined · ${formatBytes(size)}',
                   style: const TextStyle(
                     color: AppColors.textSecondary,
                   ),
@@ -118,7 +165,7 @@ class MergeResultScreen extends StatelessWidget {
               ),
               const SizedBox(height: 10),
               TextButton(
-                onPressed: () => Navigator.of(context).pop(),
+                onPressed: _closeWithAd,
                 child: const Text('Done'),
               ),
             ],

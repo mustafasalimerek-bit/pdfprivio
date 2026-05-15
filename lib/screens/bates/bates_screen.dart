@@ -113,6 +113,7 @@ class _BatesScreenState extends ConsumerState<BatesScreen> {
           MaterialPageRoute(
             builder: (_) => MergeResultScreen(
               outputFile: value,
+              toolLabel: 'Bates',
               sourceCount: 1,
               pageCount: doc.pageCount,
             ),

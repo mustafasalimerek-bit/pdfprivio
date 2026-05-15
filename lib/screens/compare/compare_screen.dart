@@ -12,6 +12,8 @@ import '../../data/models/pdf_document.dart';
 import '../../data/services/haptics_service.dart';
 import '../../data/services/pdf_compare_service.dart';
 import '../../data/services/pdf_metadata_service.dart';
+import '../../data/services/usage_limits_service.dart';
+import '../../widgets/disclaimer_banner.dart';
 import '../../widgets/privacy_badge.dart';
 import '../../widgets/progress_overlay.dart';
 import 'compare_result_screen.dart';
@@ -101,6 +103,7 @@ class _CompareScreenState extends ConsumerState<CompareScreen> {
     switch (result) {
       case Ok(:final value):
         HapticsService.instance.success();
+        UsageLimitsService.instance.recordUse('compare');
         await Navigator.of(context).push(
           MaterialPageRoute(
             builder: (_) => CompareResultScreen(
@@ -174,6 +177,14 @@ class _CompareScreenState extends ConsumerState<CompareScreen> {
                   child: ListView(
                     padding: const EdgeInsets.fromLTRB(16, 4, 16, 4),
                     children: [
+                      const DisclaimerBanner(
+                        message: 'Compares text content only. Image '
+                            'differences, visual layout changes, font '
+                            "swaps, and annotations aren't detected. "
+                            'Use as a starting point — verify visually '
+                            'for decisions that depend on appearance.',
+                      ),
+                      const SizedBox(height: 12),
                       _Slot(
                         label: 'Left (original)',
                         doc: _left,
@@ -353,6 +364,7 @@ class _Slot extends StatelessWidget {
                   ),
                   IconButton(
                     icon: const Icon(Icons.close, size: 18),
+                    tooltip: 'Clear',
                     color: AppColors.textSecondary,
                     onPressed: onClear,
                   ),

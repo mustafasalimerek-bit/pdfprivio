@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:open_filex/open_filex.dart';
@@ -5,12 +7,23 @@ import 'package:share_plus/share_plus.dart';
 
 import '../../core/theme/colors.dart';
 import '../../core/utils/format_bytes.dart';
+import '../../data/services/ads_service.dart';
 import '../../data/services/haptics_service.dart';
+import '../../data/services/recent_files_service.dart';
+import '../../data/services/usage_limits_service.dart';
 import '../../providers/compress_providers.dart';
 import '../../widgets/privacy_badge.dart';
 
-class CompressResultScreen extends ConsumerWidget {
+class CompressResultScreen extends ConsumerStatefulWidget {
   const CompressResultScreen({super.key});
+
+  @override
+  ConsumerState<CompressResultScreen> createState() =>
+      _CompressResultScreenState();
+}
+
+class _CompressResultScreenState extends ConsumerState<CompressResultScreen> {
+  bool _recorded = false;
 
   Future<void> _share(BuildContext context, String path) async {
     HapticsService.instance.tap();
@@ -32,8 +45,17 @@ class CompressResultScreen extends ConsumerWidget {
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final outcome = ref.watch(compressOutcomeProvider);
+    if (outcome != null && !_recorded) {
+      _recorded = true;
+      // Fire-and-forget — best-effort surfacing on the home carousel.
+      RecentFilesService.instance.record(
+        file: outcome.compressed,
+        toolLabel: 'Compressed',
+      );
+      UsageLimitsService.instance.recordUse('compress');
+    }
     if (outcome == null) {
       // Defensive fallback — shouldn't happen because we set the provider
       // immediately before pushing this route, but bail gracefully if it does.
@@ -51,7 +73,11 @@ class CompressResultScreen extends ConsumerWidget {
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.close),
-          onPressed: () => Navigator.of(context).pop(),
+          tooltip: 'Close',
+          onPressed: () {
+            Navigator.of(context).pop();
+            unawaited(AdsService.instance.maybeShowInterstitial());
+          },
         ),
         title: const Text('Done'),
       ),
@@ -125,7 +151,10 @@ class CompressResultScreen extends ConsumerWidget {
               ),
               const SizedBox(height: 10),
               TextButton(
-                onPressed: () => Navigator.of(context).pop(),
+                onPressed: () {
+            Navigator.of(context).pop();
+            unawaited(AdsService.instance.maybeShowInterstitial());
+          },
                 child: const Text('Done'),
               ),
             ],
