@@ -60,21 +60,15 @@ entirely on your iPhone. No cloud uploads, no subscription, no account.
 ## Description (max 4000 chars)
 
 ```
-PDFPrivio is the offline PDF toolkit for lawyers, accountants, real estate
-professionals, and anyone who handles documents that should not be
-uploaded to a stranger's server.
+PDFPrivio is the offline PDF toolkit for lawyers, accountants, real estate professionals, and anyone who handles documents that should not be uploaded to a stranger's server.
 
-Every operation — scan, OCR, redact, sign, compress, merge, split —
-runs locally on your iPhone. Your PDFs never leave this device.
-The network panel shows zero bytes for your files.
+Every operation — scan, OCR, redact, sign, compress, merge, split — runs locally on your iPhone. Your PDFs never leave this device. The network panel shows zero bytes for your files.
 
-THE 18 TOOLS (all free)
+THE 18 TOOLS
 
 Document intake
-• Scan to PDF — Apple VisionKit edge detection, perspective correction,
-  multi-page capture
-• OCR PDF — Apple Vision recognizes text on scanned PDFs and adds a
-  searchable text layer (English + Turkish; more languages coming)
+• Scan to PDF — Apple VisionKit edge detection, multi-page capture
+• OCR PDF — Apple Vision recognizes text on scanned PDFs and adds a searchable text layer
 • Image to PDF — photos, receipts, screenshots into one PDF
 • Merge PDFs — combine document-level or hand-pick pages
 • Compress PDF — shrink for email without visible quality loss
@@ -83,48 +77,40 @@ Document intake
 Editing
 • Rotate pages — fix sideways scans
 • Delete pages — drop what you don't need
-• Sign PDF — finger or stylus signature with ESIGN-style SHA-256 audit
-  footer
-• Fill form — IRS, USCIS, court motion AcroForm fields with
-  flatten-on-save so recipients can't edit your answers
+• Sign PDF — finger or stylus signature with SHA-256 audit footer
+• Fill form (Pro) — IRS, USCIS, court motion forms with flatten-on-save
 • Page numbers — four formats, five positions, custom start
-• Bates numbering — legal discovery standard (prefix + padded number)
+• Bates numbering (Pro) — legal discovery standard
 • Password protect — AES-256 encrypt or unlock
 
 Review
 • Watermark — CONFIDENTIAL, DRAFT, custom text in three layouts
 • Extract text — pull clean text out of any born-digital PDF
 • Compare PDFs — redline two versions, added and removed text
-  highlighted per page
-• Find sensitive data — auto-detect SSN, EIN, credit cards (Luhn
-  validated), IBANs, TC Kimlik No, emails, phone numbers
-• Redact — search words, render-and-flatten removes them from the data
-  stream, optional OCR-back keeps non-redacted text searchable
+• Find sensitive data — auto-detect SSN, EIN, credit cards (Luhn validated), IBANs, emails, phone numbers
+• Redact (Pro) — search words, render-and-flatten removes them from the data stream
+
+HOME SCREEN WIDGET
+
+Pin your three most recent PDFs to your Home Screen — file name, tool used (Signed, Merged, Redacted), and time. Small and Medium widget sizes. Updates automatically every time you finish work in PDFPrivio.
 
 PRIVACY POSITIONING
 
-Other PDF apps upload your file to "process" it in the cloud — meaning
-their staff, their server logs, and their attackers could all see your
-documents. PDFPrivio was built so the lawyer-client privilege, the
-accountant-client confidentiality, and your personal data stay where
-they belong: on your phone.
+Other PDF apps upload your file to "process" it in the cloud — meaning their staff, their server logs, and their attackers could all see your documents. PDFPrivio was built so the lawyer-client privilege, the accountant-client confidentiality, and your personal data stay where they belong: on your phone.
 
-We use Apple Vision for OCR and Apple's VisionKit for scanning. Both
-run on the Neural Engine inside your iPhone. No model downloads, no
-remote calls.
+We use Apple Vision for OCR and Apple's VisionKit for scanning. Both run on the Neural Engine inside your iPhone. No model downloads, no remote calls.
 
-NO SUBSCRIPTION
+PRICING
 
-Every tool listed above is free, today and forever, with light ads on
-the free tier. A future Pro tier ($29.99 one-time) and Business tier
-($9.99/month) will unlock bulk OCR, multi-cloud sync, AI workflows, and
-priority support — but the 18 core tools stay free.
+Most tools are free with light ads and daily limits. Pro removes the limits, hides ads, and unlocks Fill form, Bates numbering, and Redact:
+
+• Monthly — $4.99
+• Yearly — $39.99 (best value)
+• Lifetime — $79.99 (one-time, no renewal)
 
 MADE BY EREK STUDIO
 
-Built by an independent developer in Istanbul. No VC, no growth team,
-no dark patterns. If a feature is missing or a bug bites you, email
-mustafasalimerek@gmail.com and you'll hear back from a human within a day.
+Built by an independent developer in Istanbul. No VC, no growth team, no dark patterns. If a feature is missing or a bug bites you, email mustafasalimerek@gmail.com and you'll hear back from a human within a day.
 ```
 
 About 2900 chars — leaves headroom for tweaks. Apple counts characters
@@ -199,22 +185,20 @@ For the initial v1.0.0:
 ```
 First release of PDFPrivio.
 
-18 PDF tools built for lawyers, accountants, and anyone who handles
-sensitive documents.
+18 PDF tools built for lawyers, accountants, and anyone who handles sensitive documents.
 
-Everything runs on this device — scan, OCR, redact, sign, fill forms,
-compress, merge, split, compare. Your PDFs never leave your iPhone.
+Everything runs on this device — scan, OCR, redact, sign, fill forms, compress, merge, split, compare. Your PDFs never leave your iPhone.
 
 Highlights:
 • Apple VisionKit document scanner with edge detection
-• Apple Vision OCR (English + Turkish) makes scans searchable
+• Apple Vision OCR makes scanned PDFs searchable
 • Real redaction — text is removed from the PDF, not just covered
 • AcroForm filler with flatten-on-save for IRS, USCIS, court forms
-• PII auto-detect: SSN, EIN, credit cards (Luhn), IBAN, TC Kimlik
-• Recent files workspace — pick up yesterday's work in one tap
+• PII auto-detect: SSN, EIN, credit cards, IBAN, email, phone
+• Home Screen widget — your 3 recent PDFs at a glance (Small + Medium)
 • On-device privacy — verifiable in Settings > Privacy & Security
 
-Free forever. No subscription required.
+15 tools free with daily limits. Pro unlocks unlimited access plus Fill form, Bates, Redact.
 ```
 
 700 chars. Easy to update for each release.
