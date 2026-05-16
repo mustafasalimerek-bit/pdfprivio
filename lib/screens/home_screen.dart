@@ -15,6 +15,7 @@ import 'delete_pages/delete_pages_screen.dart';
 import 'bookmarks/bookmarks_screen.dart';
 import 'extract_text/extract_text_screen.dart';
 import 'form_fill/form_fill_screen.dart';
+import 'summarize/summarize_screen.dart';
 import 'image_to_pdf/image_to_pdf_screen.dart';
 import 'merge/merge_screen.dart';
 import 'ocr_pdf/ocr_pdf_screen.dart';
@@ -171,6 +172,13 @@ class HomeScreen extends ConsumerWidget {
               subtitle: 'Jump to a chapter in one tap — long briefs, depositions',
               toolId: 'bookmarks',
               builder: (_) => const BookmarksScreen(),
+            ),
+            _ToolTile(
+              icon: Icons.auto_awesome,
+              title: 'Summarize PDF',
+              subtitle: 'On-device Apple Intelligence summary — never uploaded',
+              toolId: 'summarize',
+              builder: (_) => const SummarizeScreen(),
             ),
             _ToolTile(
               icon: Icons.shield_outlined,

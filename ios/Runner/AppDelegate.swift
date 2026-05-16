@@ -26,6 +26,9 @@ import UIKit
     if let registrar = engineBridge.pluginRegistry.registrar(forPlugin: "ShareExtensionBridge") {
       ShareExtensionBridge.register(with: registrar)
     }
+    if let registrar = engineBridge.pluginRegistry.registrar(forPlugin: "SummarizationBridge") {
+      SummarizationBridge.register(with: registrar)
+    }
   }
 
   override func application(
