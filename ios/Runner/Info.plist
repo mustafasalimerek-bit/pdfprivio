@@ -55,8 +55,14 @@
 				</array>
 			</dict>
 		</array>
-		<!-- URL scheme used by the Share Extension to wake the main app
-		     back up after iOS hands a shared item off to us. -->
+		<!-- URL schemes used to wake the host app from extensions:
+		     * ShareMedia-com.erekstudio.pdfprivio — receive_sharing_intent's
+		       legacy hook (kept so the CFBundleDocumentTypes path keeps
+		       working for "Copy to PDFPrivio").
+		     * pdfprivio — our custom PDFPrivioShare Share Extension fires
+		       this after dropping a file in App Group/SharedExtensionDrop,
+		       and our AppDelegate routes it to ShareExtensionBridge so
+		       the Flutter side can drain the drop folder. -->
 		<key>CFBundleURLTypes</key>
 		<array>
 			<dict>
@@ -65,6 +71,7 @@
 				<key>CFBundleURLSchemes</key>
 				<array>
 					<string>ShareMedia-com.erekstudio.pdfprivio</string>
+					<string>pdfprivio</string>
 				</array>
 			</dict>
 		</array>

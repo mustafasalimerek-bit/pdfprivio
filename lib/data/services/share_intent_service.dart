@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 import 'package:receive_sharing_intent/receive_sharing_intent.dart';
@@ -23,6 +24,9 @@ import 'package:receive_sharing_intent/receive_sharing_intent.dart';
 class ShareIntentService {
   ShareIntentService._();
   static final ShareIntentService instance = ShareIntentService._();
+
+  static const MethodChannel _shareExtChannel =
+      MethodChannel('com.erekstudio.pdfprivio/share_extension');
 
   final _controller = StreamController<List<SharedMediaFile>>.broadcast();
   StreamSubscription<List<SharedMediaFile>>? _streamSub;
@@ -67,6 +71,72 @@ class ShareIntentService {
         }
       },
     );
+
+    // Also drain whatever our custom PDFPrivioShare extension dropped
+    // before launch (Share-Sheet cold-launch path).
+    await drainExtensionDrop();
+
+    // Listen for the AppDelegate-fired "shareExtensionPending" pings
+    // — these fire when the user shares while the app is already
+    // running so we don't have to wait for the next AppLifecycle
+    // resume tick.
+    _shareExtChannel.setMethodCallHandler((call) async {
+      if (call.method == 'shareExtensionPending') {
+        await drainExtensionDrop();
+      }
+    });
+  }
+
+  /// Move every file the PDFPrivioShare Share Extension dumped into
+  /// the App Group's SharedExtensionDrop folder into our own
+  /// Documents/Inbox, then emit them on [intents] so the action sheet
+  /// gets the same treatment as a CFBundleDocumentTypes-routed file.
+  /// Called by RootScaffold on every AppLifecycleState.resumed plus
+  /// once during init().
+  Future<void> drainExtensionDrop() async {
+    if (!Platform.isIOS) return;
+    try {
+      final paths = await _shareExtChannel.invokeListMethod<String>('drain');
+      if (paths == null || paths.isEmpty) return;
+
+      final imported = <SharedMediaFile>[];
+      final docs = await getApplicationDocumentsDirectory();
+      final inbox = Directory(p.join(docs.path, 'Inbox'));
+      if (!await inbox.exists()) {
+        await inbox.create(recursive: true);
+      }
+
+      for (final path in paths) {
+        final src = File(path);
+        if (!await src.exists()) continue;
+        final dest = File(p.join(inbox.path, p.basename(src.path)));
+        try {
+          await src.copy(dest.path);
+          await src.delete(); // drain — don't re-import next time.
+          final type = dest.path.toLowerCase().endsWith('.pdf')
+              ? SharedMediaType.file
+              : SharedMediaType.image;
+          imported.add(SharedMediaFile(path: dest.path, type: type));
+        } catch (e) {
+          if (kDebugMode) {
+            debugPrint('drainExtensionDrop import failed for $path: $e');
+          }
+        }
+      }
+
+      await _shareExtChannel.invokeMethod('clearPendingFlag');
+
+      if (imported.isNotEmpty) {
+        _controller.add(imported);
+      }
+    } on PlatformException catch (e) {
+      if (kDebugMode) {
+        debugPrint('drainExtensionDrop platform error: $e');
+      }
+    } on MissingPluginException {
+      // Bridge not registered yet (very early boot). Will be picked
+      // up on the next resume tick.
+    }
   }
 
   /// Copy the iOS-supplied file path into the app's Documents/Inbox

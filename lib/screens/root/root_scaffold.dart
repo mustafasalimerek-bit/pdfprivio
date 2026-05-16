@@ -70,9 +70,13 @@ class _RootScaffoldState extends ConsumerState<RootScaffold>
   void didChangeAppLifecycleState(AppLifecycleState state) {
     // A Siri / Shortcuts trigger fired while we were backgrounded
     // writes to UserDefaults and brings us back. Re-drain the queue on
-    // every resume so the navigator catches it.
+    // every resume so the navigator catches it. Same logic for the
+    // custom PDFPrivioShare Share Extension — anything it dropped in
+    // the App Group folder while we were away gets imported into
+    // Documents/Inbox and surfaced through the action sheet.
     if (state == AppLifecycleState.resumed) {
       AppIntentService.instance.onResume();
+      ShareIntentService.instance.drainExtensionDrop();
     }
   }
 
