@@ -12,6 +12,7 @@ import 'bates/bates_screen.dart';
 import 'compare/compare_screen.dart';
 import 'compress/compress_screen.dart';
 import 'delete_pages/delete_pages_screen.dart';
+import 'bookmarks/bookmarks_screen.dart';
 import 'extract_text/extract_text_screen.dart';
 import 'form_fill/form_fill_screen.dart';
 import 'image_to_pdf/image_to_pdf_screen.dart';
@@ -163,6 +164,13 @@ class HomeScreen extends ConsumerWidget {
               subtitle: 'Redline two versions — added & removed text',
               toolId: 'compare',
               builder: (_) => const CompareScreen(),
+            ),
+            _ToolTile(
+              icon: Icons.menu_book_outlined,
+              title: 'Bookmarks / TOC',
+              subtitle: 'Jump to a chapter in one tap — long briefs, depositions',
+              toolId: 'bookmarks',
+              builder: (_) => const BookmarksScreen(),
             ),
             _ToolTile(
               icon: Icons.shield_outlined,
