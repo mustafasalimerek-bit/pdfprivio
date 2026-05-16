@@ -12,11 +12,13 @@ import '../../data/models/receipt.dart';
 import '../../data/services/expense_ledger_service.dart';
 import '../../data/services/haptics_service.dart';
 
-/// Browse, edit, and export the on-device expense ledger.
+/// Browse and export the on-device expense ledger.
 ///
-/// One row per receipt, newest first. Tap → view receipt source + raw
-/// OCR + editable fields. Long-press a row for delete. Toolbar export
-/// dumps every receipt to a QuickBooks-friendly CSV via Share Sheet.
+/// One row per receipt, newest first. Long-press a row for delete.
+/// Toolbar export dumps every receipt to a QuickBooks-friendly CSV
+/// via the Share Sheet. v1.0 doesn't support tap-to-edit yet — to
+/// fix a wrong field, delete the row and re-scan; v1.1 adds an
+/// inline editor.
 class ExpenseLedgerScreen extends ConsumerStatefulWidget {
   const ExpenseLedgerScreen({super.key});
 
