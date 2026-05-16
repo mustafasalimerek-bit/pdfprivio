@@ -665,9 +665,9 @@ class _RedactResultScreen extends StatelessWidget {
                 const SizedBox(height: 14),
                 const DisclaimerBanner(
                   message: 'Before sharing externally: open the output '
-                      "in a different viewer (e.g. Preview, Adobe) and "
-                      'check no PII bleeds through embedded objects, '
-                      'attachments, or metadata.',
+                      'in a different PDF viewer and check no PII '
+                      'bleeds through embedded objects, attachments, '
+                      'or metadata.',
                 ),
               ],
               const Spacer(),

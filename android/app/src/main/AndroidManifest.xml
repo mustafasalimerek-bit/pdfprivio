@@ -31,10 +31,11 @@
             android:name="flutterEmbedding"
             android:value="2" />
         <!-- Real PDFPrivio Android AdMob App ID (publisher pub-7294127185571156).
-             Registered 2026-05-15. Unit IDs in lib/core/ads/ad_unit_ids.dart. -->
+             Registered 2026-05-16 for package com.erekstudio.pdfprivio.
+             Unit IDs in lib/core/ads/ad_unit_ids.dart. -->
         <meta-data
             android:name="com.google.android.gms.ads.APPLICATION_ID"
-            android:value="ca-app-pub-7294127185571156~9501360776" />
+            android:value="ca-app-pub-7294127185571156~9550975009" />
     </application>
     <!-- Required to query activities that can process text, see:
          https://developer.android.com/training/package-visibility and

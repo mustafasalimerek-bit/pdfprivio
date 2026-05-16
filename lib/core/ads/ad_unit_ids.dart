@@ -10,15 +10,8 @@ import 'package:flutter/foundation.dart';
 /// In `kDebugMode` we always return Google's published sandbox IDs so
 /// development clicks are safe. In release builds we return the real
 /// PDFPrivio unit IDs from the AdMob console (publisher
-/// `pub-7294127185571156`).
-///
-/// ⚠️ STALE WARNING (2026-05-16, rebrand to PDFPrivio):
-/// The six "real" unit IDs below were issued to the OLD `com.erekstudio.pdfwork`
-/// bundle. After the trademark-driven rename to `com.erekstudio.pdfprivio`,
-/// new AdMob app entries must be registered (Chrome session) and these six
-/// constants replaced with the new unit IDs before any release build ships.
-/// In debug builds the Google test IDs are used so nothing breaks during
-/// development; release builds with these stale IDs will get no-fill.
+/// `pub-7294127185571156`, bundle `com.erekstudio.pdfprivio`,
+/// registered 2026-05-16).
 class AdUnitIds {
   AdUnitIds._();
 
@@ -50,14 +43,13 @@ class AdUnitIds {
   static const _testInterstitial = 'ca-app-pub-3940256099942544/4411468910';
   static const _testRewarded = 'ca-app-pub-3940256099942544/1712485313';
 
-  // ---- Real units (release) — ⚠️ STALE, bound to old pdfwork bundle ----
-  // Replace with new PDFPrivio unit IDs after AdMob console reset.
+  // ---- Real units (release) — PDFPrivio bundle, AdMob 2026-05-16 ----
 
-  static const _iosBanner = 'ca-app-pub-7294127185571156/9557430009';
-  static const _iosInterstitial = 'ca-app-pub-7294127185571156/8244348331';
-  static const _iosRewarded = 'ca-app-pub-7294127185571156/9152052582';
+  static const _iosBanner = 'ca-app-pub-7294127185571156/4229154111';
+  static const _iosInterstitial = 'ca-app-pub-7294127185571156/2916072443';
+  static const _iosRewarded = 'ca-app-pub-7294127185571156/8878845562';
 
-  static const _androidBanner = 'ca-app-pub-7294127185571156/5753916366';
-  static const _androidInterstitial = 'ca-app-pub-7294127185571156/1311879566';
-  static const _androidRewarded = 'ca-app-pub-7294127185571156/8497446468';
+  static const _androidBanner = 'ca-app-pub-7294127185571156/1038060163';
+  static const _androidInterstitial = 'ca-app-pub-7294127185571156/9784962038';
+  static const _androidRewarded = 'ca-app-pub-7294127185571156/3271295669';
 }

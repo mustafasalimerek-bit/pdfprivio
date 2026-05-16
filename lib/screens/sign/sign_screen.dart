@@ -382,7 +382,8 @@ class _SignSetup extends StatelessWidget {
               "audit footer, but it isn't a certified e-signature "
               'service. Legal binding depends on jurisdiction, the '
               'transaction type, and recipient acceptance. For '
-              'high-stakes contracts, also use a service like DocuSign.',
+              'high-stakes contracts, also use a certified '
+              'e-signature service.',
         ),
         const SizedBox(height: 8),
       ],

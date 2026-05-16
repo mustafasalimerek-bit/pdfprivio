@@ -101,7 +101,7 @@ class SamplePdfService {
             _row('Date of birth', 'DOB: 04/11/1981'),
             _row('Social Security Number', '555-55-5555'),
             _row('Employer Tax ID', '12-3456789'),
-            _row('TC Kimlik No (TR ref)', '10000000146'),
+            _row('Driver license', 'CA D1234567'),
             _row('Primary card on file',
                 'Visa ending  4242 4242 4242 4242'),
             _row('Linked IBAN',

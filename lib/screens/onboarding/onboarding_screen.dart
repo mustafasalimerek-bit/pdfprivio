@@ -29,7 +29,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       icon: Icons.picture_as_pdf,
       title: 'Welcome to PDFPrivio',
       lead: 'The PDF toolkit lawyers, CPAs, and pros pick when '
-          'Adobe Acrobat feels like overkill.',
+          'a heavy desktop suite feels like overkill.',
       body: '18 tools in one app — scan paper, OCR scans, sign '
           'contracts, redact sensitive data, fill IRS / USCIS forms, '
           'compare versions, and more. No subscription.',

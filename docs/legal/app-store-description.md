@@ -146,10 +146,12 @@ pdf,scanner,ocr,redact,esign,sign,form,fill,merge,split,compress,bates,watermark
 Alternative, prosumer-tilted:
 
 ```
-pdf,scanner,ocr,redact,sign,merge,split,compress,form,fillable,bates,watermark,acrobat,tools,editor
+pdf,scanner,ocr,redact,sign,merge,split,compress,form,fillable,bates,watermark,tools,editor
 ```
 
-99 chars.
+90 chars. (Originally included "acrobat" — removed; Apple guideline 4.7
+/ 5.6 prohibit competitor trademarks as keywords and Adobe could file
+a DMCA-style complaint. Brand-free keywords are safe.)
 
 Recommendation: lawyer-tilted at launch. If Reddit /r/LawFirm post lands
 and we get any organic search ranking, swap broader prosumer keywords

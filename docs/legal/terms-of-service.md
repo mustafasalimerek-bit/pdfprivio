@@ -59,7 +59,7 @@ PDFPrivio is a **tool**, not a service that gives legal, medical, accounting, or
 In particular:
 
 - Our PII Scan tool uses pattern matching plus heuristics to flag likely sensitive data. It is helpful but not perfect — it can miss things and it can flag false positives. **Always review redactions and PII findings by eye before sharing a sensitive document.** We are not liable if a leak occurs because the auto-scan missed something.
-- Our Sign + ESIGN audit trail feature is designed to support legitimate electronic signatures. We do not provide certified e-signature service (we are not DocuSign / Adobe Sign). Whether a PDFPrivio-signed document is legally binding depends on your jurisdiction and the specific use; consult a licensed attorney if it matters.
+- Our Sign + ESIGN audit trail feature is designed to support legitimate electronic signatures. We do not provide a certified e-signature service. Whether a PDFPrivio-signed document is legally binding depends on your jurisdiction and the specific use; consult a licensed attorney if it matters.
 - Our redaction tool truly removes the matched text from the affected pages (text layer flattened, image-burned black bars). However: documents have many surfaces — embedded objects, attachments, metadata, prior versions, comments. Before sending a sensitive document externally, you should verify the redacted PDF in a separate viewer.
 - Templates we may bundle (court forms, tax forms, immigration forms) are provided as-is for convenience. Forms change. Verify the latest version on the issuing agency's website before filing.
 
