@@ -15,6 +15,7 @@ import 'delete_pages/delete_pages_screen.dart';
 import 'bookmarks/bookmarks_screen.dart';
 import 'extract_text/extract_text_screen.dart';
 import 'form_fill/form_fill_screen.dart';
+import 'quick_look/quick_look_launcher_screen.dart';
 import 'summarize/summarize_screen.dart';
 import 'image_to_pdf/image_to_pdf_screen.dart';
 import 'merge/merge_screen.dart';
@@ -179,6 +180,13 @@ class HomeScreen extends ConsumerWidget {
               subtitle: 'On-device Apple Intelligence summary — never uploaded',
               toolId: 'summarize',
               builder: (_) => const SummarizeScreen(),
+            ),
+            _ToolTile(
+              icon: Icons.center_focus_strong_outlined,
+              title: 'Live Text view',
+              subtitle: 'Select text from any PDF page — Apple Live Text + Markup',
+              toolId: 'quick_look',
+              builder: (_) => const QuickLookLauncherScreen(),
             ),
             _ToolTile(
               icon: Icons.shield_outlined,

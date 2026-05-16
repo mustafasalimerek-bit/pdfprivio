@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		065EAC6E85B217E209C8D6E8 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B1F2D1347F6D9A0C9B22EB0D /* Foundation.framework */; };
+		07A735C0BE553ABA904CE473 /* QuickLookBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0F34CE5DBE01FFA5D9C64856 /* QuickLookBridge.swift */; };
 		0D5B11DF8D2766D5F1BF55CD /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B1F2D1347F6D9A0C9B22EB0D /* Foundation.framework */; };
 		1498D2341E8E89220040F4C2 /* GeneratedPluginRegistrant.m in Sources */ = {isa = PBXBuildFile; fileRef = 1498D2331E8E89220040F4C2 /* GeneratedPluginRegistrant.m */; };
 		1CCE61B02DB900151F1C3082 /* ShareViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = BC68728586275ED67B205A85 /* ShareViewController.swift */; };
@@ -109,6 +110,7 @@
 /* Begin PBXFileReference section */
 		03ACA07F089216D71E5BF264 /* PDFPrivioWidget.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = PDFPrivioWidget.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		0C15AD83CEFD78125A03CB20 /* Runner.entitlements */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.entitlements; path = Runner.entitlements; sourceTree = "<group>"; };
+		0F34CE5DBE01FFA5D9C64856 /* QuickLookBridge.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = QuickLookBridge.swift; sourceTree = "<group>"; };
 		0F8E6D68721540A45DC894A9 /* Info.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		1380EA98C6177F2384B6CA4B /* Pods-RunnerTests.profile.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-RunnerTests.profile.xcconfig"; path = "Target Support Files/Pods-RunnerTests/Pods-RunnerTests.profile.xcconfig"; sourceTree = "<group>"; };
 		1498D2321E8E86230040F4C2 /* GeneratedPluginRegistrant.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = GeneratedPluginRegistrant.h; sourceTree = "<group>"; };
@@ -380,6 +382,7 @@
 				FE7DEE8781C4F58926E8CABA /* PrivacyInfo.xcprivacy */,
 				546EB9C2C7A3038103488EA7 /* AppIntents */,
 				AF966FE0CE812DB5C54C58F5 /* SummarizationBridge.swift */,
+				0F34CE5DBE01FFA5D9C64856 /* QuickLookBridge.swift */,
 			);
 			path = Runner;
 			sourceTree = "<group>";
@@ -797,6 +800,7 @@
 				7272D4C44AAD5B28389A507B /* Intents.swift in Sources */,
 				D48B38459BCF756D948F6376 /* PDFPrivioAppShortcuts.swift in Sources */,
 				E0425A08E29CA1656C5190A8 /* SummarizationBridge.swift in Sources */,
+				07A735C0BE553ABA904CE473 /* QuickLookBridge.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
