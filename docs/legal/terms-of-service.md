@@ -25,11 +25,11 @@ We grant you a personal, non-exclusive, revocable, non-transferable license to u
 - Remove or alter copyright notices or trademarks inside the app.
 - Use PDFPrivio in any way that violates applicable law.
 
-The license is granted under the Apple App Store EULA (iOS) or Google Play Terms (Android), with these terms layered on top where the App Store / Play terms are silent.
+The license is granted under the Apple App Store EULA, with these terms layered on top where the App Store terms are silent.
 
 ## 3. Paid features (Pro / Business)
 
-Some features in PDFPrivio are gated behind paid tiers (Pro Lifetime, Business subscription). Pricing and feature lists are shown in-app. Purchases are processed by Apple's App Store or Google Play, governed by their billing terms; we are not party to that payment relationship.
+Some features in PDFPrivio are gated behind paid tiers (Pro Monthly, Pro Yearly, Pro Lifetime). Pricing and feature lists are shown in-app. Purchases are processed by Apple's App Store, governed by their billing terms; we are not party to that payment relationship.
 
 **Refunds** are handled by Apple or Google according to their respective policies:
 - Apple: <https://support.apple.com/HT204084>
@@ -110,7 +110,3 @@ Email: mustafasalimerek@gmail.com
 ## Apple App Store note
 
 To the extent these terms conflict with the Apple Media Services Terms or App Store EULA, Apple's terms govern for iOS use.
-
-## Google Play note
-
-To the extent these terms conflict with the Google Play Terms of Service, Google's terms govern for Android use.

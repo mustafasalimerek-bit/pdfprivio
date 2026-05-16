@@ -72,11 +72,10 @@ Google AdMob's privacy practices are described at <https://policies.google.com/t
 
 Pro / Business tier users see no ads and we don't share any identifier with AdMob.
 
-### 2.4 In-app purchases (Apple / Google)
+### 2.4 In-app purchases (Apple)
 
-If you upgrade to Pro or Business, the transaction is processed entirely by Apple's App Store or Google Play. PDFPrivio receives a receipt validation token from Apple/Google so it can unlock features locally; we don't see your payment method, credit card, or address. Apple's and Google's privacy policies cover that data:
+If you upgrade to Pro, the transaction is processed entirely by Apple's App Store. PDFPrivio receives a receipt validation token from Apple so it can unlock features locally; we don't see your payment method, credit card, or address. Apple's privacy policy covers that data:
 - Apple: <https://www.apple.com/legal/privacy/>
-- Google: <https://policies.google.com/privacy>
 
 ---
 
