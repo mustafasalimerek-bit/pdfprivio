@@ -59,8 +59,19 @@ class HomeScreen extends ConsumerWidget {
                   : w >= Breakpoints.iPadCompact
                       ? 5
                       : 4;
+              // Recent cards align with the grid columns: same width,
+              // same inter-card spacing, so column edges line up
+              // vertically with the All-tools grid below.
+              const horizontalPadding = 16.0;
+              const gridSpacing = 12.0;
+              final available =
+                  (w - horizontalPadding * 2).clamp(0, double.infinity);
+              final gridColumnWidth = (available -
+                      gridSpacing * (gridColumns - 1)) /
+                  gridColumns;
               return ListView(
-                padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+                padding: const EdgeInsets.fromLTRB(
+                    horizontalPadding, 8, horizontalPadding, 24),
                 children: [
                   const _HomeHeader(),
                   const SizedBox(height: 14),
@@ -68,7 +79,10 @@ class HomeScreen extends ConsumerWidget {
                   const SizedBox(height: 14),
                   _HeroScanCard(onTap: () => _openScan(context)),
                   const SizedBox(height: 18),
-                  const RecentFilesCarousel(),
+                  RecentFilesCarousel(
+                    cardWidth: gridColumnWidth,
+                    cardSpacing: gridSpacing,
+                  ),
                   const _SectionLabel('All tools'),
                   const SizedBox(height: 10),
                   _HeroToolGrid(
@@ -636,12 +650,15 @@ class _MoreTile extends StatelessWidget {
               width: 64,
               height: 64,
               decoration: BoxDecoration(
-                color: AppColors.textSecondary.withValues(alpha: 0.10),
+                // Same iconTint as every other grid cell so More
+                // sits in the same visual family — earlier muted
+                // grey made it read as "different / leftover".
+                color: AppColors.iconTint,
                 borderRadius: BorderRadius.circular(18),
               ),
               child: const Icon(
                 Icons.more_horiz,
-                color: AppColors.textSecondary,
+                color: AppColors.primary,
                 size: 28,
               ),
             ),

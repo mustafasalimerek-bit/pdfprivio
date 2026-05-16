@@ -15,7 +15,18 @@ import '../data/services/recent_files_service.dart';
 /// fresh save lands at the front of the carousel without the home
 /// screen having to pull-to-refresh.
 class RecentFilesCarousel extends StatefulWidget {
-  const RecentFilesCarousel({super.key});
+  /// Optional explicit card width. When the carousel sits above the
+  /// home's 4×2 All-tools grid the caller passes the grid column
+  /// width here so the recent cards align with the grid columns
+  /// (no jaggy edge). Default 102 stays for any standalone use.
+  final double cardWidth;
+  final double cardSpacing;
+
+  const RecentFilesCarousel({
+    super.key,
+    this.cardWidth = 102,
+    this.cardSpacing = 10,
+  });
 
   @override
   State<RecentFilesCarousel> createState() => _RecentFilesCarouselState();
@@ -168,15 +179,21 @@ class _RecentFilesCarouselState extends State<RecentFilesCarousel> {
         SizedBox(
           height: 116,
           child: isEmpty
-              ? _PlaceholderRow(onScan: () => _routeToScan(context))
+              ? _PlaceholderRow(
+                  onScan: () => _routeToScan(context),
+                  cardWidth: widget.cardWidth,
+                  cardSpacing: widget.cardSpacing,
+                )
               : ListView.separated(
                   scrollDirection: Axis.horizontal,
                   itemCount: _files.length,
-                  separatorBuilder: (_, _) => const SizedBox(width: 10),
+                  separatorBuilder: (_, _) =>
+                      SizedBox(width: widget.cardSpacing),
                   itemBuilder: (context, i) {
                     final f = _files[i];
                     return _RecentCard(
                       file: f,
+                      width: widget.cardWidth,
                       onTap: () => _open(f),
                       onLongPress: () => _showActions(context, f),
                     );
@@ -206,7 +223,13 @@ class _RecentFilesCarouselState extends State<RecentFilesCarousel> {
 /// user understands what kind of thing will land here.
 class _PlaceholderRow extends StatelessWidget {
   final VoidCallback onScan;
-  const _PlaceholderRow({required this.onScan});
+  final double cardWidth;
+  final double cardSpacing;
+  const _PlaceholderRow({
+    required this.onScan,
+    required this.cardWidth,
+    required this.cardSpacing,
+  });
 
   static const _slots = <(IconData, String)>[
     (Icons.document_scanner_outlined, 'Scan'),
@@ -219,19 +242,19 @@ class _PlaceholderRow extends StatelessWidget {
     return ListView.separated(
       scrollDirection: Axis.horizontal,
       itemCount: _slots.length,
-      separatorBuilder: (_, _) => const SizedBox(width: 10),
+      separatorBuilder: (_, _) => SizedBox(width: cardSpacing),
       itemBuilder: (context, i) {
         final (icon, label) = _slots[i];
         return InkWell(
           onTap: onScan,
           borderRadius: BorderRadius.circular(14),
           child: SizedBox(
-            width: 102,
+            width: cardWidth,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 Container(
-                  width: 102,
+                  width: cardWidth,
                   height: 64,
                   decoration: BoxDecoration(
                     color: AppColors.border.withValues(alpha: 0.55),
@@ -275,11 +298,13 @@ class _PlaceholderRow extends StatelessWidget {
 
 class _RecentCard extends StatelessWidget {
   final RecentFile file;
+  final double width;
   final VoidCallback onTap;
   final VoidCallback onLongPress;
 
   const _RecentCard({
     required this.file,
+    required this.width,
     required this.onTap,
     required this.onLongPress,
   });
@@ -292,7 +317,7 @@ class _RecentCard extends StatelessWidget {
     // mockup leans on file identity (Lease draft / Receipts Apr)
     // not how-was-it-touched.
     return SizedBox(
-      width: 102,
+      width: width,
       child: InkWell(
         onTap: onTap,
         onLongPress: onLongPress,
@@ -301,7 +326,7 @@ class _RecentCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Container(
-              width: 102,
+              width: width,
               height: 64,
               decoration: BoxDecoration(
                 color: AppColors.iconTint,
