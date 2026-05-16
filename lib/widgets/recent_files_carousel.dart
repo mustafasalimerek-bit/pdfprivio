@@ -228,7 +228,7 @@ class _PlaceholderRow extends StatelessWidget {
           child: SizedBox(
             width: 102,
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 Container(
                   width: 102,
@@ -246,6 +246,7 @@ class _PlaceholderRow extends StatelessWidget {
                 const SizedBox(height: 6),
                 Text(
                   label,
+                  textAlign: TextAlign.center,
                   style: const TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w700,
@@ -256,6 +257,7 @@ class _PlaceholderRow extends StatelessWidget {
                 const SizedBox(height: 2),
                 const Text(
                   'Empty',
+                  textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 10,
                     color: AppColors.textTertiary,
