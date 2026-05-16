@@ -8,7 +8,7 @@ import '../../data/services/onboarding_service.dart';
 
 /// Three-page welcome carousel shown once per install, before the
 /// consent prompts. Sets the tone for the lawyer/CPA wedge: privacy
-/// first, all 18 tools free, made for professionals.
+/// first, 23 tools in one app, made for professionals.
 class OnboardingScreen extends StatefulWidget {
   /// Called after the user dismisses the onboarding (Skip or finish).
   /// Parent typically navigates to the consent flow / home after this.
@@ -30,9 +30,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       title: 'Welcome to PDFPrivio',
       lead: 'The PDF toolkit lawyers, CPAs, and pros pick when '
           'a heavy desktop suite feels like overkill.',
-      body: '18 tools in one app — scan paper, OCR scans, sign '
+      body: '23 tools in one app — scan paper, OCR scans, sign '
           'contracts, redact sensitive data, fill IRS / USCIS forms, '
-          'compare versions, and more. No subscription.',
+          'compare versions, summarise with on-device AI, capture '
+          'receipts to CSV. No subscription required.',
     ),
     _Page(
       icon: Icons.lock_outline,
