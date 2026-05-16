@@ -10,6 +10,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'app.dart';
 import 'data/services/ads_service.dart';
+import 'data/services/app_intent_service.dart';
 import 'data/services/promo_code_service.dart';
 import 'data/services/purchase_service.dart';
 import 'data/services/share_intent_service.dart';
@@ -54,6 +55,10 @@ Future<void> main() async {
     // / our own Share Extension. Cold-launch payload is drained here;
     // hot stream events are picked up by RootScaffold's listener.
     await ShareIntentService.instance.init();
+    // Drain any AppIntent-triggered route ("Hey Siri, sign a PDF with
+    // PDFPrivio"). Cold-launch route comes through on init; warm
+    // resumes re-poll from RootScaffold's lifecycle listener.
+    await AppIntentService.instance.init();
     // AdsService.init() pre-loads the first interstitial and wires the
     // Pro-purchase listener that drops cached ads when users upgrade.
     // Safe to call before consent — internal calls are silent no-ops

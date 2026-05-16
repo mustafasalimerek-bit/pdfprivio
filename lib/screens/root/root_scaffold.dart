@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:receive_sharing_intent/receive_sharing_intent.dart';
 
 import '../../core/theme/colors.dart';
+import '../../data/services/app_intent_service.dart';
 import '../../data/services/haptics_service.dart';
 import '../../data/services/share_intent_service.dart';
 import '../../widgets/banner_ad_widget.dart';
@@ -28,9 +29,11 @@ class RootScaffold extends ConsumerStatefulWidget {
   ConsumerState<RootScaffold> createState() => _RootScaffoldState();
 }
 
-class _RootScaffoldState extends ConsumerState<RootScaffold> {
+class _RootScaffoldState extends ConsumerState<RootScaffold>
+    with WidgetsBindingObserver {
   int _index = 0;
   StreamSubscription<List<SharedMediaFile>>? _shareSub;
+  StreamSubscription<String>? _intentSub;
 
   static const _tabs = <Widget>[
     HomeScreen(),
@@ -42,6 +45,7 @@ class _RootScaffoldState extends ConsumerState<RootScaffold> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     // Defer until the widget has a real context — using the
     // post-frame callback also catches the cold-launch share payload
     // that ShareIntentService.init() emits during app boot.
@@ -50,13 +54,48 @@ class _RootScaffoldState extends ConsumerState<RootScaffold> {
         if (!mounted) return;
         SharedFileActionSheet.show(context, files);
       });
+      _intentSub = AppIntentService.instance.routes.listen(_handleIntentRoute);
     });
   }
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _shareSub?.cancel();
+    _intentSub?.cancel();
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    // A Siri / Shortcuts trigger fired while we were backgrounded
+    // writes to UserDefaults and brings us back. Re-drain the queue on
+    // every resume so the navigator catches it.
+    if (state == AppLifecycleState.resumed) {
+      AppIntentService.instance.onResume();
+    }
+  }
+
+  void _handleIntentRoute(String route) {
+    if (!mounted) return;
+    HapticsService.instance.select();
+    // "tab:<name>" switches the bottom-nav tab; everything else
+    // is treated as a navigator route.
+    if (route.startsWith('tab:')) {
+      switch (route.substring(4)) {
+        case 'recent':
+          setState(() => _index = 1);
+        case 'pro':
+          setState(() => _index = 2);
+        case 'settings':
+          setState(() => _index = 3);
+        case 'tools':
+        default:
+          setState(() => _index = 0);
+      }
+      return;
+    }
+    Navigator.of(context).pushNamed(route);
   }
 
   void _select(int i) {

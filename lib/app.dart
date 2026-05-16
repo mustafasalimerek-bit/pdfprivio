@@ -8,8 +8,10 @@ import 'screens/image_to_pdf/image_to_pdf_screen.dart';
 import 'screens/merge/merge_screen.dart';
 import 'screens/ocr_pdf/ocr_pdf_screen.dart';
 import 'screens/onboarding/onboarding_screen.dart';
+import 'screens/pii_scan/pii_scan_screen.dart';
 import 'screens/redact/redact_screen.dart';
 import 'screens/root/root_scaffold.dart';
+import 'screens/scan/scan_screen.dart';
 import 'screens/sign/sign_screen.dart';
 
 class PdfPrivioApp extends StatelessWidget {
@@ -22,15 +24,19 @@ class PdfPrivioApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light(),
       home: const _BootGate(),
-      // Routes for the SharedFileActionSheet — when iOS hands us a file
-      // we push one of these by name. The rest of the app pushes its
-      // tool screens with MaterialPageRoute inside HomeScreen.
+      // Routes for the SharedFileActionSheet (inbound files) and the
+      // AppIntents bridge (Siri / Shortcuts triggers). The rest of the
+      // app pushes its tool screens with MaterialPageRoute inside
+      // HomeScreen — the named routes only exist for system-driven
+      // entry points.
       routes: {
         '/tool/sign': (_) => const SignScreen(),
         '/tool/redact': (_) => const RedactScreen(),
         '/tool/merge': (_) => const MergeScreen(),
         '/tool/ocr': (_) => const OcrPdfScreen(),
         '/tool/image_to_pdf': (_) => const ImageToPdfScreen(),
+        '/tool/pii': (_) => const PiiScanScreen(),
+        '/tool/scan': (_) => const ScanScreen(),
       },
     );
   }
