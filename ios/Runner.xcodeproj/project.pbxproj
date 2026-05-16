@@ -15,11 +15,15 @@
 		74858FAF1ED2DC5600515810 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 74858FAE1ED2DC5600515810 /* AppDelegate.swift */; };
 		7884E8682EC3CC0700C636F2 /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7884E8672EC3CC0400C636F2 /* SceneDelegate.swift */; };
 		89F243A6EBEC2BA5626E00FC /* DocumentScannerBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA96D1015543CE2C25FF53C3 /* DocumentScannerBridge.swift */; };
+		8C66174154A5112298E25FED /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = E946B0CC7A149E0AD26D7836 /* Assets.xcassets */; };
 		97C146FC1CF9000F007C117D /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 97C146FA1CF9000F007C117D /* Main.storyboard */; };
 		97C146FE1CF9000F007C117D /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 97C146FD1CF9000F007C117D /* Assets.xcassets */; };
 		97C147011CF9000F007C117D /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 97C146FF1CF9000F007C117D /* LaunchScreen.storyboard */; };
 		99EF5541D6AF9B865D934195 /* TextRecognizerBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = CB99833E405AD436DA30A198 /* TextRecognizerBridge.swift */; };
 		A135694D173C91F6E7BE9806 /* Pods_Runner.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C6E27A9C295B878AE004FD20 /* Pods_Runner.framework */; };
+		AFB88FA51F288E071F8DA659 /* PDFPrivioWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = 46EE2897018D20D7B6CA038A /* PDFPrivioWidget.swift */; };
+		B7D669C8727B33ABBC455CAB /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B1F2D1347F6D9A0C9B22EB0D /* Foundation.framework */; };
+		E6FAD838CB55ACE2646AC35B /* PDFPrivioWidget.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = 03ACA07F089216D71E5BF264 /* PDFPrivioWidget.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -29,6 +33,13 @@
 			proxyType = 1;
 			remoteGlobalIDString = 97C146ED1CF9000F007C117D;
 			remoteInfo = Runner;
+		};
+		3F2FCD2EA31C808DCD76CB45 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 97C146E61CF9000F007C117D /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 3BBF0A45CFEFB14AC17DD471;
+			remoteInfo = PDFPrivioWidget;
 		};
 /* End PBXContainerItemProxy section */
 
@@ -43,15 +54,30 @@
 			name = "Embed Frameworks";
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		AE0EC66EA520E1AD6D6C5B48 /* Embed App Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				E6FAD838CB55ACE2646AC35B /* PDFPrivioWidget.appex in Embed App Extensions */,
+			);
+			name = "Embed App Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		03ACA07F089216D71E5BF264 /* PDFPrivioWidget.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = PDFPrivioWidget.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		0C15AD83CEFD78125A03CB20 /* Runner.entitlements */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.entitlements; path = Runner.entitlements; sourceTree = "<group>"; };
+		0F8E6D68721540A45DC894A9 /* Info.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		1380EA98C6177F2384B6CA4B /* Pods-RunnerTests.profile.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-RunnerTests.profile.xcconfig"; path = "Target Support Files/Pods-RunnerTests/Pods-RunnerTests.profile.xcconfig"; sourceTree = "<group>"; };
 		1498D2321E8E86230040F4C2 /* GeneratedPluginRegistrant.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = GeneratedPluginRegistrant.h; sourceTree = "<group>"; };
 		1498D2331E8E89220040F4C2 /* GeneratedPluginRegistrant.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = GeneratedPluginRegistrant.m; sourceTree = "<group>"; };
 		331C807B294A618700263BE5 /* RunnerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RunnerTests.swift; sourceTree = "<group>"; };
 		331C8081294A63A400263BE5 /* RunnerTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = RunnerTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		3B3967151E833CAA004F5970 /* AppFrameworkInfo.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = AppFrameworkInfo.plist; path = Flutter/AppFrameworkInfo.plist; sourceTree = "<group>"; };
+		46EE2897018D20D7B6CA038A /* PDFPrivioWidget.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = PDFPrivioWidget.swift; sourceTree = "<group>"; };
 		595A85428A8AD49CFAE26D6B /* Pods-Runner.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Runner.release.xcconfig"; path = "Target Support Files/Pods-Runner/Pods-Runner.release.xcconfig"; sourceTree = "<group>"; };
 		65CCABF17F31F5BD0F4F4C8F /* Pods-Runner.profile.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Runner.profile.xcconfig"; path = "Target Support Files/Pods-Runner/Pods-Runner.profile.xcconfig"; sourceTree = "<group>"; };
 		74858FAD1ED2DC5600515810 /* Runner-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "Runner-Bridging-Header.h"; sourceTree = "<group>"; };
@@ -70,9 +96,12 @@
 		97C147021CF9000F007C117D /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		AA96D1015543CE2C25FF53C3 /* DocumentScannerBridge.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = DocumentScannerBridge.swift; sourceTree = "<group>"; };
 		AF002727ECCA4C624FE24D32 /* Pods-Runner.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Runner.debug.xcconfig"; path = "Target Support Files/Pods-Runner/Pods-Runner.debug.xcconfig"; sourceTree = "<group>"; };
+		B1F2D1347F6D9A0C9B22EB0D /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS18.0.sdk/System/Library/Frameworks/Foundation.framework; sourceTree = DEVELOPER_DIR; };
+		C5C284B0E8D540B62950BB28 /* PDFPrivioWidget.entitlements */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.entitlements; path = PDFPrivioWidget.entitlements; sourceTree = "<group>"; };
 		C6E27A9C295B878AE004FD20 /* Pods_Runner.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_Runner.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		CB99833E405AD436DA30A198 /* TextRecognizerBridge.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = TextRecognizerBridge.swift; sourceTree = "<group>"; };
 		DC422804FBD89E2A96F0AF65 /* GoogleService-Info.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
+		E946B0CC7A149E0AD26D7836 /* Assets.xcassets */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -92,6 +121,14 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		C13E10E8F46BA50F592AEAB2 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				B7D669C8727B33ABBC455CAB /* Foundation.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -108,8 +145,17 @@
 			children = (
 				C6E27A9C295B878AE004FD20 /* Pods_Runner.framework */,
 				807DAC76E6C7CDB78B24CD0B /* Pods_RunnerTests.framework */,
+				51BF31E78CA8D01DBF26FB61 /* iOS */,
 			);
 			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		51BF31E78CA8D01DBF26FB61 /* iOS */ = {
+			isa = PBXGroup;
+			children = (
+				B1F2D1347F6D9A0C9B22EB0D /* Foundation.framework */,
+			);
+			name = iOS;
 			sourceTree = "<group>";
 		};
 		52BF6D2FDCF41B774D3E6AAA /* Pods */ = {
@@ -146,6 +192,7 @@
 				331C8082294A63A400263BE5 /* RunnerTests */,
 				52BF6D2FDCF41B774D3E6AAA /* Pods */,
 				3F38667386976CB2EBEC83A5 /* Frameworks */,
+				D633C66B3A532A248C167E89 /* PDFPrivioWidget */,
 			);
 			sourceTree = "<group>";
 		};
@@ -154,6 +201,7 @@
 			children = (
 				97C146EE1CF9000F007C117D /* Runner.app */,
 				331C8081294A63A400263BE5 /* RunnerTests.xctest */,
+				03ACA07F089216D71E5BF264 /* PDFPrivioWidget.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -173,8 +221,21 @@
 				DC422804FBD89E2A96F0AF65 /* GoogleService-Info.plist */,
 				AA96D1015543CE2C25FF53C3 /* DocumentScannerBridge.swift */,
 				CB99833E405AD436DA30A198 /* TextRecognizerBridge.swift */,
+				0C15AD83CEFD78125A03CB20 /* Runner.entitlements */,
 			);
 			path = Runner;
+			sourceTree = "<group>";
+		};
+		D633C66B3A532A248C167E89 /* PDFPrivioWidget */ = {
+			isa = PBXGroup;
+			children = (
+				46EE2897018D20D7B6CA038A /* PDFPrivioWidget.swift */,
+				0F8E6D68721540A45DC894A9 /* Info.plist */,
+				E946B0CC7A149E0AD26D7836 /* Assets.xcassets */,
+				C5C284B0E8D540B62950BB28 /* PDFPrivioWidget.entitlements */,
+			);
+			name = PDFPrivioWidget;
+			path = PDFPrivioWidget;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -199,6 +260,23 @@
 			productReference = 331C8081294A63A400263BE5 /* RunnerTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
 		};
+		3BBF0A45CFEFB14AC17DD471 /* PDFPrivioWidget */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = B66E3ED5937DA7222058A7AA /* Build configuration list for PBXNativeTarget "PDFPrivioWidget" */;
+			buildPhases = (
+				2FEE0BA9015DCF53D5B75AA6 /* Sources */,
+				C13E10E8F46BA50F592AEAB2 /* Frameworks */,
+				30F62E694D4ED72E24AA1F22 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = PDFPrivioWidget;
+			productName = PDFPrivioWidget;
+			productReference = 03ACA07F089216D71E5BF264 /* PDFPrivioWidget.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
 		97C146ED1CF9000F007C117D /* Runner */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 97C147051CF9000F007C117D /* Build configuration list for PBXNativeTarget "Runner" */;
@@ -208,6 +286,7 @@
 				97C146EA1CF9000F007C117D /* Sources */,
 				97C146EB1CF9000F007C117D /* Frameworks */,
 				97C146EC1CF9000F007C117D /* Resources */,
+				AE0EC66EA520E1AD6D6C5B48 /* Embed App Extensions */,
 				9705A1C41CF9048500538489 /* Embed Frameworks */,
 				3B06AD1E1E4923F5004D2608 /* Thin Binary */,
 				BE4251C4AC728CEA5D901EB5 /* [CP] Embed Pods Frameworks */,
@@ -216,6 +295,7 @@
 			buildRules = (
 			);
 			dependencies = (
+				309F3F9F49C797300E6DBD2B /* PBXTargetDependency */,
 			);
 			name = Runner;
 			productName = Runner;
@@ -257,11 +337,20 @@
 			targets = (
 				97C146ED1CF9000F007C117D /* Runner */,
 				331C8080294A63A400263BE5 /* RunnerTests */,
+				3BBF0A45CFEFB14AC17DD471 /* PDFPrivioWidget */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
+		30F62E694D4ED72E24AA1F22 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				8C66174154A5112298E25FED /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		331C807F294A63A400263BE5 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -396,6 +485,14 @@
 /* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
+		2FEE0BA9015DCF53D5B75AA6 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				AFB88FA51F288E071F8DA659 /* PDFPrivioWidget.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		331C807D294A63A400263BE5 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -419,6 +516,12 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
+		309F3F9F49C797300E6DBD2B /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			name = PDFPrivioWidget;
+			target = 3BBF0A45CFEFB14AC17DD471 /* PDFPrivioWidget */;
+			targetProxy = 3F2FCD2EA31C808DCD76CB45 /* PBXContainerItemProxy */;
+		};
 		331C8086294A63A400263BE5 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = 97C146ED1CF9000F007C117D /* Runner */;
@@ -504,6 +607,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_ENTITLEMENTS = Runner/Runner.entitlements;
 				CURRENT_PROJECT_VERSION = "$(FLUTTER_BUILD_NUMBER)";
 				DEVELOPMENT_TEAM = X593LCYK54;
 				ENABLE_BITCODE = NO;
@@ -569,6 +673,95 @@
 				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Runner.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Runner";
 			};
 			name = Profile;
+		};
+		4A9A544D36C046B7E59EDF77 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CLANG_ENABLE_OBJC_WEAK = NO;
+				CODE_SIGN_ENTITLEMENTS = PDFPrivioWidget/PDFPrivioWidget.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 2;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = PDFPrivioWidget/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0.0;
+				MTL_FAST_MATH = YES;
+				PRODUCT_BUNDLE_IDENTIFIER = com.erekstudio.pdfprivio.PDFPrivioWidget;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		5CB427B419CA2A07E9636390 /* Profile */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CLANG_ENABLE_OBJC_WEAK = NO;
+				CODE_SIGN_ENTITLEMENTS = PDFPrivioWidget/PDFPrivioWidget.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 2;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = PDFPrivioWidget/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0.0;
+				MTL_FAST_MATH = YES;
+				PRODUCT_BUNDLE_IDENTIFIER = com.erekstudio.pdfprivio.PDFPrivioWidget;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Profile;
+		};
+		7747F3777F6E9D469C23A298 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CLANG_ENABLE_OBJC_WEAK = NO;
+				CODE_SIGN_ENTITLEMENTS = PDFPrivioWidget/PDFPrivioWidget.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 2;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = PDFPrivioWidget/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0.0;
+				MTL_FAST_MATH = YES;
+				PRODUCT_BUNDLE_IDENTIFIER = com.erekstudio.pdfprivio.PDFPrivioWidget;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
 		};
 		97C147031CF9000F007C117D /* Debug */ = {
 			isa = XCBuildConfiguration;
@@ -687,6 +880,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_ENTITLEMENTS = Runner/Runner.entitlements;
 				CURRENT_PROJECT_VERSION = "$(FLUTTER_BUILD_NUMBER)";
 				DEVELOPMENT_TEAM = X593LCYK54;
 				ENABLE_BITCODE = NO;
@@ -710,6 +904,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_ENTITLEMENTS = Runner/Runner.entitlements;
 				CURRENT_PROJECT_VERSION = "$(FLUTTER_BUILD_NUMBER)";
 				DEVELOPMENT_TEAM = X593LCYK54;
 				ENABLE_BITCODE = NO;
@@ -755,6 +950,16 @@
 				97C147061CF9000F007C117D /* Debug */,
 				97C147071CF9000F007C117D /* Release */,
 				249021D4217E4FDB00AE95B9 /* Profile */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		B66E3ED5937DA7222058A7AA /* Build configuration list for PBXNativeTarget "PDFPrivioWidget" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				7747F3777F6E9D469C23A298 /* Release */,
+				4A9A544D36C046B7E59EDF77 /* Debug */,
+				5CB427B419CA2A07E9636390 /* Profile */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

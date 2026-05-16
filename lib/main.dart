@@ -13,6 +13,7 @@ import 'data/services/ads_service.dart';
 import 'data/services/promo_code_service.dart';
 import 'data/services/purchase_service.dart';
 import 'data/services/usage_limits_service.dart';
+import 'data/services/widget_data_service.dart';
 
 Future<void> main() async {
   await runZonedGuarded<Future<void>>(() async {
@@ -44,6 +45,10 @@ Future<void> main() async {
     await PurchaseService.instance.init();
     await PromoCodeService.instance.init();
     await UsageLimitsService.instance.pruneOldEntries();
+    // Home Screen widget bridge — pushes recent files into the App
+    // Group shared store so the iOS WidgetKit extension can render
+    // them. No-op on Android (widget arrives in v1.1).
+    await WidgetDataService.instance.init();
     // AdsService.init() pre-loads the first interstitial and wires the
     // Pro-purchase listener that drops cached ads when users upgrade.
     // Safe to call before consent — internal calls are silent no-ops

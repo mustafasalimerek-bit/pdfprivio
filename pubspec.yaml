@@ -41,6 +41,10 @@ dependencies:
   # PromoCodeService to persist redemption flag across uninstall on
   # iOS — abuse-resistance for the 14-day promo grant.
   flutter_secure_storage: ^9.2.2
+  # Home Screen Widget bridge — writes recent files into the App
+  # Group shared UserDefaults so the iOS WidgetKit extension can
+  # render them. App Group: group.com.erekstudio.pdfprivio.
+  home_widget: ^0.7.0
 
   # Monetization
   in_app_purchase: ^3.2.0
