@@ -7,7 +7,9 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../core/theme/colors.dart';
 import '../../data/services/consent_service.dart';
 import '../../data/services/haptics_service.dart';
+import '../../data/services/promo_code_service.dart';
 import '../../data/services/purchase_service.dart';
+import '../../widgets/redeem_promo_dialog.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
@@ -18,16 +20,23 @@ class SettingsScreen extends ConsumerStatefulWidget {
 
 class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   PackageInfo? _info;
+  bool _promoUsed = false;
 
   @override
   void initState() {
     super.initState();
     _loadInfo();
+    _loadPromoState();
   }
 
   Future<void> _loadInfo() async {
     final info = await PackageInfo.fromPlatform();
     if (mounted) setState(() => _info = info);
+  }
+
+  Future<void> _loadPromoState() async {
+    final used = await PromoCodeService.instance.hasAnyRedemption();
+    if (mounted) setState(() => _promoUsed = used);
   }
 
   Future<void> _open(String url) async {
@@ -66,6 +75,43 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     );
   }
 
+  Future<void> _openRedeemDialog() async {
+    HapticsService.instance.tap();
+    await RedeemPromoDialog.show(context);
+    await _loadPromoState();
+    if (mounted) setState(() {});
+  }
+
+  Widget _buildPromoTile() {
+    final timeLeft = PromoCodeService.instance.timeLeft;
+    final hasActive = timeLeft != null;
+    final daysLeft = hasActive ? timeLeft.inDays : 0;
+
+    final String title;
+    final String subtitle;
+    if (hasActive) {
+      title = 'Promo active · $daysLeft '
+          '${daysLeft == 1 ? "day" : "days"} left';
+      subtitle = 'Your 14-day Pro promo is running. Drops back to free '
+          'tier when it ends.';
+    } else if (_promoUsed) {
+      title = 'Promo used';
+      subtitle = 'This device has claimed its 14-day Pro promo. '
+          'Upgrade to Pro to unlock everything again.';
+    } else {
+      title = 'Redeem a promo code';
+      subtitle = 'Got a code from a conference or campaign? Tap to '
+          'enter it — 14 days of Pro, no purchase.';
+    }
+
+    return _SettingsTile(
+      icon: Icons.card_giftcard_outlined,
+      title: title,
+      subtitle: subtitle,
+      onTap: _openRedeemDialog,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final info = _info;
@@ -95,6 +141,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   'Recover a previous purchase on this Apple ID',
               onTap: _restorePurchases,
             ),
+            _buildPromoTile(),
             if (kDebugMode)
               _SettingsTile(
                 icon: Icons.bug_report_outlined,
@@ -109,6 +156,20 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   await PurchaseService.instance.setProForTesting(
                     !PurchaseService.instance.hasPro,
                   );
+                  if (mounted) setState(() {});
+                },
+              ),
+            if (kDebugMode &&
+                (PromoCodeService.instance.hasActivePromo || _promoUsed))
+              _SettingsTile(
+                icon: Icons.delete_sweep_outlined,
+                title: 'DEBUG: clear promo redemptions',
+                subtitle: 'Wipe redemption history (shared_prefs + '
+                    'Keychain) so codes can be redeemed again. Debug only.',
+                onTap: () async {
+                  HapticsService.instance.tap();
+                  await PromoCodeService.instance.clearForTesting();
+                  await _loadPromoState();
                   if (mounted) setState(() {});
                 },
               ),

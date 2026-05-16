@@ -7,6 +7,7 @@ import '../core/theme/colors.dart';
 import '../data/services/haptics_service.dart';
 import '../data/services/purchase_service.dart';
 import '../data/services/usage_limits_service.dart';
+import 'redeem_promo_dialog.dart';
 
 /// Drop-in bottom sheet that pitches Pro with all three SKUs side by
 /// side. Used from two places:
@@ -202,7 +203,27 @@ class _PaywallSheetState extends State<PaywallSheet> {
                     ),
                   ),
                 ),
-                const SizedBox(height: 10),
+                Center(
+                  child: TextButton(
+                    onPressed: _busy
+                        ? null
+                        : () {
+                            HapticsService.instance.tap();
+                            // A successful redeem flips PurchaseService.hasPro
+                            // through the OR-gate, and our entitlementChanges
+                            // listener pops the sheet — no manual cleanup.
+                            RedeemPromoDialog.show(context);
+                          },
+                    child: const Text(
+                      'Have a promo code?',
+                      style: TextStyle(
+                        color: AppColors.textSecondary,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 4),
                 const _LegalFooter(),
               ],
             ),

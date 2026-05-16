@@ -37,6 +37,10 @@ dependencies:
   shared_preferences: ^2.2.3
   hive: ^2.2.3
   hive_flutter: ^1.1.0
+  # Keychain (iOS) / EncryptedSharedPreferences (Android). Used by
+  # PromoCodeService to persist redemption flag across uninstall on
+  # iOS — abuse-resistance for the 14-day promo grant.
+  flutter_secure_storage: ^9.2.2
 
   # Monetization
   in_app_purchase: ^3.2.0

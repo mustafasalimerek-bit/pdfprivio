@@ -4,6 +4,8 @@ import 'package:flutter/foundation.dart';
 import 'package:in_app_purchase/in_app_purchase.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'promo_code_service.dart';
+
 enum EntitlementTier { free, pro }
 
 /// One of the three SKUs we sell. The tier they unlock is the same —
@@ -72,9 +74,23 @@ class PurchaseService {
   StreamSubscription<List<PurchaseDetails>>? _purchaseSub;
 
   bool get isStoreAvailable => _available;
-  bool get hasPro => _hasPro;
+
+  /// True when the user has any path to Pro features — paid StoreKit
+  /// entitlement OR an unexpired promo code grant. The promo branch
+  /// keeps real subscribers untouched (the OR short-circuits) and lets
+  /// us hand out marketing/influencer access without minting fake IAP
+  /// transactions.
+  bool get hasPro => _hasPro || PromoCodeService.instance.hasActivePromo;
+
+  /// Distinguishes paid subscribers from promo-granted access — useful
+  /// for surfacing "Pro active via promo" copy in Settings and for
+  /// keeping analytics segments clean.
+  bool get hasPaidPro => _hasPro;
+  bool get hasPromoPro =>
+      !_hasPro && PromoCodeService.instance.hasActivePromo;
+
   EntitlementTier get tier =>
-      _hasPro ? EntitlementTier.pro : EntitlementTier.free;
+      hasPro ? EntitlementTier.pro : EntitlementTier.free;
   ProSku? get activeSku => _activeSku;
   ProductDetails? productFor(ProSku sku) => _products[sku];
   bool get productsLoaded => _products.isNotEmpty;
@@ -227,6 +243,14 @@ class PurchaseService {
     } else {
       await prefs.remove(_prefsActiveSkuKey);
     }
+    _controller.add(tier);
+  }
+
+  /// Bridge for PromoCodeService — when a promo is redeemed (or cleared
+  /// in debug builds) the entitlement OR-gate flips without StoreKit
+  /// firing. Re-emit `tier` so listeners (BannerAdWidget, Paywall, tile
+  /// lock states) refresh on the same channel they already subscribe to.
+  void notifyExternalEntitlementChange() {
     _controller.add(tier);
   }
 
