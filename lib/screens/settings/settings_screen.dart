@@ -219,10 +219,10 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             _SettingsTile(
               icon: Icons.receipt_long_outlined,
               title: 'Audit log',
-              subtitle: 'Every tool operation (sign, redact, OCR, merge, '
-                  'batch, receipt, PII scan, summarize, Live Text) '
-                  'recorded with timestamp + file metadata. Browse, '
-                  'export as CSV, or clear.',
+              subtitle: 'Records 9 consequential operations — sign, '
+                  'redact, OCR, merge, batch, receipt, PII scan, '
+                  'summarize, Live Text — with timestamp + file metadata. '
+                  'Browse, export as CSV, or clear.',
               onTap: () {
                 HapticsService.instance.tap();
                 Navigator.of(context).push(

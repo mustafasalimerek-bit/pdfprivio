@@ -33,7 +33,7 @@ PDF tools that stay private
 (26 chars — leans into wedge)
 
 ```
-18 PDF tools, all offline
+23 PDF tools, all offline
 ```
 (25 chars — value + privacy)
 
@@ -49,11 +49,11 @@ re-submitting** — use it for launch announcements, ProductHunt week, or
 seasonal pushes.
 
 ```
-Scan, OCR, sign, redact, fill forms, compare — 18 PDF tools that run
-entirely on your iPhone. No cloud uploads, no subscription, no account.
+Scan, OCR, sign, redact, summarise with AI, batch process, capture
+receipts — 23 PDF tools that run entirely on your iPhone. No cloud.
 ```
 
-165 chars. Tightens the wedge in one sentence.
+164 chars. Tightens the wedge in one sentence.
 
 ---
 
@@ -62,9 +62,9 @@ entirely on your iPhone. No cloud uploads, no subscription, no account.
 ```
 PDFPrivio is the offline PDF toolkit for lawyers, accountants, real estate professionals, and anyone who handles documents that should not be uploaded to a stranger's server.
 
-Every operation — scan, OCR, redact, sign, compress, merge, split — runs locally on your iPhone. Your PDFs never leave this device. The network panel shows zero bytes for your files.
+Every operation — scan, OCR, redact, sign, summarise with Apple Intelligence, capture receipts — runs locally on your iPhone. Your PDFs never leave this device. The network panel shows zero bytes for your files.
 
-THE 18 TOOLS
+THE 23 TOOLS
 
 Document intake
 • Scan to PDF — Apple VisionKit edge detection, multi-page capture
@@ -87,22 +87,29 @@ Review
 • Watermark — CONFIDENTIAL, DRAFT, custom text in three layouts
 • Extract text — pull clean text out of any born-digital PDF
 • Compare PDFs — redline two versions, added and removed text
+• Bookmarks / TOC — jump to any chapter in long briefs and depositions
 • Find sensitive data — auto-detect SSN, EIN, credit cards (Luhn validated), IBANs, emails, phone numbers
 • Redact (Pro) — search words, render-and-flatten removes them from the data stream
 
-HOME SCREEN WIDGET
+AI + receipts + batch (Pro on the last two)
+• Summarize PDF — Apple Intelligence on-device summary (iOS 26+)
+• Live Text view — Apple Live Text + Visual Look Up + Markup
+• Batch operations (Pro) — compress, watermark, or rotate a stack of PDFs in one pass
+• Receipt scanner (Pro) — auto-extract date / vendor / total / tax → QuickBooks-friendly CSV
 
-Pin your three most recent PDFs to your Home Screen — file name, tool used (Signed, Merged, Redacted), and time. Small and Medium widget sizes. Updates automatically every time you finish work in PDFPrivio.
+iOS INTEGRATION
+
+Home Screen widget (Small + Medium) plus three Lock Screen accessory families. iOS 18 Control Center / Lock Screen scan control. Action Button binding for iPhone 15 Pro and later. Siri, Shortcuts, Files Provider, Share Sheet, Action Extension. iPad Stage Manager + Split View.
 
 PRIVACY POSITIONING
 
 Other PDF apps upload your file to "process" it in the cloud — meaning their staff, their server logs, and their attackers could all see your documents. PDFPrivio was built so the lawyer-client privilege, the accountant-client confidentiality, and your personal data stay where they belong: on your phone.
 
-We use Apple Vision for OCR and Apple's VisionKit for scanning. Both run on the Neural Engine inside your iPhone. No model downloads, no remote calls.
+Apple Vision and VisionKit for OCR + scanning, Apple Intelligence for summarisation — all on the Neural Engine inside your iPhone. No model downloads, no remote calls.
 
 PRICING
 
-Most tools are free with light ads and daily limits. Pro removes the limits, hides ads, and unlocks Fill form, Bates numbering, and Redact:
+18 of 23 tools work for free (15 with daily caps, 3 unlimited). Pro removes the caps, hides ads, and unlocks Fill form, Bates numbering, Redact, Batch operations, and Receipt scanner:
 
 • Monthly — $4.99
 • Yearly — $39.99 (best value)
@@ -113,7 +120,7 @@ MADE BY EREK STUDIO
 Built by an independent developer in Istanbul. No VC, no growth team, no dark patterns. If a feature is missing or a bug bites you, email mustafasalimerek@gmail.com and you'll hear back from a human within a day.
 ```
 
-About 2900 chars — leaves headroom for tweaks. Apple counts characters
+About 3600 chars — well under the 4000 char limit. Apple counts characters
 including spaces, line breaks, and bullet symbols.
 
 ---
@@ -185,9 +192,9 @@ For the initial v1.0.0:
 ```
 First release of PDFPrivio.
 
-18 PDF tools built for lawyers, accountants, and anyone who handles sensitive documents.
+23 PDF tools built for lawyers, accountants, and anyone who handles sensitive documents.
 
-Everything runs on this device — scan, OCR, redact, sign, fill forms, compress, merge, split, compare. Your PDFs never leave your iPhone.
+Everything runs on this device — scan, OCR, redact, sign, fill forms, compress, merge, split, compare, summarise, capture receipts. Your PDFs never leave your iPhone.
 
 Highlights:
 • Apple VisionKit document scanner with edge detection
@@ -195,13 +202,17 @@ Highlights:
 • Real redaction — text is removed from the PDF, not just covered
 • AcroForm filler with flatten-on-save for IRS, USCIS, court forms
 • PII auto-detect: SSN, EIN, credit cards, IBAN, email, phone
-• Home Screen widget — your 3 recent PDFs at a glance (Small + Medium)
+• Apple Intelligence summary (iOS 26+) — on-device, never uploaded
+• Receipt scanner — auto-extract date / vendor / total → QuickBooks CSV
+• Batch operations — compress / watermark / rotate stacks of PDFs
+• Home Screen widget + iOS 18 Control Center / Lock Screen scan control
+• Action Button binding for iPhone 15 Pro+
 • On-device privacy — verifiable in Settings > Privacy & Security
 
-15 tools free with daily limits. Pro unlocks unlimited access plus Fill form, Bates, Redact.
+18 of 23 tools free (15 with daily limits + 3 unlimited). Pro unlocks unlimited access plus Fill form, Bates, Redact, Batch, and Receipt scanner.
 ```
 
-700 chars. Easy to update for each release.
+About 1000 chars. Easy to update for each release.
 
 ---
 
@@ -230,7 +241,7 @@ App Store Connect needs screenshots for:
 - **12.9" iPad Pro** — REQUIRED if listed as iPad-compatible
 
 For v1, target 5 screenshots showing:
-1. Home screen with Recent files + 18 tool tiles (lead with surface area)
+1. Home screen with Recent files + 23 tool tiles (lead with surface area)
 2. Scan to PDF empty state ("Scan paper into a sharp PDF")
 3. Redact result ("12 redactions applied · across 4 pages") with green
    "Real redaction" verified banner

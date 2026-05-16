@@ -168,12 +168,17 @@ class _ReceiptCaptureScreenState
       vendor: _vendorController.text.trim().isEmpty
           ? null
           : _vendorController.text.trim(),
+      // Normalise user-typed money so EU-style "12,34" and US-style
+      // "12.34" both land as "12.34" in the ledger — keeps the CSV
+      // export parseable by QuickBooks/Xero either way.
       total: _totalController.text.trim().isEmpty
           ? null
-          : _totalController.text.trim(),
+          : ReceiptExtractionService.normaliseMoney(
+              _totalController.text.trim()),
       tax: _taxController.text.trim().isEmpty
           ? null
-          : _taxController.text.trim(),
+          : ReceiptExtractionService.normaliseMoney(
+              _taxController.text.trim()),
       currency: _currencyController.text.trim().isEmpty
           ? 'USD'
           : _currencyController.text.trim().toUpperCase(),

@@ -248,9 +248,15 @@ class ReceiptExtractionService {
     return best;
   }
 
-  String _normaliseMoney(String raw) {
-    // Convert "1.234,56" (EU) to "1234.56"; "1,234.56" (US) to "1234.56".
+  String _normaliseMoney(String raw) => normaliseMoney(raw);
+
+  /// Convert "1.234,56" (EU) → "1234.56"; "1,234.56" (US) → "1234.56";
+  /// "12,34" → "12.34". Public so the capture screen can run user-typed
+  /// totals through the same normaliser before persisting — keeps CSV
+  /// exports parseable by QuickBooks/Xero regardless of locale.
+  static String normaliseMoney(String raw) {
     var cleaned = raw.replaceAll(RegExp(r'\s'), '');
+    if (cleaned.isEmpty) return cleaned;
     final lastComma = cleaned.lastIndexOf(',');
     final lastDot = cleaned.lastIndexOf('.');
     if (lastComma > lastDot) {
