@@ -9,6 +9,7 @@ import '../../core/utils/cancellation_token.dart';
 import '../../core/utils/result.dart';
 import '../models/pdf_document.dart';
 import '../models/pdf_page_ref.dart';
+import 'audit_service.dart';
 
 /// Merges multiple PDFs into one, preserving each source page's original
 /// trim size (so a Letter page in source #1 stays Letter in the output even
@@ -67,6 +68,17 @@ class PdfMergeService {
       final outFile = await _writeOutput(
         outputBytes,
         outputName ?? _suggestOutputName(documents),
+      );
+      await AuditService.instance.record(
+        tool: 'merge',
+        outputFile: outFile,
+        params: {
+          'sourceCount': '${documents.length}',
+          'sourceFiles': documents
+              .map((d) => d.displayName)
+              .take(10)
+              .join('|'),
+        },
       );
       return Ok(outFile);
     } catch (e) {

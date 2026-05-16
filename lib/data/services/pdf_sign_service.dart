@@ -9,6 +9,7 @@ import 'package:syncfusion_flutter_pdf/pdf.dart' as sf;
 
 import '../../core/utils/result.dart';
 import '../models/pdf_document.dart';
+import 'audit_service.dart';
 
 /// Five corner/edge positions where a signature commonly lands on a page.
 /// Custom drag-to-place is a Pro feature and added in a later pass.
@@ -92,6 +93,20 @@ class PdfSignService {
       final outFile = await _writeOutput(
         outBytes,
         '${input.displayName}_signed',
+      );
+      // Defensible record for compliance / malpractice posture —
+      // signer + page + position go into the log so a future "did
+      // you really sign this for client X on date Y?" question
+      // doesn't depend on the auditor's memory.
+      await AuditService.instance.record(
+        tool: 'sign',
+        inputFile: input.file,
+        outputFile: outFile,
+        params: {
+          'signerName': signerName ?? '',
+          'pageIndex': '$pageIndex',
+          'position': position.name,
+        },
       );
       return Ok(outFile);
     } catch (e) {

@@ -8,6 +8,7 @@ import 'package:syncfusion_flutter_pdf/pdf.dart' as sf;
 
 import '../../core/utils/cancellation_token.dart';
 import '../../core/utils/result.dart';
+import 'audit_service.dart';
 import 'ocr_service.dart';
 
 /// One image-page paired with its OCR result.
@@ -130,6 +131,16 @@ class PdfOcrComposeService {
 
       final out = await _writeOutput(bytes, outputName ?? 'searchable_scan');
       onProgress?.call(1.0, 'Done');
+
+      await AuditService.instance.record(
+        tool: 'ocr',
+        outputFile: out,
+        params: {
+          'pageCount': '${pages.length}',
+          'recognizedObservations': '$totalObs',
+          'elapsedMs': '${stopwatch.elapsedMilliseconds}',
+        },
+      );
 
       return Ok(OcrComposeOutcome(
         outputFile: out,

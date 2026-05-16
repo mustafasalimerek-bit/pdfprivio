@@ -11,6 +11,7 @@ import '../../data/services/promo_code_service.dart';
 import '../../data/services/purchase_service.dart';
 import '../../data/services/widget_data_service.dart';
 import '../../widgets/redeem_promo_dialog.dart';
+import '../audit_log/audit_log_screen.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
@@ -211,6 +212,21 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                       'off the Home Screen.'
                   : 'Tap to show file names again on the widget.',
               onTap: _toggleWidgetNames,
+            ),
+            _SettingsTile(
+              icon: Icons.receipt_long_outlined,
+              title: 'Audit log',
+              subtitle: 'Every Sign / Redact / OCR / Merge / PII Scan '
+                  'recorded with timestamp + file metadata. Browse, '
+                  'export as CSV, or clear.',
+              onTap: () {
+                HapticsService.instance.tap();
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => const AuditLogScreen(),
+                  ),
+                );
+              },
             ),
             _SettingsTile(
               icon: Icons.description_outlined,

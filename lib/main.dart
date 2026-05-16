@@ -7,10 +7,12 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 
 import 'app.dart';
 import 'data/services/ads_service.dart';
 import 'data/services/app_intent_service.dart';
+import 'data/services/audit_service.dart';
 import 'data/services/promo_code_service.dart';
 import 'data/services/purchase_service.dart';
 import 'data/services/share_intent_service.dart';
@@ -41,11 +43,15 @@ Future<void> main() async {
     // than launching straight into prompts.
     await FirebaseAnalytics.instance.setAnalyticsCollectionEnabled(false);
 
+    // Hive — backs the audit log + recent files entries.
+    await Hive.initFlutter();
+
     // Purchase + usage-limits boot. Init runs StoreKit availability
     // check and silent restore so the home grid renders with the right
     // lock state on the very first frame.
     await PurchaseService.instance.init();
     await PromoCodeService.instance.init();
+    await AuditService.instance.init();
     await UsageLimitsService.instance.pruneOldEntries();
     // Home Screen widget bridge — pushes recent files into the App
     // Group shared store so the iOS WidgetKit extension can render

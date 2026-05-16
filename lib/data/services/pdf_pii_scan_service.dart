@@ -3,6 +3,7 @@ import 'package:syncfusion_flutter_pdf/pdf.dart' as sf;
 import '../../core/utils/cancellation_token.dart';
 import '../../core/utils/result.dart';
 import '../models/pdf_document.dart';
+import 'audit_service.dart';
 
 enum PiiCategory {
   ssn('SSN', 'US Social Security Number', 'high'),
@@ -118,6 +119,22 @@ class PdfPiiScanService {
       }
 
       final avg = pageCount == 0 ? 0 : totalChars / pageCount;
+
+      // Audit: record counts only, never the matched strings — those
+      // ARE the PII, so logging them defeats the purpose.
+      await AuditService.instance.record(
+        tool: 'pii_scan',
+        inputFile: input.file,
+        params: {
+          'totalPages': '$pageCount',
+          'pagesWithFindings': '${pagesHit.length}',
+          'totalMatches': '${matches.length}',
+          'categories': counts.entries
+              .map((e) => '${e.key.name}=${e.value}')
+              .join(','),
+          'elapsedMs': '${stopwatch.elapsedMilliseconds}',
+        },
+      );
 
       return Ok(PiiScanOutcome(
         matches: matches,

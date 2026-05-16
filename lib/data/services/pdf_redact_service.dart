@@ -11,6 +11,7 @@ import 'package:syncfusion_flutter_pdf/pdf.dart' as sf;
 import '../../core/utils/cancellation_token.dart';
 import '../../core/utils/result.dart';
 import '../models/pdf_document.dart';
+import 'audit_service.dart';
 import 'ocr_service.dart';
 import 'pdf_ocr_compose_service.dart';
 
@@ -272,6 +273,23 @@ class PdfRedactService {
       }
 
       onProgress?.call(1.0, 'Done');
+
+      // Audit: record counts only, never the actual search terms —
+      // those can contain client names / SSNs and don't belong in
+      // a persisted log even on-device.
+      await AuditService.instance.record(
+        tool: 'redact',
+        inputFile: input.file,
+        outputFile: outFile,
+        params: {
+          'searchTermCount': '${cleanSearches.length}',
+          'matchesFound': '$matchCount',
+          'pagesAffected': '${hitsByPage.length}',
+          'totalPages': '$totalPages',
+          'caseSensitive': '$caseSensitive',
+          'makeSearchable': '$makeSearchable',
+        },
+      );
 
       return Ok(RedactOutcome(
         file: outFile,
