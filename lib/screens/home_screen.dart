@@ -39,7 +39,7 @@ class HomeScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final tiles = _tiles();
+    final heroes = _heroSpecs();
     return Scaffold(
       // No AppBar — the greeting + status pill below replaces the
       // "giant PDFPrivio title" that ate 1/8 of the screen. iOS HIG
@@ -50,33 +50,17 @@ class HomeScreen extends ConsumerWidget {
           maxWidth: 1200,
           child: LayoutBuilder(
             builder: (context, constraints) {
+              // iPad gets a slightly roomier grid (5 cols vs 4) but the
+              // structure is identical — header + status + hero + recent
+              // + 4×2 (or 5×2) tool grid + "More" cell.
               final w = constraints.maxWidth;
-              final columns = w >= Breakpoints.iPadRegular
-                  ? 3
+              final gridColumns = w >= Breakpoints.iPadRegular
+                  ? 6
                   : w >= Breakpoints.iPadCompact
-                      ? 2
-                      : 1;
-              if (columns == 1) {
-                return ListView(
-                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
-                  children: [
-                    const _HomeHeader(),
-                    const SizedBox(height: 14),
-                    const _OfflineStatusPill(),
-                    const SizedBox(height: 14),
-                    _HeroScanCard(onTap: () => _openScan(context)),
-                    const SizedBox(height: 18),
-                    const RecentFilesCarousel(),
-                    const _SectionLabel('All tools'),
-                    const SizedBox(height: 4),
-                    ...tiles,
-                  ],
-                );
-              }
-              // iPad / wide layout: keep the new header + status pill + hero
-              // up top, drop the grid below them.
+                      ? 5
+                      : 4;
               return ListView(
-                padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
                 children: [
                   const _HomeHeader(),
                   const SizedBox(height: 14),
@@ -86,18 +70,11 @@ class HomeScreen extends ConsumerWidget {
                   const SizedBox(height: 18),
                   const RecentFilesCarousel(),
                   const _SectionLabel('All tools'),
-                  const SizedBox(height: 8),
-                  GridView.builder(
-                    physics: const NeverScrollableScrollPhysics(),
-                    shrinkWrap: true,
-                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: columns,
-                      mainAxisSpacing: 4,
-                      crossAxisSpacing: 12,
-                      mainAxisExtent: 96,
-                    ),
-                    itemCount: tiles.length,
-                    itemBuilder: (_, i) => tiles[i],
+                  const SizedBox(height: 10),
+                  _HeroToolGrid(
+                    heroes: heroes,
+                    columns: gridColumns,
+                    onMoreTap: () => _showMoreSheet(context),
                   ),
                 ],
               );
@@ -115,169 +92,578 @@ class HomeScreen extends ConsumerWidget {
     );
   }
 
-  List<Widget> _tiles() => [
-        _ToolTile(
+  /// The 7 tools that earn home-screen real estate. Chosen for the
+  /// lawyer/CPA wedge: OCR + Sign + Fill form + Redact = legal/tax
+  /// daily ops; Merge + Compress + Split = universal PDF utility.
+  /// Everything else lives one tap deeper behind "More" — same
+  /// discovery hop as iOS Settings sub-pages, which Apple sees as a
+  /// premium pattern rather than a friction.
+  static const _heroToolIds = <String>{
+    'ocr_pdf',
+    'sign',
+    'form_fill',
+    'redact',
+    'merge',
+    'compress',
+    'split',
+  };
+
+  List<_ToolSpec> _specs() => const [
+        _ToolSpec(
           icon: Icons.document_scanner_outlined,
           title: 'Scan to PDF',
           subtitle: 'Camera → auto-edge → multi-page → one PDF',
           toolId: 'scan_to_pdf',
-          builder: (_) => const ScanScreen(),
+          builder: _buildScanScreen,
         ),
-        _ToolTile(
+        _ToolSpec(
           icon: Icons.find_in_page_outlined,
           title: 'OCR PDF',
           subtitle: 'Scanned PDF → searchable text · on-device',
           toolId: 'ocr_pdf',
-          builder: (_) => const OcrPdfScreen(),
+          builder: _buildOcrScreen,
         ),
-        _ToolTile(
+        _ToolSpec(
           icon: Icons.library_books_outlined,
           title: 'Merge PDFs',
           subtitle: 'Combine multiple PDFs into one',
           toolId: 'merge',
-          builder: (_) => const MergeScreen(),
+          builder: _buildMergeScreen,
         ),
-        _ToolTile(
+        _ToolSpec(
           icon: Icons.compress_outlined,
           title: 'Compress PDF',
           subtitle: 'Shrink for email — keep quality',
           toolId: 'compress',
-          builder: (_) => const CompressScreen(),
+          builder: _buildCompressScreen,
         ),
-        _ToolTile(
+        _ToolSpec(
           icon: Icons.content_cut_outlined,
           title: 'Split PDF',
           subtitle: 'Extract range, every N pages, or N parts',
           toolId: 'split',
-          builder: (_) => const SplitScreen(),
+          builder: _buildSplitScreen,
         ),
-        _ToolTile(
+        _ToolSpec(
           icon: Icons.image_outlined,
           title: 'Image to PDF',
           subtitle: 'Photos, receipts, screenshots → one PDF',
           toolId: 'image_to_pdf',
-          builder: (_) => const ImageToPdfScreen(),
+          builder: _buildImageToPdfScreen,
         ),
-        _ToolTile(
+        _ToolSpec(
           icon: Icons.rotate_right_outlined,
           title: 'Rotate pages',
           subtitle: 'Fix sideways scans or flip a PDF',
           toolId: 'rotate',
-          builder: (_) => const RotateScreen(),
+          builder: _buildRotateScreen,
         ),
-        _ToolTile(
+        _ToolSpec(
           icon: Icons.delete_sweep_outlined,
           title: 'Delete pages',
           subtitle: 'Pick the pages to drop, keep the rest',
           toolId: 'delete_pages',
-          builder: (_) => const DeletePagesScreen(),
+          builder: _buildDeletePagesScreen,
         ),
-        _ToolTile(
+        _ToolSpec(
           icon: Icons.draw_outlined,
           title: 'Sign PDF',
           subtitle: 'Draw, place, save — audit-trail included',
           toolId: 'sign',
-          builder: (_) => const SignScreen(),
+          builder: _buildSignScreen,
         ),
-        _ToolTile(
+        _ToolSpec(
           icon: Icons.edit_document,
           title: 'Fill form',
           subtitle: 'IRS, USCIS, court forms — flatten on save',
           toolId: 'form_fill',
-          builder: (_) => const FormFillScreen(),
+          builder: _buildFormFillScreen,
         ),
-        _ToolTile(
+        _ToolSpec(
           icon: Icons.format_list_numbered,
           title: 'Page numbers',
           subtitle: 'Page 1 of 20 — pick format and position',
           toolId: 'page_numbers',
-          builder: (_) => const PageNumbersScreen(),
+          builder: _buildPageNumbersScreen,
         ),
-        _ToolTile(
+        _ToolSpec(
           icon: Icons.tag,
           title: 'Bates numbering',
           subtitle: 'Sequential page IDs — legal discovery standard',
           toolId: 'bates',
-          builder: (_) => const BatesScreen(),
+          builder: _buildBatesScreen,
         ),
-        _ToolTile(
+        _ToolSpec(
           icon: Icons.lock_outline,
           title: 'Password protect',
           subtitle: 'AES-256 encrypt or unlock — pick auto-detects',
           toolId: 'password',
-          builder: (_) => const PasswordScreen(),
+          builder: _buildPasswordScreen,
         ),
-        _ToolTile(
+        _ToolSpec(
           icon: Icons.water_drop_outlined,
           title: 'Watermark',
           subtitle: 'CONFIDENTIAL / DRAFT — diagonal, center, or tile',
           toolId: 'watermark',
-          builder: (_) => const WatermarkScreen(),
+          builder: _buildWatermarkScreen,
         ),
-        _ToolTile(
+        _ToolSpec(
           icon: Icons.text_snippet_outlined,
           title: 'Extract text',
           subtitle: 'Pull text out — born-digital PDFs only',
           toolId: 'extract_text',
-          builder: (_) => const ExtractTextScreen(),
+          builder: _buildExtractTextScreen,
         ),
-        _ToolTile(
+        _ToolSpec(
           icon: Icons.compare_arrows,
           title: 'Compare PDFs',
           subtitle: 'Redline two versions — added & removed text',
           toolId: 'compare',
-          builder: (_) => const CompareScreen(),
+          builder: _buildCompareScreen,
         ),
-        _ToolTile(
+        _ToolSpec(
           icon: Icons.menu_book_outlined,
           title: 'Bookmarks / TOC',
           subtitle: 'Jump to a chapter in one tap — long briefs, depositions',
           toolId: 'bookmarks',
-          builder: (_) => const BookmarksScreen(),
+          builder: _buildBookmarksScreen,
         ),
-        _ToolTile(
+        _ToolSpec(
           icon: Icons.auto_awesome,
           title: 'Summarize PDF',
           subtitle: 'On-device Apple Intelligence summary — never uploaded',
           toolId: 'summarize',
-          builder: (_) => const SummarizeScreen(),
+          builder: _buildSummarizeScreen,
         ),
-        _ToolTile(
+        _ToolSpec(
           icon: Icons.center_focus_strong_outlined,
           title: 'Live Text view',
           subtitle: 'Select text from any PDF page — Apple Live Text + Markup',
           toolId: 'quick_look',
-          builder: (_) => const QuickLookLauncherScreen(),
+          builder: _buildQuickLookScreen,
         ),
-        _ToolTile(
+        _ToolSpec(
           icon: Icons.dynamic_feed_outlined,
           title: 'Batch operations',
           subtitle: 'Compress / Watermark / Rotate many PDFs at once',
           toolId: 'batch',
-          builder: (_) => const BatchScreen(),
+          builder: _buildBatchScreen,
         ),
-        _ToolTile(
+        _ToolSpec(
           icon: Icons.receipt_long_outlined,
           title: 'Receipt scanner',
           subtitle: 'Scan → auto-extract date/vendor/total → CSV for QuickBooks',
           toolId: 'receipt',
-          builder: (_) => const ReceiptCaptureScreen(),
+          builder: _buildReceiptScreen,
         ),
-        _ToolTile(
+        _ToolSpec(
           icon: Icons.shield_outlined,
           title: 'Find sensitive data',
           subtitle: 'Auto-detect SSN, EIN, credit cards, emails, phone numbers',
           toolId: 'pii_scan',
-          builder: (_) => const PiiScanScreen(),
+          builder: _buildPiiScanScreen,
         ),
-        _ToolTile(
+        _ToolSpec(
           icon: Icons.format_color_fill,
           title: 'Redact',
           subtitle: 'Search and black out names, account numbers, etc.',
           toolId: 'redact',
-          builder: (_) => const RedactScreen(),
+          builder: _buildRedactScreen,
         ),
       ];
+
+  /// Build heroes in hero-id order, plus a "More" cell at the end —
+  /// what shows in the 4×2 grid on the home screen.
+  List<_ToolSpec> _heroSpecs() {
+    final all = _specs();
+    return _heroToolIds
+        .map((id) => all.firstWhere((s) => s.toolId == id))
+        .toList();
+  }
+
+  /// Build the long list shown inside the "More" bottom sheet —
+  /// everything that didn't make it into the hero grid, in original
+  /// declaration order so related tools stay grouped.
+  List<_ToolSpec> _otherSpecs() {
+    return _specs().where((s) => !_heroToolIds.contains(s.toolId)).toList();
+  }
+
+  void _showMoreSheet(BuildContext context) {
+    HapticsService.instance.tap();
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: AppColors.background,
+      shape: const RoundedRectangleBorder(
+        borderRadius:
+            BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (sheetContext) {
+        return DraggableScrollableSheet(
+          initialChildSize: 0.85,
+          maxChildSize: 0.95,
+          minChildSize: 0.5,
+          expand: false,
+          builder: (_, scrollController) {
+            return Column(
+              children: [
+                Container(
+                  margin: const EdgeInsets.symmetric(vertical: 10),
+                  width: 36,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: AppColors.border,
+                    borderRadius: BorderRadius.circular(99),
+                  ),
+                ),
+                const Padding(
+                  padding: EdgeInsets.fromLTRB(20, 6, 20, 12),
+                  child: Row(
+                    children: [
+                      Text(
+                        'All tools',
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Expanded(
+                  child: ListView(
+                    controller: scrollController,
+                    padding:
+                        const EdgeInsets.fromLTRB(16, 0, 16, 24),
+                    children: [
+                      for (final spec in _otherSpecs())
+                        _ToolTile(
+                          icon: spec.icon,
+                          title: spec.title,
+                          subtitle: spec.subtitle,
+                          toolId: spec.toolId,
+                          builder: spec.builder,
+                        ),
+                    ],
+                  ),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+}
+
+// Static screen builders — needed so _ToolSpec instances can be
+// declared `const`. Each is a one-liner that wraps the screen
+// constructor.
+Widget _buildScanScreen(BuildContext _) => const ScanScreen();
+Widget _buildOcrScreen(BuildContext _) => const OcrPdfScreen();
+Widget _buildMergeScreen(BuildContext _) => const MergeScreen();
+Widget _buildCompressScreen(BuildContext _) => const CompressScreen();
+Widget _buildSplitScreen(BuildContext _) => const SplitScreen();
+Widget _buildImageToPdfScreen(BuildContext _) => const ImageToPdfScreen();
+Widget _buildRotateScreen(BuildContext _) => const RotateScreen();
+Widget _buildDeletePagesScreen(BuildContext _) => const DeletePagesScreen();
+Widget _buildSignScreen(BuildContext _) => const SignScreen();
+Widget _buildFormFillScreen(BuildContext _) => const FormFillScreen();
+Widget _buildPageNumbersScreen(BuildContext _) => const PageNumbersScreen();
+Widget _buildBatesScreen(BuildContext _) => const BatesScreen();
+Widget _buildPasswordScreen(BuildContext _) => const PasswordScreen();
+Widget _buildWatermarkScreen(BuildContext _) => const WatermarkScreen();
+Widget _buildExtractTextScreen(BuildContext _) => const ExtractTextScreen();
+Widget _buildCompareScreen(BuildContext _) => const CompareScreen();
+Widget _buildBookmarksScreen(BuildContext _) => const BookmarksScreen();
+Widget _buildSummarizeScreen(BuildContext _) => const SummarizeScreen();
+Widget _buildQuickLookScreen(BuildContext _) =>
+    const QuickLookLauncherScreen();
+Widget _buildBatchScreen(BuildContext _) => const BatchScreen();
+Widget _buildReceiptScreen(BuildContext _) => const ReceiptCaptureScreen();
+Widget _buildPiiScanScreen(BuildContext _) => const PiiScanScreen();
+Widget _buildRedactScreen(BuildContext _) => const RedactScreen();
+
+/// Immutable spec for a tool entry. Rendered either as a row
+/// (_ToolTile, full-width with subtitle + badges) or as a square
+/// grid cell (_CompactToolTile, icon + label only).
+class _ToolSpec {
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final String toolId;
+  final WidgetBuilder builder;
+  const _ToolSpec({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.toolId,
+    required this.builder,
+  });
+}
+
+/// 4×2 hero grid of the 7 wedge-critical tools plus a "More" cell
+/// that opens the rest in a bottom sheet. Each cell is icon + label,
+/// with a tiny "PRO" or quota indicator in the corner — the heavier
+/// subtitle + chevron of the full row tile gets dropped because the
+/// row's purpose here is recognition, not discovery.
+class _HeroToolGrid extends StatelessWidget {
+  final List<_ToolSpec> heroes;
+  final int columns;
+  final VoidCallback onMoreTap;
+
+  const _HeroToolGrid({
+    required this.heroes,
+    required this.columns,
+    required this.onMoreTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    // heroes.length + 1 for the More cell. We size each cell square-ish
+    // so on iPhone 6 wide the icons sit comfortably above their labels.
+    final cells = <Widget>[
+      ...heroes.map((spec) => _CompactToolTile(spec: spec)),
+      _MoreTile(onTap: onMoreTap),
+    ];
+    return GridView.builder(
+      physics: const NeverScrollableScrollPhysics(),
+      shrinkWrap: true,
+      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: columns,
+        mainAxisSpacing: 10,
+        crossAxisSpacing: 10,
+        // Slightly taller than wide so two-line labels like
+        // "Compress PDF" don't clip on narrow iPhone width.
+        childAspectRatio: 0.82,
+      ),
+      itemCount: cells.length,
+      itemBuilder: (_, i) => cells[i],
+    );
+  }
+}
+
+/// Compact grid-cell variant of the tool tile. Pulls Pro / usage
+/// state from the same services as the full row, but renders only
+/// icon + label + a minimal corner indicator. Pure-tile UI; the
+/// long-form description lives in the More sheet (_ToolTile) for
+/// users who tap through.
+class _CompactToolTile extends StatefulWidget {
+  final _ToolSpec spec;
+  const _CompactToolTile({required this.spec});
+
+  @override
+  State<_CompactToolTile> createState() => _CompactToolTileState();
+}
+
+class _CompactToolTileState extends State<_CompactToolTile> {
+  UsageState? _usage;
+  bool _hasPro = PurchaseService.instance.hasPro;
+  StreamSubscription<void>? _usageSub;
+  StreamSubscription<EntitlementTier>? _entitleSub;
+
+  @override
+  void initState() {
+    super.initState();
+    _refresh();
+    _usageSub =
+        UsageLimitsService.instance.changes.listen((_) => _refresh());
+    _entitleSub =
+        PurchaseService.instance.entitlementChanges.listen((tier) {
+      if (!mounted) return;
+      setState(() => _hasPro = tier == EntitlementTier.pro);
+    });
+  }
+
+  Future<void> _refresh() async {
+    final usage =
+        await UsageLimitsService.instance.stateFor(widget.spec.toolId);
+    if (!mounted) return;
+    setState(() => _usage = usage);
+  }
+
+  @override
+  void dispose() {
+    _usageSub?.cancel();
+    _entitleSub?.cancel();
+    super.dispose();
+  }
+
+  bool get _isProOnly =>
+      ToolLimits.proOnly.contains(widget.spec.toolId);
+
+  Future<void> _onTap() async {
+    HapticsService.instance.tap();
+    if (_hasPro) {
+      _navigate();
+      return;
+    }
+    if (_isProOnly) {
+      final purchased = await PaywallSheet.show(
+        context,
+        quotaContext: widget.spec.title,
+      );
+      if (purchased && mounted) _navigate();
+      return;
+    }
+    final usage = _usage;
+    if (usage != null && !usage.canUse) {
+      final purchased = await PaywallSheet.show(
+        context,
+        quotaContext: widget.spec.title,
+      );
+      if (purchased && mounted) _navigate();
+      return;
+    }
+    _navigate();
+  }
+
+  void _navigate() {
+    Navigator.of(context).push(
+      MaterialPageRoute(builder: widget.spec.builder),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final showProBadge = _isProOnly && !_hasPro;
+    return Semantics(
+      button: true,
+      label: '${widget.spec.title}. ${widget.spec.subtitle}.',
+      excludeSemantics: true,
+      child: Material(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(16),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(16),
+          onTap: _onTap,
+          child: Container(
+            padding: const EdgeInsets.fromLTRB(10, 12, 10, 10),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: AppColors.border),
+            ),
+            child: Stack(
+              children: [
+                Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Container(
+                      width: 40,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        color: AppColors.primary.withValues(alpha: 0.10),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Icon(
+                        widget.spec.icon,
+                        color: AppColors.primary,
+                        size: 22,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      widget.spec.title,
+                      style: const TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        height: 1.15,
+                      ),
+                      maxLines: 2,
+                      textAlign: TextAlign.center,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
+                if (showProBadge)
+                  Positioned(
+                    top: -2,
+                    right: -2,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 5,
+                        vertical: 1,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppColors.warning,
+                        borderRadius: BorderRadius.circular(99),
+                      ),
+                      child: const Text(
+                        'PRO',
+                        style: TextStyle(
+                          fontSize: 8,
+                          fontWeight: FontWeight.w800,
+                          color: Colors.white,
+                          letterSpacing: 0.4,
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// 8th cell of the home grid — opens the bottom sheet with every
+/// tool not already in the hero set.
+class _MoreTile extends StatelessWidget {
+  final VoidCallback onTap;
+  const _MoreTile({required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      button: true,
+      label: 'More tools — opens the full list',
+      excludeSemantics: true,
+      child: Material(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(16),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(16),
+          onTap: onTap,
+          child: Container(
+            padding: const EdgeInsets.fromLTRB(10, 12, 10, 10),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: AppColors.border),
+            ),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: AppColors.textSecondary.withValues(alpha: 0.10),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Icon(
+                    Icons.more_horiz,
+                    color: AppColors.textSecondary,
+                    size: 22,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                const Text(
+                  'More',
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    height: 1.15,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 }
 
 /// Time-of-day greeting + small day-of-week subtitle. Replaces the
