@@ -35,10 +35,13 @@ class ToolLimits {
   ///   * form_fill — kills filling IRS/USCIS forms by hand
   ///   * bates — niche but mandatory for legal discovery
   ///   * redact — wrong usage = client leak, only paying customers
+  ///   * batch — amplifies any tool 50x; the wedge for stacks of
+  ///     exhibits/receipts. Free users keep per-tool daily caps.
   static const Set<String> proOnly = {
     'form_fill',
     'bates',
     'redact',
+    'batch',
   };
 
   /// Optional page-count guardrail on top of the daily cap. Keeps free

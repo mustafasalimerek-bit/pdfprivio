@@ -9,6 +9,7 @@ import '../data/services/purchase_service.dart';
 import '../data/services/usage_limits_service.dart';
 import '../widgets/paywall_sheet.dart';
 import 'bates/bates_screen.dart';
+import 'batch/batch_screen.dart';
 import 'compare/compare_screen.dart';
 import 'compress/compress_screen.dart';
 import 'delete_pages/delete_pages_screen.dart';
@@ -187,6 +188,13 @@ class HomeScreen extends ConsumerWidget {
               subtitle: 'Select text from any PDF page — Apple Live Text + Markup',
               toolId: 'quick_look',
               builder: (_) => const QuickLookLauncherScreen(),
+            ),
+            _ToolTile(
+              icon: Icons.dynamic_feed_outlined,
+              title: 'Batch operations',
+              subtitle: 'Compress / Watermark / Rotate many PDFs at once',
+              toolId: 'batch',
+              builder: (_) => const BatchScreen(),
             ),
             _ToolTile(
               icon: Icons.shield_outlined,
