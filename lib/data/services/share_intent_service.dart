@@ -87,6 +87,21 @@ class ShareIntentService {
     });
   }
 
+  /// Last preferred-action string the QuickSign / Quick* Action
+  /// Extensions wrote into App Group UserDefaults. Read once per drain
+  /// and cleared so the next share starts clean.
+  String? _preferredAction;
+
+  /// True when the most recent drained share was triggered by an
+  /// Action Extension that already chose a tool (e.g. Quick Sign).
+  /// SharedFileActionSheet checks this to decide whether to bypass
+  /// the action chooser sheet entirely.
+  String? get pendingPreferredAction => _preferredAction;
+
+  void clearPreferredAction() {
+    _preferredAction = null;
+  }
+
   /// Move every file the PDFPrivioShare Share Extension dumped into
   /// the App Group's SharedExtensionDrop folder into our own
   /// Documents/Inbox, then emit them on [intents] so the action sheet
@@ -125,6 +140,19 @@ class ShareIntentService {
       }
 
       await _shareExtChannel.invokeMethod('clearPendingFlag');
+
+      // Quick Sign / other Action Extensions write the picked tool
+      // into App Group UserDefaults so the chooser sheet can be
+      // skipped. Pulled here so SharedFileActionSheet has it ready
+      // before deciding whether to show.
+      try {
+        _preferredAction = await _shareExtChannel
+            .invokeMethod<String>('consumePreferredAction');
+      } on PlatformException {
+        _preferredAction = null;
+      } on MissingPluginException {
+        _preferredAction = null;
+      }
 
       if (imported.isNotEmpty) {
         _controller.add(imported);

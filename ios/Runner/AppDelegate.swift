@@ -144,6 +144,8 @@ class ShareExtensionBridge: NSObject, FlutterPlugin {
     pendingChannel?.invokeMethod("shareExtensionPending", arguments: nil)
   }
 
+  static let preferredActionKey = "pdfprivio.preferredShareAction"
+
   func handle(_ call: FlutterMethodCall, result: @escaping FlutterResult) {
     switch call.method {
     case "drain":
@@ -153,6 +155,17 @@ class ShareExtensionBridge: NSObject, FlutterPlugin {
       result(nil)
     case "hasPending":
       result(UserDefaults.standard.bool(forKey: Self.pendingFlagKey))
+    case "consumePreferredAction":
+      // Read + clear the Action Extension's preferred-tool hint from
+      // App Group UserDefaults (set by Quick Sign etc.). Returns nil
+      // if the share came from the plain Share Extension.
+      guard let defaults = UserDefaults(suiteName: Self.appGroupId) else {
+        result(nil)
+        return
+      }
+      let action = defaults.string(forKey: Self.preferredActionKey)
+      defaults.removeObject(forKey: Self.preferredActionKey)
+      result(action)
     default:
       result(FlutterMethodNotImplemented)
     }

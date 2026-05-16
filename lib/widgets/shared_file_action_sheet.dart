@@ -26,14 +26,39 @@ class SharedFileActionSheet {
   ) async {
     if (files.isEmpty) return;
     final first = files.first;
-    final imported = await ShareIntentService.importToInbox(first);
-    if (imported == null || !context.mounted) return;
+    // CFBundleDocumentTypes path drops files in temp / Files
+    // sandbox — copy into Inbox first. The PDFPrivioShare /
+    // PDFPrivioQuickSign extensions have already moved their file
+    // into Documents/Inbox, so importToInbox just no-ops the copy
+    // when the source already lives there.
+    File workingFile;
+    final src = File(first.path);
+    if (src.path.contains('/Documents/Inbox/')) {
+      workingFile = src;
+    } else {
+      final imported = await ShareIntentService.importToInbox(first);
+      if (imported == null || !context.mounted) return;
+      workingFile = imported;
+    }
+
+    // Quick Sign / other Action Extensions flagged a tool — skip the
+    // chooser sheet and route straight there for the "quick" feel.
+    final preferred = ShareIntentService.instance.pendingPreferredAction;
+    if (preferred != null) {
+      ShareIntentService.instance.clearPreferredAction();
+      final route = _routeForAction(preferred);
+      if (route != null && context.mounted) {
+        PendingSharedFile.set(workingFile);
+        await Navigator.of(context).pushNamed(route);
+        return;
+      }
+    }
 
     final isImage = first.type == SharedMediaType.image;
 
     if (isImage) {
       // Single obvious action — skip the chooser.
-      PendingSharedFile.set(imported);
+      PendingSharedFile.set(workingFile);
       await Navigator.of(context).pushNamed('/tool/image_to_pdf');
       return;
     }
@@ -42,8 +67,28 @@ class SharedFileActionSheet {
     await showModalBottomSheet<void>(
       context: context,
       backgroundColor: Colors.transparent,
-      builder: (_) => _Sheet(file: imported),
+      builder: (_) => _Sheet(file: workingFile),
     );
+  }
+
+  /// Map the Action Extension's preferred-action string (set by
+  /// PDFPrivioQuickSign etc.) to a named route. Unknown strings fall
+  /// back to the chooser sheet.
+  static String? _routeForAction(String action) {
+    switch (action) {
+      case 'sign':
+        return '/tool/sign';
+      case 'redact':
+        return '/tool/redact';
+      case 'ocr':
+        return '/tool/ocr';
+      case 'pii':
+        return '/tool/pii';
+      case 'merge':
+        return '/tool/merge';
+      default:
+        return null;
+    }
   }
 }
 
