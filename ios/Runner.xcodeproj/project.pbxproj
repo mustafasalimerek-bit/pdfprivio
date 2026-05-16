@@ -8,11 +8,15 @@
 
 /* Begin PBXBuildFile section */
 		1498D2341E8E89220040F4C2 /* GeneratedPluginRegistrant.m in Sources */ = {isa = PBXBuildFile; fileRef = 1498D2331E8E89220040F4C2 /* GeneratedPluginRegistrant.m */; };
+		150E31FC8BA619E939915946 /* MainInterface.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = B071678843491A589DCF0180 /* MainInterface.storyboard */; };
+		211CAE7271183947064E1D01 /* ShareExtension.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = 2F83077C83748D20FE04FE40 /* ShareExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		2144F4C18CEFD25703A4CD7F /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = DC422804FBD89E2A96F0AF65 /* GoogleService-Info.plist */; };
 		331C808B294A63AB00263BE5 /* RunnerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 331C807B294A618700263BE5 /* RunnerTests.swift */; };
 		3B3967161E833CAA004F5970 /* AppFrameworkInfo.plist in Resources */ = {isa = PBXBuildFile; fileRef = 3B3967151E833CAA004F5970 /* AppFrameworkInfo.plist */; };
+		5C010EC9753572F7EB5ADFBB /* Pods_ShareExtension.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B98F4F26CC028663E7D8C431 /* Pods_ShareExtension.framework */; };
 		636305CC8C8521AE8719F646 /* Pods_RunnerTests.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 807DAC76E6C7CDB78B24CD0B /* Pods_RunnerTests.framework */; };
 		74858FAF1ED2DC5600515810 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 74858FAE1ED2DC5600515810 /* AppDelegate.swift */; };
+		75083573F9877C73836CFDB8 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B1F2D1347F6D9A0C9B22EB0D /* Foundation.framework */; };
 		7884E8682EC3CC0700C636F2 /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7884E8672EC3CC0400C636F2 /* SceneDelegate.swift */; };
 		89F243A6EBEC2BA5626E00FC /* DocumentScannerBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA96D1015543CE2C25FF53C3 /* DocumentScannerBridge.swift */; };
 		8C66174154A5112298E25FED /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = E946B0CC7A149E0AD26D7836 /* Assets.xcassets */; };
@@ -24,6 +28,7 @@
 		A135694D173C91F6E7BE9806 /* Pods_Runner.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C6E27A9C295B878AE004FD20 /* Pods_Runner.framework */; };
 		AFB88FA51F288E071F8DA659 /* PDFPrivioWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = 46EE2897018D20D7B6CA038A /* PDFPrivioWidget.swift */; };
 		B7D669C8727B33ABBC455CAB /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B1F2D1347F6D9A0C9B22EB0D /* Foundation.framework */; };
+		C86C3ECF8B7E16611D308BB9 /* ShareViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 27B25ACB659542741A1FD23F /* ShareViewController.swift */; };
 		E6FAD838CB55ACE2646AC35B /* PDFPrivioWidget.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = 03ACA07F089216D71E5BF264 /* PDFPrivioWidget.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 /* End PBXBuildFile section */
 
@@ -41,6 +46,13 @@
 			proxyType = 1;
 			remoteGlobalIDString = 3BBF0A45CFEFB14AC17DD471;
 			remoteInfo = PDFPrivioWidget;
+		};
+		87182D0F6F5A05E7479A1C29 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 97C146E61CF9000F007C117D /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = D790B7C550D0D02BFBBE2E18;
+			remoteInfo = ShareExtension;
 		};
 /* End PBXContainerItemProxy section */
 
@@ -75,17 +87,21 @@
 		1380EA98C6177F2384B6CA4B /* Pods-RunnerTests.profile.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-RunnerTests.profile.xcconfig"; path = "Target Support Files/Pods-RunnerTests/Pods-RunnerTests.profile.xcconfig"; sourceTree = "<group>"; };
 		1498D2321E8E86230040F4C2 /* GeneratedPluginRegistrant.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = GeneratedPluginRegistrant.h; sourceTree = "<group>"; };
 		1498D2331E8E89220040F4C2 /* GeneratedPluginRegistrant.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = GeneratedPluginRegistrant.m; sourceTree = "<group>"; };
+		27B25ACB659542741A1FD23F /* ShareViewController.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ShareViewController.swift; sourceTree = "<group>"; };
+		2F83077C83748D20FE04FE40 /* ShareExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = ShareExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		331C807B294A618700263BE5 /* RunnerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RunnerTests.swift; sourceTree = "<group>"; };
 		331C8081294A63A400263BE5 /* RunnerTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = RunnerTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		3B3967151E833CAA004F5970 /* AppFrameworkInfo.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = AppFrameworkInfo.plist; path = Flutter/AppFrameworkInfo.plist; sourceTree = "<group>"; };
 		46EE2897018D20D7B6CA038A /* PDFPrivioWidget.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = PDFPrivioWidget.swift; sourceTree = "<group>"; };
 		595A85428A8AD49CFAE26D6B /* Pods-Runner.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Runner.release.xcconfig"; path = "Target Support Files/Pods-Runner/Pods-Runner.release.xcconfig"; sourceTree = "<group>"; };
 		65CCABF17F31F5BD0F4F4C8F /* Pods-Runner.profile.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Runner.profile.xcconfig"; path = "Target Support Files/Pods-Runner/Pods-Runner.profile.xcconfig"; sourceTree = "<group>"; };
+		72B826335585313C32D0E5E8 /* Pods-ShareExtension.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; path = "Pods-ShareExtension.debug.xcconfig"; sourceTree = "<group>"; };
 		74858FAD1ED2DC5600515810 /* Runner-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "Runner-Bridging-Header.h"; sourceTree = "<group>"; };
 		74858FAE1ED2DC5600515810 /* AppDelegate.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		7884E8672EC3CC0400C636F2 /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneDelegate.swift; sourceTree = "<group>"; };
 		7AFA3C8E1D35360C0083082E /* Release.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; name = Release.xcconfig; path = Flutter/Release.xcconfig; sourceTree = "<group>"; };
 		807DAC76E6C7CDB78B24CD0B /* Pods_RunnerTests.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_RunnerTests.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		8E59E8E4B0A65291A8E93C09 /* Pods-ShareExtension.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-ShareExtension.debug.xcconfig"; path = "Target Support Files/Pods-ShareExtension/Pods-ShareExtension.debug.xcconfig"; sourceTree = "<group>"; };
 		8F2811689B9DC7F927CC840E /* Pods-RunnerTests.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-RunnerTests.debug.xcconfig"; path = "Target Support Files/Pods-RunnerTests/Pods-RunnerTests.debug.xcconfig"; sourceTree = "<group>"; };
 		96BA84738A4ACA5D7640760E /* Pods-RunnerTests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-RunnerTests.release.xcconfig"; path = "Target Support Files/Pods-RunnerTests/Pods-RunnerTests.release.xcconfig"; sourceTree = "<group>"; };
 		9740EEB21CF90195004384FC /* Debug.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; name = Debug.xcconfig; path = Flutter/Debug.xcconfig; sourceTree = "<group>"; };
@@ -97,12 +113,18 @@
 		97C147021CF9000F007C117D /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		AA96D1015543CE2C25FF53C3 /* DocumentScannerBridge.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = DocumentScannerBridge.swift; sourceTree = "<group>"; };
 		AF002727ECCA4C624FE24D32 /* Pods-Runner.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Runner.debug.xcconfig"; path = "Target Support Files/Pods-Runner/Pods-Runner.debug.xcconfig"; sourceTree = "<group>"; };
+		AF71C76F88677C1D74BED191 /* Pods-ShareExtension.profile.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-ShareExtension.profile.xcconfig"; path = "Target Support Files/Pods-ShareExtension/Pods-ShareExtension.profile.xcconfig"; sourceTree = "<group>"; };
+		B071678843491A589DCF0180 /* MainInterface.storyboard */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = file.storyboard; path = MainInterface.storyboard; sourceTree = "<group>"; };
 		B1F2D1347F6D9A0C9B22EB0D /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS18.0.sdk/System/Library/Frameworks/Foundation.framework; sourceTree = DEVELOPER_DIR; };
+		B98F4F26CC028663E7D8C431 /* Pods_ShareExtension.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_ShareExtension.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		C03B5DF58714B667F352E7C5 /* Pods-ShareExtension.profile.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; path = "Pods-ShareExtension.profile.xcconfig"; sourceTree = "<group>"; };
 		C5C284B0E8D540B62950BB28 /* PDFPrivioWidget.entitlements */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.entitlements; path = PDFPrivioWidget.entitlements; sourceTree = "<group>"; };
 		C6E27A9C295B878AE004FD20 /* Pods_Runner.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_Runner.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		CB99833E405AD436DA30A198 /* TextRecognizerBridge.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = TextRecognizerBridge.swift; sourceTree = "<group>"; };
 		DC422804FBD89E2A96F0AF65 /* GoogleService-Info.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
+		E0852AADFAC1022286E44F2E /* Pods-ShareExtension.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; path = "Pods-ShareExtension.release.xcconfig"; sourceTree = "<group>"; };
 		E946B0CC7A149E0AD26D7836 /* Assets.xcassets */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		FBD13C0073AE4CFFC3AD1318 /* Pods-ShareExtension.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-ShareExtension.release.xcconfig"; path = "Target Support Files/Pods-ShareExtension/Pods-ShareExtension.release.xcconfig"; sourceTree = "<group>"; };
 		FE7DEE8781C4F58926E8CABA /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; includeInIndex = 1; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -148,8 +170,18 @@
 				C6E27A9C295B878AE004FD20 /* Pods_Runner.framework */,
 				807DAC76E6C7CDB78B24CD0B /* Pods_RunnerTests.framework */,
 				51BF31E78CA8D01DBF26FB61 /* iOS */,
+				B98F4F26CC028663E7D8C431 /* Pods_ShareExtension.framework */,
 			);
 			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		3FF5988DCD3ECB405923A041 /* Target Support Files */ = {
+			isa = PBXGroup;
+			children = (
+				EE65AEDB988ECA1E4A6F5D6B /* Pods-ShareExtension */,
+			);
+			name = "Target Support Files";
+			path = "Target Support Files";
 			sourceTree = "<group>";
 		};
 		51BF31E78CA8D01DBF26FB61 /* iOS */ = {
@@ -169,6 +201,10 @@
 				8F2811689B9DC7F927CC840E /* Pods-RunnerTests.debug.xcconfig */,
 				96BA84738A4ACA5D7640760E /* Pods-RunnerTests.release.xcconfig */,
 				1380EA98C6177F2384B6CA4B /* Pods-RunnerTests.profile.xcconfig */,
+				FBD13C0073AE4CFFC3AD1318 /* Pods-ShareExtension.release.xcconfig */,
+				8E59E8E4B0A65291A8E93C09 /* Pods-ShareExtension.debug.xcconfig */,
+				AF71C76F88677C1D74BED191 /* Pods-ShareExtension.profile.xcconfig */,
+				3FF5988DCD3ECB405923A041 /* Target Support Files */,
 			);
 			name = Pods;
 			path = Pods;
@@ -204,6 +240,7 @@
 				97C146EE1CF9000F007C117D /* Runner.app */,
 				331C8081294A63A400263BE5 /* RunnerTests.xctest */,
 				03ACA07F089216D71E5BF264 /* PDFPrivioWidget.appex */,
+				2F83077C83748D20FE04FE40 /* ShareExtension.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -239,6 +276,17 @@
 			);
 			name = PDFPrivioWidget;
 			path = PDFPrivioWidget;
+			sourceTree = "<group>";
+		};
+		EE65AEDB988ECA1E4A6F5D6B /* Pods-ShareExtension */ = {
+			isa = PBXGroup;
+			children = (
+				72B826335585313C32D0E5E8 /* Pods-ShareExtension.debug.xcconfig */,
+				E0852AADFAC1022286E44F2E /* Pods-ShareExtension.release.xcconfig */,
+				C03B5DF58714B667F352E7C5 /* Pods-ShareExtension.profile.xcconfig */,
+			);
+			name = "Pods-ShareExtension";
+			path = "Pods-ShareExtension";
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -520,6 +568,11 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
+		2C824E8582261F12754357AB /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			name = ShareExtension;
+			targetProxy = 87182D0F6F5A05E7479A1C29 /* PBXContainerItemProxy */;
+		};
 		309F3F9F49C797300E6DBD2B /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			name = PDFPrivioWidget;
@@ -553,6 +606,38 @@
 /* End PBXVariantGroup section */
 
 /* Begin XCBuildConfiguration section */
+		04117ED13B7E43FBA75CC86A /* Profile */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = AF71C76F88677C1D74BED191 /* Pods-ShareExtension.profile.xcconfig */;
+			buildSettings = {
+				CLANG_ENABLE_OBJC_WEAK = NO;
+				CODE_SIGN_ENTITLEMENTS = ShareExtension/ShareExtension.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 2;
+				DEVELOPMENT_TEAM = X593LCYK54;
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(PODS_CONFIGURATION_BUILD_DIR)/Flutter",
+				);
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = ShareExtension/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.5;
+				MARKETING_VERSION = 1.0.0;
+				OTHER_LDFLAGS = (
+					"$(inherited)",
+					"-framework",
+					Flutter,
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.erekstudio.pdfprivio.ShareExtension;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Profile;
+		};
 		249021D3217E4FDB00AE95B9 /* Profile */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -925,6 +1010,69 @@
 				SWIFT_OBJC_BRIDGING_HEADER = "Runner/Runner-Bridging-Header.h";
 				SWIFT_VERSION = 5.0;
 				VERSIONING_SYSTEM = "apple-generic";
+			};
+			name = Release;
+		};
+		D4516055F73600BF6AD709F4 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = 8E59E8E4B0A65291A8E93C09 /* Pods-ShareExtension.debug.xcconfig */;
+			buildSettings = {
+				CLANG_ENABLE_OBJC_WEAK = NO;
+				CODE_SIGN_ENTITLEMENTS = ShareExtension/ShareExtension.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 2;
+				DEVELOPMENT_TEAM = X593LCYK54;
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(PODS_CONFIGURATION_BUILD_DIR)/Flutter",
+				);
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = ShareExtension/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.5;
+				MARKETING_VERSION = 1.0.0;
+				OTHER_LDFLAGS = (
+					"$(inherited)",
+					"-framework",
+					Flutter,
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.erekstudio.pdfprivio.ShareExtension;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		FA6ED56FA2F59076BB2C84D6 /* Release */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = FBD13C0073AE4CFFC3AD1318 /* Pods-ShareExtension.release.xcconfig */;
+			buildSettings = {
+				CLANG_ENABLE_OBJC_WEAK = NO;
+				CODE_SIGN_ENTITLEMENTS = ShareExtension/ShareExtension.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 2;
+				DEVELOPMENT_TEAM = X593LCYK54;
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(PODS_CONFIGURATION_BUILD_DIR)/Flutter",
+				);
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = ShareExtension/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.5;
+				MARKETING_VERSION = 1.0.0;
+				OTHER_LDFLAGS = (
+					"$(inherited)",
+					"-framework",
+					Flutter,
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.erekstudio.pdfprivio.ShareExtension;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				VALIDATE_PRODUCT = YES;
 			};
 			name = Release;
 		};

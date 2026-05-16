@@ -1,9 +1,14 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:receive_sharing_intent/receive_sharing_intent.dart';
 
 import '../../core/theme/colors.dart';
 import '../../data/services/haptics_service.dart';
+import '../../data/services/share_intent_service.dart';
 import '../../widgets/banner_ad_widget.dart';
+import '../../widgets/shared_file_action_sheet.dart';
 import '../home_screen.dart';
 import '../pro/pro_screen.dart';
 import '../recent/recent_screen.dart';
@@ -25,6 +30,7 @@ class RootScaffold extends ConsumerStatefulWidget {
 
 class _RootScaffoldState extends ConsumerState<RootScaffold> {
   int _index = 0;
+  StreamSubscription<List<SharedMediaFile>>? _shareSub;
 
   static const _tabs = <Widget>[
     HomeScreen(),
@@ -32,6 +38,26 @@ class _RootScaffoldState extends ConsumerState<RootScaffold> {
     ProScreen(),
     SettingsScreen(),
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    // Defer until the widget has a real context — using the
+    // post-frame callback also catches the cold-launch share payload
+    // that ShareIntentService.init() emits during app boot.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _shareSub = ShareIntentService.instance.intents.listen((files) {
+        if (!mounted) return;
+        SharedFileActionSheet.show(context, files);
+      });
+    });
+  }
+
+  @override
+  void dispose() {
+    _shareSub?.cancel();
+    super.dispose();
+  }
 
   void _select(int i) {
     if (i == _index) return;

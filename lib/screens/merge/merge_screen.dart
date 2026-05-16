@@ -10,6 +10,7 @@ import '../../core/utils/result.dart';
 import '../../data/models/pdf_document.dart';
 import '../../data/services/haptics_service.dart';
 import '../../data/services/pdf_merge_service.dart';
+import '../../data/services/share_intent_service.dart';
 import '../../providers/merge_providers.dart';
 import '../../widgets/pdf_doc_tile.dart';
 import '../../widgets/privacy_badge.dart';
@@ -26,6 +27,21 @@ class MergeScreen extends ConsumerStatefulWidget {
 
 class _MergeScreenState extends ConsumerState<MergeScreen> {
   CancellationToken? _activeCancel;
+
+  @override
+  void initState() {
+    super.initState();
+    final pending = PendingSharedFile.consume();
+    if (pending != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) async {
+        if (!mounted) return;
+        // Seed the workspace with the shared file. User will then add
+        // one or more additional files via the picker.
+        await ref.read(mergeWorkspaceProvider.notifier).add([pending]);
+        if (mounted) HapticsService.instance.select();
+      });
+    }
+  }
 
   Future<void> _pickFiles() async {
     HapticsService.instance.tap();

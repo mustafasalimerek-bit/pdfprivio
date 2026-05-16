@@ -9,6 +9,7 @@ import '../../core/utils/cancellation_token.dart';
 import '../../core/utils/result.dart';
 import '../../data/services/haptics_service.dart';
 import '../../data/services/image_to_pdf_service.dart';
+import '../../data/services/share_intent_service.dart';
 import '../../widgets/privacy_badge.dart';
 import '../../widgets/progress_overlay.dart';
 import '../merge/merge_result_screen.dart';
@@ -25,6 +26,19 @@ class _ImageToPdfScreenState extends ConsumerState<ImageToPdfScreen> {
   PdfPaperSize _paperSize = PdfPaperSize.letter; // US default
   double? _progress;
   CancellationToken? _cancel;
+
+  @override
+  void initState() {
+    super.initState();
+    final pending = PendingSharedFile.consume();
+    if (pending != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        setState(() => _images.add(pending));
+        HapticsService.instance.select();
+      });
+    }
+  }
 
   Future<void> _pickImages() async {
     HapticsService.instance.tap();

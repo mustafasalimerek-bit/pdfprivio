@@ -16,6 +16,7 @@ import '../../data/services/haptics_service.dart';
 import '../../data/services/pdf_metadata_service.dart';
 import '../../data/services/pdf_redact_service.dart';
 import '../../data/services/recent_files_service.dart';
+import '../../data/services/share_intent_service.dart';
 import '../../widgets/disclaimer_banner.dart';
 import '../../widgets/privacy_badge.dart';
 import '../../widgets/progress_overlay.dart';
@@ -56,6 +57,15 @@ class _RedactScreenState extends ConsumerState<RedactScreen> {
     if (widget.initialSearches != null) {
       _searches.addAll(widget.initialSearches!.toSet());
     }
+    // Pre-load file handed in by "Share to PDFPrivio".
+    if (_doc == null) {
+      final pending = PendingSharedFile.consume();
+      if (pending != null) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) _loadFromFile(pending);
+        });
+      }
+    }
   }
 
   @override
@@ -64,17 +74,8 @@ class _RedactScreenState extends ConsumerState<RedactScreen> {
     super.dispose();
   }
 
-  Future<void> _pick() async {
-    HapticsService.instance.tap();
-    final res = await FilePicker.platform.pickFiles(
-      type: FileType.custom,
-      allowedExtensions: ['pdf'],
-    );
-    if (res == null) return;
-    final path = res.paths.firstOrNull;
-    if (path == null) return;
-
-    final outcome = await PdfMetadataService.instance.inspect(File(path));
+  Future<void> _loadFromFile(File file) async {
+    final outcome = await PdfMetadataService.instance.inspect(file);
     if (!mounted) return;
     switch (outcome) {
       case Ok(:final value):
@@ -91,6 +92,18 @@ class _RedactScreenState extends ConsumerState<RedactScreen> {
           ),
         );
     }
+  }
+
+  Future<void> _pick() async {
+    HapticsService.instance.tap();
+    final res = await FilePicker.platform.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: ['pdf'],
+    );
+    if (res == null) return;
+    final path = res.paths.firstOrNull;
+    if (path == null) return;
+    await _loadFromFile(File(path));
   }
 
   void _addSearch() {

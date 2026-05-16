@@ -12,6 +12,7 @@ import '../../data/models/pdf_document.dart';
 import '../../data/services/haptics_service.dart';
 import '../../data/services/pdf_metadata_service.dart';
 import '../../data/services/pdf_sign_service.dart';
+import '../../data/services/share_intent_service.dart';
 import '../../data/services/pdf_thumbnail_service.dart';
 import '../../widgets/disclaimer_banner.dart';
 import '../../widgets/privacy_badge.dart';
@@ -41,22 +42,26 @@ class _SignScreenState extends ConsumerState<SignScreen> {
   bool _busy = false;
 
   @override
+  void initState() {
+    super.initState();
+    // If the user got here from "Share to PDFPrivio" the action sheet
+    // already stashed the file. Skip the picker.
+    final pending = PendingSharedFile.consume();
+    if (pending != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _loadPdfFromFile(pending);
+      });
+    }
+  }
+
+  @override
   void dispose() {
     _signerName.dispose();
     super.dispose();
   }
 
-  Future<void> _pickPdf() async {
-    HapticsService.instance.tap();
-    final res = await FilePicker.platform.pickFiles(
-      type: FileType.custom,
-      allowedExtensions: ['pdf'],
-    );
-    if (res == null) return;
-    final path = res.paths.firstOrNull;
-    if (path == null) return;
-
-    final outcome = await PdfMetadataService.instance.inspect(File(path));
+  Future<void> _loadPdfFromFile(File file) async {
+    final outcome = await PdfMetadataService.instance.inspect(file);
     if (!mounted) return;
     switch (outcome) {
       case Ok(:final value):
@@ -78,6 +83,18 @@ class _SignScreenState extends ConsumerState<SignScreen> {
           ),
         );
     }
+  }
+
+  Future<void> _pickPdf() async {
+    HapticsService.instance.tap();
+    final res = await FilePicker.platform.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: ['pdf'],
+    );
+    if (res == null) return;
+    final path = res.paths.firstOrNull;
+    if (path == null) return;
+    await _loadPdfFromFile(File(path));
   }
 
   Future<void> _drawSignature() async {

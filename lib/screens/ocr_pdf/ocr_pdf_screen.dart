@@ -14,6 +14,7 @@ import '../../data/services/ocr_service.dart';
 import '../../data/services/pdf_metadata_service.dart';
 import '../../data/services/pdf_ocr_compose_service.dart';
 import '../../data/services/pdf_to_images_service.dart';
+import '../../data/services/share_intent_service.dart';
 import '../../widgets/privacy_badge.dart';
 import '../../widgets/progress_overlay.dart';
 import '../merge/merge_result_screen.dart';
@@ -33,16 +34,19 @@ class _OcrPdfScreenState extends ConsumerState<OcrPdfScreen> {
   final _languages = ['en-US', 'tr-TR'];
   OcrLevel _level = OcrLevel.accurate;
 
-  Future<void> _pick() async {
-    HapticsService.instance.tap();
-    final res = await FilePicker.platform.pickFiles(
-      type: FileType.custom,
-      allowedExtensions: ['pdf'],
-    );
-    if (res == null) return;
-    final path = res.paths.firstOrNull;
-    if (path == null) return;
-    final outcome = await PdfMetadataService.instance.inspect(File(path));
+  @override
+  void initState() {
+    super.initState();
+    final pending = PendingSharedFile.consume();
+    if (pending != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _loadFromFile(pending);
+      });
+    }
+  }
+
+  Future<void> _loadFromFile(File file) async {
+    final outcome = await PdfMetadataService.instance.inspect(file);
     if (!mounted) return;
     switch (outcome) {
       case Ok(:final value):
@@ -59,6 +63,18 @@ class _OcrPdfScreenState extends ConsumerState<OcrPdfScreen> {
           ),
         );
     }
+  }
+
+  Future<void> _pick() async {
+    HapticsService.instance.tap();
+    final res = await FilePicker.platform.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: ['pdf'],
+    );
+    if (res == null) return;
+    final path = res.paths.firstOrNull;
+    if (path == null) return;
+    await _loadFromFile(File(path));
   }
 
   Future<void> _run() async {

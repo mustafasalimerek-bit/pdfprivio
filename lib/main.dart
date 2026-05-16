@@ -12,6 +12,7 @@ import 'app.dart';
 import 'data/services/ads_service.dart';
 import 'data/services/promo_code_service.dart';
 import 'data/services/purchase_service.dart';
+import 'data/services/share_intent_service.dart';
 import 'data/services/usage_limits_service.dart';
 import 'data/services/widget_data_service.dart';
 
@@ -49,6 +50,10 @@ Future<void> main() async {
     // Group shared store so the iOS WidgetKit extension can render
     // them. No-op on Android (widget arrives in v1.1).
     await WidgetDataService.instance.init();
+    // Listen for inbound files handed to us via Share Sheet / Open In
+    // / our own Share Extension. Cold-launch payload is drained here;
+    // hot stream events are picked up by RootScaffold's listener.
+    await ShareIntentService.instance.init();
     // AdsService.init() pre-loads the first interstitial and wires the
     // Pro-purchase listener that drops cached ads when users upgrade.
     // Safe to call before consent — internal calls are silent no-ops
