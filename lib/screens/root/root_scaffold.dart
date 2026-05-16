@@ -139,9 +139,12 @@ class _RootScaffoldState extends ConsumerState<RootScaffold>
             label: 'Recent',
           ),
           NavigationDestination(
-            icon: Icon(Icons.workspace_premium_outlined),
+            // Sparkles for the Pro tab — Apple standardised this glyph
+            // for "AI / premium" in iOS 18+, so it reads as "value
+            // unlock" instead of a generic decoration.
+            icon: Icon(Icons.auto_awesome_outlined),
             selectedIcon: Icon(
-              Icons.workspace_premium,
+              Icons.auto_awesome,
               color: AppColors.primary,
             ),
             label: 'Pro',
