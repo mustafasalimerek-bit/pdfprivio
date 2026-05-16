@@ -61,14 +61,21 @@ class UsageState {
   final int allowance;
   final DateTime resetsAt;
 
+  /// True for tools with no daily cap (e.g. Bookmarks, Summarize,
+  /// Live Text view). The UI uses this to skip the quota pill and
+  /// the tap-time paywall — those tools are free unlimited and
+  /// shouldn't pretend to be over-quota.
+  final bool unlimited;
+
   const UsageState({
     required this.used,
     required this.allowance,
     required this.resetsAt,
+    this.unlimited = false,
   });
 
   int get remaining => (allowance - used).clamp(0, allowance);
-  bool get canUse => remaining > 0;
+  bool get canUse => unlimited || remaining > 0;
 }
 
 class UsageLimitsService {
@@ -95,15 +102,31 @@ class UsageLimitsService {
   }
 
   /// Returns the user's remaining uses for [toolId] today.
+  ///
+  /// Three classes of tool:
+  ///   * in [ToolLimits.proOnly] → returns zero/zero (paywall handled
+  ///     by `_isProOnly` check in the tile, this state still flags
+  ///     `canUse=false` for the lock UI).
+  ///   * in [ToolLimits.dailyFree] → metered, returns real usage.
+  ///   * neither (Bookmarks, Summarize, Live Text view) → unlimited
+  ///     free use, returns `unlimited=true` so the tile shows no
+  ///     badge and tap doesn't fire the paywall.
   Future<UsageState> stateFor(String toolId) async {
-    final allowance = ToolLimits.dailyFree[toolId] ?? 0;
-    if (allowance == 0) {
-      // No allowance configured means Pro-only — represent as zero used,
-      // zero allowance so UI shows the lock state coherently.
+    if (ToolLimits.proOnly.contains(toolId)) {
       return UsageState(
         used: 0,
         allowance: 0,
         resetsAt: _tomorrowMidnightLocal(),
+      );
+    }
+    final allowance = ToolLimits.dailyFree[toolId];
+    if (allowance == null) {
+      // Not metered and not Pro-only → free unlimited.
+      return UsageState(
+        used: 0,
+        allowance: 0,
+        resetsAt: _tomorrowMidnightLocal(),
+        unlimited: true,
       );
     }
     final prefs = await SharedPreferences.getInstance();

@@ -513,7 +513,9 @@ class _TileBadge extends StatelessWidget {
       // Free tiles for Pro users — no badge clutter, just clean tile.
       return const SizedBox.shrink();
     }
-    if (usage == null) {
+    if (usage == null || usage!.unlimited) {
+      // No usage state yet, or tool is free-unlimited (Bookmarks,
+      // Summarize, Live Text view) — show no badge.
       return const SizedBox.shrink();
     }
     if (!usage!.canUse) {
