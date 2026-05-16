@@ -117,21 +117,35 @@ private struct SmallView: View {
             }
             Spacer()
             if let first = entry.files.first {
-                Text(first.name)
-                    .font(.system(size: 13, weight: .semibold))
-                    .lineLimit(2)
-                    .multilineTextAlignment(.leading)
-                Spacer(minLength: 4)
-                HStack(spacing: 4) {
+                // Empty name = privacy-mode opt-out from Settings.
+                // Fall back to a tool-prominent layout that doesn't
+                // surface client-identifying filenames on the Home
+                // Screen — the lawyer-wedge default for hidden mode.
+                if first.name.isEmpty {
                     Text(first.tool)
-                        .font(.system(size: 10, weight: .semibold))
+                        .font(.system(size: 15, weight: .semibold))
                         .foregroundColor(brandColor)
-                    Text("·")
-                        .font(.system(size: 10))
-                        .foregroundColor(.secondary)
+                    Spacer(minLength: 4)
                     Text(relativeTime(from: first.openedAtDate))
-                        .font(.system(size: 10))
+                        .font(.system(size: 11))
                         .foregroundColor(.secondary)
+                } else {
+                    Text(first.name)
+                        .font(.system(size: 13, weight: .semibold))
+                        .lineLimit(2)
+                        .multilineTextAlignment(.leading)
+                    Spacer(minLength: 4)
+                    HStack(spacing: 4) {
+                        Text(first.tool)
+                            .font(.system(size: 10, weight: .semibold))
+                            .foregroundColor(brandColor)
+                        Text("·")
+                            .font(.system(size: 10))
+                            .foregroundColor(.secondary)
+                        Text(relativeTime(from: first.openedAtDate))
+                            .font(.system(size: 10))
+                            .foregroundColor(.secondary)
+                    }
                 }
             } else {
                 Text("No recent files yet")
@@ -186,20 +200,35 @@ private struct MediumView: View {
                         Image(systemName: "doc.fill")
                             .font(.system(size: 11))
                             .foregroundColor(brandColor.opacity(0.7))
-                        VStack(alignment: .leading, spacing: 1) {
-                            Text(file.name)
-                                .font(.system(size: 11, weight: .semibold))
-                                .lineLimit(1)
-                            HStack(spacing: 3) {
+                        // Privacy-mode (empty name) renders the tool
+                        // label as the primary line so a lawyer's
+                        // client-named files don't appear on the Home
+                        // Screen.
+                        if file.name.isEmpty {
+                            VStack(alignment: .leading, spacing: 1) {
                                 Text(file.tool)
-                                    .font(.system(size: 9, weight: .semibold))
+                                    .font(.system(size: 11, weight: .semibold))
                                     .foregroundColor(brandColor)
-                                Text("·")
-                                    .font(.system(size: 9))
-                                    .foregroundColor(.secondary)
                                 Text(relativeTime(from: file.openedAtDate))
                                     .font(.system(size: 9))
                                     .foregroundColor(.secondary)
+                            }
+                        } else {
+                            VStack(alignment: .leading, spacing: 1) {
+                                Text(file.name)
+                                    .font(.system(size: 11, weight: .semibold))
+                                    .lineLimit(1)
+                                HStack(spacing: 3) {
+                                    Text(file.tool)
+                                        .font(.system(size: 9, weight: .semibold))
+                                        .foregroundColor(brandColor)
+                                    Text("·")
+                                        .font(.system(size: 9))
+                                        .foregroundColor(.secondary)
+                                    Text(relativeTime(from: file.openedAtDate))
+                                        .font(.system(size: 9))
+                                        .foregroundColor(.secondary)
+                                }
                             }
                         }
                         Spacer()

@@ -506,10 +506,12 @@ class _LegalFooter extends StatelessWidget {
         style: baseStyle,
         children: [
           const TextSpan(
-            text: 'Monthly and yearly auto-renew until cancelled — manage '
-                "in your Apple ID's subscription settings. Lifetime is a "
-                'one-time purchase. Payment is charged to your Apple ID at '
-                'confirmation. By continuing you agree to our ',
+            text: 'Subscriptions automatically renew unless cancelled at '
+                'least 24 hours before the end of the current period. '
+                'Payment is charged to your Apple ID at confirmation. '
+                'Manage or cancel anytime in your Apple ID account '
+                'settings. Lifetime is a one-time purchase with no '
+                'renewal. By continuing you agree to our ',
           ),
           TextSpan(
             text: 'Terms of Service',

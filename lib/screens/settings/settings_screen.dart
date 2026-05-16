@@ -9,6 +9,7 @@ import '../../data/services/consent_service.dart';
 import '../../data/services/haptics_service.dart';
 import '../../data/services/promo_code_service.dart';
 import '../../data/services/purchase_service.dart';
+import '../../data/services/widget_data_service.dart';
 import '../../widgets/redeem_promo_dialog.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
@@ -21,12 +22,14 @@ class SettingsScreen extends ConsumerStatefulWidget {
 class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   PackageInfo? _info;
   bool _promoUsed = false;
+  bool _widgetShowsNames = true;
 
   @override
   void initState() {
     super.initState();
     _loadInfo();
     _loadPromoState();
+    _loadWidgetPref();
   }
 
   Future<void> _loadInfo() async {
@@ -37,6 +40,18 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   Future<void> _loadPromoState() async {
     final used = await PromoCodeService.instance.hasAnyRedemption();
     if (mounted) setState(() => _promoUsed = used);
+  }
+
+  Future<void> _loadWidgetPref() async {
+    final show = await WidgetDataService.instance.showFileNames();
+    if (mounted) setState(() => _widgetShowsNames = show);
+  }
+
+  Future<void> _toggleWidgetNames() async {
+    HapticsService.instance.tap();
+    final next = !_widgetShowsNames;
+    await WidgetDataService.instance.setShowFileNames(next);
+    if (mounted) setState(() => _widgetShowsNames = next);
   }
 
   Future<void> _open(String url) async {
@@ -178,9 +193,24 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             _SettingsTile(
               icon: Icons.shield_outlined,
               title: 'Manage data preferences',
-              subtitle:
-                  'Reopen the consent form to change analytics / ad choices',
+              subtitle: 'Reopen the consent form to manage analytics, '
+                  'ad choices, and the California Do Not Sell My '
+                  'Personal Information opt-out',
               onTap: _resurfaceConsent,
+            ),
+            _SettingsTile(
+              icon: _widgetShowsNames
+                  ? Icons.visibility_outlined
+                  : Icons.visibility_off_outlined,
+              title: _widgetShowsNames
+                  ? 'Home Screen widget · file names visible'
+                  : 'Home Screen widget · file names hidden',
+              subtitle: _widgetShowsNames
+                  ? 'Tap to hide file names on the widget — useful '
+                      'when client-identifying file names should stay '
+                      'off the Home Screen.'
+                  : 'Tap to show file names again on the widget.',
+              onTap: _toggleWidgetNames,
             ),
             _SettingsTile(
               icon: Icons.description_outlined,

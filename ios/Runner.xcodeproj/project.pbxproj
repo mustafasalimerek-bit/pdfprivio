@@ -20,6 +20,7 @@
 		97C146FE1CF9000F007C117D /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 97C146FD1CF9000F007C117D /* Assets.xcassets */; };
 		97C147011CF9000F007C117D /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 97C146FF1CF9000F007C117D /* LaunchScreen.storyboard */; };
 		99EF5541D6AF9B865D934195 /* TextRecognizerBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = CB99833E405AD436DA30A198 /* TextRecognizerBridge.swift */; };
+		9FA605747AA2E8BC0CAD5D08 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = FE7DEE8781C4F58926E8CABA /* PrivacyInfo.xcprivacy */; };
 		A135694D173C91F6E7BE9806 /* Pods_Runner.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C6E27A9C295B878AE004FD20 /* Pods_Runner.framework */; };
 		AFB88FA51F288E071F8DA659 /* PDFPrivioWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = 46EE2897018D20D7B6CA038A /* PDFPrivioWidget.swift */; };
 		B7D669C8727B33ABBC455CAB /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B1F2D1347F6D9A0C9B22EB0D /* Foundation.framework */; };
@@ -102,6 +103,7 @@
 		CB99833E405AD436DA30A198 /* TextRecognizerBridge.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = TextRecognizerBridge.swift; sourceTree = "<group>"; };
 		DC422804FBD89E2A96F0AF65 /* GoogleService-Info.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
 		E946B0CC7A149E0AD26D7836 /* Assets.xcassets */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		FE7DEE8781C4F58926E8CABA /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; includeInIndex = 1; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -222,6 +224,7 @@
 				AA96D1015543CE2C25FF53C3 /* DocumentScannerBridge.swift */,
 				CB99833E405AD436DA30A198 /* TextRecognizerBridge.swift */,
 				0C15AD83CEFD78125A03CB20 /* Runner.entitlements */,
+				FE7DEE8781C4F58926E8CABA /* PrivacyInfo.xcprivacy */,
 			);
 			path = Runner;
 			sourceTree = "<group>";
@@ -367,6 +370,7 @@
 				97C146FE1CF9000F007C117D /* Assets.xcassets in Resources */,
 				97C146FC1CF9000F007C117D /* Main.storyboard in Resources */,
 				2144F4C18CEFD25703A4CD7F /* GoogleService-Info.plist in Resources */,
+				9FA605747AA2E8BC0CAD5D08 /* PrivacyInfo.xcprivacy in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

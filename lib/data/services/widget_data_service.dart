@@ -4,6 +4,7 @@ import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:home_widget/home_widget.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'recent_files_service.dart';
 
@@ -26,6 +27,13 @@ class WidgetDataService {
   static const String _widgetName = 'PDFPrivioWidget';
   static const String _dataKey = 'recent_files_json';
   static const int _maxRows = 3;
+
+  // shared_preferences key for the user-facing toggle. Defaults to
+  // true (show file names) so the widget is useful out of the box.
+  // Lawyer / privacy-conscious users can disable it from Settings —
+  // the widget then displays the tool label + relative time only,
+  // hiding any client-identifying filename from the Home Screen.
+  static const String _showNamesKey = 'pdfprivio.widget.show_filenames';
 
   StreamSubscription<void>? _sub;
   bool _inited = false;
@@ -55,6 +63,22 @@ class WidgetDataService {
     _sub = RecentFilesService.instance.changes.listen((_) => _publishRecents());
   }
 
+  /// Returns the current "show file names in widget" preference.
+  /// Defaults to true so widgets are useful for the median user; lawyer
+  /// / privacy-conscious users can flip it off from Settings.
+  Future<bool> showFileNames() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getBool(_showNamesKey) ?? true;
+  }
+
+  /// Persist the toggle and immediately republish so the widget reflects
+  /// the new setting without waiting for the next file write.
+  Future<void> setShowFileNames(bool value) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_showNamesKey, value);
+    await _publishRecents();
+  }
+
   /// Read up to _maxRows recent files and write them as JSON to the
   /// shared App Group store, then ask WidgetKit to redraw.
   ///
@@ -71,9 +95,15 @@ class WidgetDataService {
       final files = await RecentFilesService.instance.getAll();
       if (files.isEmpty && !allowEmptyOverwrite) return;
 
+      // Resolve the user's preference once per publish. Storing an empty
+      // string for name when names are hidden lets the Swift widget fall
+      // back to a generic "tool · time" row without needing its own copy
+      // of the toggle state.
+      final showNames = await showFileNames();
+
       final top = files.take(_maxRows).map((f) {
         return {
-          'name': f.displayName,
+          'name': showNames ? f.displayName : '',
           'tool': f.toolLabel,
           'openedAtMs': f.openedAt.millisecondsSinceEpoch,
         };
