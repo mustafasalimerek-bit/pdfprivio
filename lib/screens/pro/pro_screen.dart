@@ -254,8 +254,9 @@ class _Hero extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            'Pro lifts the free-tier caps on 15 tools and opens Form '
-            'Fill, Bates numbering, and Redact. Same on-device privacy.',
+            'Pro lifts the daily caps on 15 tools and unlocks the 5 '
+            'Pro-only tools — Form Fill, Bates, Redact, Batch operations, '
+            'and Receipt scanner. Same on-device privacy.',
             style: TextStyle(
               fontSize: 13,
               color: Colors.white.withValues(alpha: 0.92),
@@ -412,10 +413,12 @@ class _PerksBlock extends StatelessWidget {
   const _PerksBlock();
 
   static const _perks = <(IconData, String)>[
-    (Icons.timer_off_outlined, 'No daily limits on any of the 15 free tools'),
+    (Icons.timer_off_outlined, 'No daily limits on any of the 15 metered tools'),
     (Icons.edit_document, 'Form Fill — IRS, USCIS, court motion AcroForm fields'),
     (Icons.tag, 'Bates numbering — legal discovery standard'),
     (Icons.format_color_fill, 'Redact — text removed from data stream, not just hidden'),
+    (Icons.dynamic_feed_outlined, 'Batch operations — compress/watermark/rotate stacks of PDFs'),
+    (Icons.receipt_long_outlined, 'Receipt scanner — auto-extract date/vendor/total → QuickBooks CSV'),
     (Icons.block, 'No ads anywhere'),
     (Icons.lock_outline, 'Same on-device processing — your PDFs never leave the device'),
   ];
@@ -484,9 +487,9 @@ class _StaysFreeNote extends StatelessWidget {
           SizedBox(width: 10),
           Expanded(
             child: Text(
-              "Free stays free. The 15 tools you can use today never get "
-              'paywalled — Pro removes their daily caps, not the tools '
-              'themselves.',
+              'Free stays free. 18 of the 23 tools work without Pro — 15 '
+              'with daily caps, plus Bookmarks, Summarize, and Live Text '
+              'view fully unlimited. Pro removes the caps, never the tools.',
               style: TextStyle(
                 fontSize: 12,
                 color: AppColors.success,
@@ -506,9 +509,11 @@ class _Faq extends StatelessWidget {
   static const _items = <_FaqItem>[
     _FaqItem(
       q: 'What is in the free tier?',
-      a: '15 tools with daily caps (1–5 uses per tool per day) plus the '
-          'three Pro-only tools locked. Quotas reset at midnight in your '
-          'local timezone.',
+      a: '18 of 23 tools work for free: 15 with daily caps (1–5 uses per '
+          'tool per day), plus Bookmarks, Summarize PDF, and Live Text '
+          'view fully unlimited. The 5 Pro-only tools are Form Fill, '
+          'Bates, Redact, Batch operations, and Receipt scanner. Quotas '
+          'reset at midnight in your local timezone.',
     ),
     _FaqItem(
       q: 'Why three pricing options?',

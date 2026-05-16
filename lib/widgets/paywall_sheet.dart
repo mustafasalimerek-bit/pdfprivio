@@ -298,9 +298,10 @@ class _Header extends StatelessWidget {
                   ? 'Your daily quota resets at midnight'
                       '${inHours != null ? ' — in ${inHours}h' : ''}. '
                       'Or remove the cap and unlock Form Fill, Bates, '
-                      'and Redact right now.'
+                      'Redact, Batch, and Receipt scanner right now.'
                   : 'Remove daily limits across 15 tools and unlock '
-                      'Form Fill, Bates numbering, and Redact.',
+                      'Form Fill, Bates, Redact, Batch operations, and '
+                      'Receipt scanner.',
               style: const TextStyle(
                 fontSize: 13,
                 color: AppColors.textSecondary,
@@ -317,7 +318,7 @@ class _Header extends StatelessWidget {
 class _PerkList extends StatelessWidget {
   static const _items = <String>[
     'No daily limits on any tool',
-    'Form Fill, Bates numbering, Redact — unlocked',
+    'Form Fill, Bates, Redact, Batch, Receipt scanner — unlocked',
     'No ads',
     'Same on-device privacy guarantee',
   ];
