@@ -88,6 +88,7 @@ import UIKit
 class AppIntentBridge: NSObject, FlutterPlugin {
   static let channelName = "com.erekstudio.pdfprivio/app_intent"
   static let defaultsKey = "pdfprivio.pendingIntentRoute"
+  static let appGroupId = "group.com.erekstudio.pdfprivio"
 
   static func register(with registrar: FlutterPluginRegistrar) {
     let instance = AppIntentBridge()
@@ -101,9 +102,20 @@ class AppIntentBridge: NSObject, FlutterPlugin {
   func handle(_ call: FlutterMethodCall, result: @escaping FlutterResult) {
     switch call.method {
     case "consume":
-      let defaults = UserDefaults.standard
-      let pending = defaults.string(forKey: Self.defaultsKey)
-      defaults.removeObject(forKey: Self.defaultsKey)
+      // Look in both buckets: the Runner-side intents write to
+      // standard UserDefaults (same process); the widget extension's
+      // control button writes to App Group UserDefaults (different
+      // process — shared container is the only way across the
+      // process boundary).
+      let standard = UserDefaults.standard
+      let group = UserDefaults(suiteName: Self.appGroupId)
+      let standardRoute = standard.string(forKey: Self.defaultsKey)
+      let groupRoute = group?.string(forKey: Self.defaultsKey)
+      // Prefer the group route if both somehow exist — control taps
+      // and Action Button presses are the higher-intent signal.
+      let pending = groupRoute ?? standardRoute
+      standard.removeObject(forKey: Self.defaultsKey)
+      group?.removeObject(forKey: Self.defaultsKey)
       result(pending)
     default:
       result(FlutterMethodNotImplemented)

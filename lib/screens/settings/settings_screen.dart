@@ -243,6 +243,83 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               onTap: () => _open('https://mustafasalimerek-bit.github.io/pdfprivio/terms/'),
             ),
             const SizedBox(height: 18),
+            _SectionHeader(title: 'iOS integrations'),
+            _SettingsTile(
+              icon: Icons.bolt_outlined,
+              title: 'Bind to Action Button',
+              subtitle: 'iPhone 15 Pro / 16 Pro: Settings → Action Button '
+                  '→ Shortcut → PDFPrivio → Scan to PDF. One physical '
+                  'press opens the document scanner.',
+              onTap: () {
+                HapticsService.instance.tap();
+                showDialog<void>(
+                  context: context,
+                  builder: (ctx) => AlertDialog(
+                    title: const Text('Bind to Action Button'),
+                    content: const SingleChildScrollView(
+                      child: Text(
+                        'iPhone 15 Pro and later — the silent switch is '
+                        'replaced by a configurable Action Button.\n\n'
+                        '1. Open the iOS Settings app.\n'
+                        '2. Action Button → swipe to "Shortcut".\n'
+                        '3. Tap "Choose a Shortcut" → PDFPrivio → '
+                        '"Scan to PDF".\n\n'
+                        'A press-and-hold of the Action Button now '
+                        'opens PDFPrivio\'s scanner. Other shortcuts '
+                        '(Sign, Redact, OCR, Find sensitive data, '
+                        'Open Recent) are also available.',
+                      ),
+                    ),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.of(ctx).pop(),
+                        child: const Text('Got it'),
+                      ),
+                    ],
+                  ),
+                );
+              },
+            ),
+            _SettingsTile(
+              icon: Icons.tune_outlined,
+              title: 'Add to Control Center / Lock Screen',
+              subtitle: 'iOS 18+: long-press Control Center → + → '
+                  'Scan to PDF. Tap from the Lock Screen without '
+                  'unlocking.',
+              onTap: () {
+                HapticsService.instance.tap();
+                showDialog<void>(
+                  context: context,
+                  builder: (ctx) => AlertDialog(
+                    title: const Text('Lock Screen quick scan'),
+                    content: const SingleChildScrollView(
+                      child: Text(
+                        'iOS 18 lets you put PDFPrivio\'s scanner on '
+                        'the Lock Screen or in Control Center.\n\n'
+                        'Control Center:\n'
+                        '1. Swipe down from the top-right.\n'
+                        '2. Long-press a blank area → "+" → search '
+                        '"Scan to PDF".\n'
+                        '3. Tap to add. Drag to reposition.\n\n'
+                        'Lock Screen:\n'
+                        '1. Long-press the Lock Screen → Customize → '
+                        'Lock Screen.\n'
+                        '2. Tap a control slot → search "Scan to PDF".\n\n'
+                        'On iOS 17 or earlier, use the Action Button '
+                        'tile above or the home screen widget.',
+                      ),
+                    ),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.of(ctx).pop(),
+                        child: const Text('Got it'),
+                      ),
+                    ],
+                  ),
+                );
+              },
+            ),
+            const SizedBox(height: 18),
             _SectionHeader(title: 'About'),
             _SettingsTile(
               icon: Icons.info_outline,

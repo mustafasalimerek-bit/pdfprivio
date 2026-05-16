@@ -9,6 +9,35 @@
 
 import WidgetKit
 import SwiftUI
+import AppIntents
+
+// MARK: - ScanToPdfIntent (widget-side copy)
+//
+// AppIntents bound to a ControlWidgetButton must be declared inside
+// the widget extension's compilation unit — the widget target can't
+// see the Runner target's intent struct. Both copies enqueue the
+// same App Group UserDefaults key, so the host app's
+// AppIntentBridge drains either invocation identically. Keep this
+// in sync with ios/Runner/AppIntents/Intents.swift if the routing
+// key or route string changes.
+
+@available(iOS 16.0, *)
+struct ScanToPdfIntent: AppIntent {
+    static var title: LocalizedStringResource = "Scan to PDF"
+    static var description = IntentDescription(
+        "Open the document scanner — Apple VisionKit edge detection and multi-page capture into one PDF."
+    )
+    static var openAppWhenRun: Bool = true
+
+    @MainActor
+    func perform() async throws -> some IntentResult {
+        if let defaults = UserDefaults(suiteName: "group.com.erekstudio.pdfprivio") {
+            defaults.set("/tool/scan", forKey: "pdfprivio.pendingIntentRoute")
+        }
+        UserDefaults.standard.set("/tool/scan", forKey: "pdfprivio.pendingIntentRoute")
+        return .result()
+    }
+}
 
 // MARK: - Data model
 
@@ -331,8 +360,7 @@ private struct MediumView: View {
 
 // MARK: - Widget definition
 
-@main
-struct PDFPrivioWidget: Widget {
+struct PDFPrivioRecentWidget: Widget {
     let kind: String = "PDFPrivioWidget"
 
     var body: some WidgetConfiguration {
@@ -355,5 +383,43 @@ struct PDFPrivioWidget: Widget {
             .accessoryCircular,
             .accessoryInline
         ])
+    }
+}
+
+// MARK: - Lock Screen / Control Center quick action (iOS 18+)
+//
+// A Control surface lets the user pin "Scan to PDF with PDFPrivio"
+// to Control Center or as a Lock Screen control. Tapping it fires
+// the same ScanToPdfIntent that Siri and the Action Button bind to,
+// so iPhone 15 Pro+ owners can map the hardware Action Button to
+// PDFPrivio's scanner via Settings → Action Button → Shortcut →
+// PDFPrivio → Scan to PDF.
+//
+// Wrapped in iOS 18 availability — ControlWidget didn't ship until
+// iOS 18 (Sept 2024). Pre-18 devices still get every Lock Screen
+// accessory family above.
+
+@available(iOS 18.0, *)
+struct PDFPrivioScanControl: ControlWidget {
+    static let kind: String = "com.erekstudio.pdfprivio.ScanControl"
+
+    var body: some ControlWidgetConfiguration {
+        StaticControlConfiguration(kind: Self.kind) {
+            ControlWidgetButton(action: ScanToPdfIntent()) {
+                Label("Scan to PDF", systemImage: "doc.viewfinder")
+            }
+        }
+        .displayName("Scan to PDF")
+        .description("Open PDFPrivio's document scanner from Control Center or the Lock Screen.")
+    }
+}
+
+@main
+struct PDFPrivioWidgetBundle: WidgetBundle {
+    var body: some Widget {
+        PDFPrivioRecentWidget()
+        if #available(iOS 18.0, *) {
+            PDFPrivioScanControl()
+        }
     }
 }
