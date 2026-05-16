@@ -131,7 +131,8 @@ class _RecentFilesCarouselState extends State<RecentFilesCarousel> {
   @override
   Widget build(BuildContext context) {
     if (!_loaded) return const SizedBox(height: 0);
-    if (_files.isEmpty) return const SizedBox(height: 0);
+
+    final isEmpty = _files.isEmpty;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -149,38 +150,123 @@ class _RecentFilesCarouselState extends State<RecentFilesCarousel> {
                 ),
               ),
               const Spacer(),
-              GestureDetector(
-                onTap: () => _seeAll(context),
-                child: const Text(
-                  'See all',
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.primary,
+              if (!isEmpty)
+                GestureDetector(
+                  onTap: () => _seeAll(context),
+                  child: const Text(
+                    'See all',
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.primary,
+                    ),
                   ),
                 ),
-              ),
             ],
           ),
         ),
         SizedBox(
           height: 116,
-          child: ListView.separated(
-            scrollDirection: Axis.horizontal,
-            itemCount: _files.length,
-            separatorBuilder: (_, _) => const SizedBox(width: 10),
-            itemBuilder: (context, i) {
-              final f = _files[i];
-              return _RecentCard(
-                file: f,
-                onTap: () => _open(f),
-                onLongPress: () => _showActions(context, f),
-              );
-            },
-          ),
+          child: isEmpty
+              ? _PlaceholderRow(onScan: () => _routeToScan(context))
+              : ListView.separated(
+                  scrollDirection: Axis.horizontal,
+                  itemCount: _files.length,
+                  separatorBuilder: (_, _) => const SizedBox(width: 10),
+                  itemBuilder: (context, i) {
+                    final f = _files[i];
+                    return _RecentCard(
+                      file: f,
+                      onTap: () => _open(f),
+                      onLongPress: () => _showActions(context, f),
+                    );
+                  },
+                ),
         ),
         const SizedBox(height: 18),
       ],
+    );
+  }
+
+  void _routeToScan(BuildContext context) {
+    HapticsService.instance.tap();
+    // Best-effort: any tap on the empty-state row routes the user
+    // to the Scan flow so the first card actually shows up. The
+    // home screen's hero scan card does the same — this is the
+    // fallback for users who didn't notice it.
+    DefaultTabController.maybeOf(context)?.animateTo(0);
+  }
+}
+
+/// Empty-state strip shown when the user has no recent files yet —
+/// three muted placeholder cards so the home screen always has its
+/// "Recent" surface present (matches the App Store editorial mockup
+/// where the section is always visible). The cards aren't fake data
+/// — they read as ghost slots labelled "Scan / Sign / Edit" so the
+/// user understands what kind of thing will land here.
+class _PlaceholderRow extends StatelessWidget {
+  final VoidCallback onScan;
+  const _PlaceholderRow({required this.onScan});
+
+  static const _slots = <(IconData, String)>[
+    (Icons.document_scanner_outlined, 'Scan'),
+    (Icons.draw_outlined, 'Sign'),
+    (Icons.edit_document, 'Edit'),
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView.separated(
+      scrollDirection: Axis.horizontal,
+      itemCount: _slots.length,
+      separatorBuilder: (_, _) => const SizedBox(width: 10),
+      itemBuilder: (context, i) {
+        final (icon, label) = _slots[i];
+        return InkWell(
+          onTap: onScan,
+          borderRadius: BorderRadius.circular(14),
+          child: SizedBox(
+            width: 102,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  width: 102,
+                  height: 64,
+                  decoration: BoxDecoration(
+                    color: AppColors.border.withValues(alpha: 0.55),
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: Icon(
+                    icon,
+                    color: AppColors.textTertiary,
+                    size: 22,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  label,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textTertiary,
+                    height: 1.15,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                const Text(
+                  'Empty',
+                  style: TextStyle(
+                    fontSize: 10,
+                    color: AppColors.textTertiary,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 }
