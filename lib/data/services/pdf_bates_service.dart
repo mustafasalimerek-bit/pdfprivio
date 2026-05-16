@@ -8,6 +8,7 @@ import 'package:syncfusion_flutter_pdf/pdf.dart' as sf;
 import '../../core/utils/cancellation_token.dart';
 import '../../core/utils/result.dart';
 import '../models/pdf_document.dart';
+import 'audit_service.dart';
 
 /// Where on each page the Bates stamp lands.
 enum BatesPosition {
@@ -124,6 +125,18 @@ class PdfBatesService {
       final outFile = await _writeOutput(
         outBytes,
         '${input.displayName}_bates',
+      );
+      await AuditService.instance.record(
+        tool: 'bates',
+        inputFile: input.file,
+        outputFile: outFile,
+        params: {
+          'prefix': settings.prefix,
+          'startNumber': '${settings.startNumber}',
+          'padding': '${settings.padding}',
+          'position': settings.position.name,
+          'pageCount': '${doc.pages.count}',
+        },
       );
       return Ok(outFile);
     } catch (e) {

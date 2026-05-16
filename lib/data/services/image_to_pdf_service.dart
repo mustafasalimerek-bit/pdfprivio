@@ -8,6 +8,7 @@ import 'package:pdf/widgets.dart' as pw;
 
 import '../../core/utils/cancellation_token.dart';
 import '../../core/utils/result.dart';
+import 'audit_service.dart';
 
 /// Page-size preset used when stitching images into a PDF.
 ///
@@ -103,6 +104,14 @@ class ImageToPdfService {
 
       final outBytes = await pdf.save();
       final file = await _writeOutput(outBytes, outputName ?? 'images');
+      await AuditService.instance.record(
+        tool: 'image_to_pdf',
+        outputFile: file,
+        params: {
+          'imageCount': '${images.length}',
+          'paperSize': paperSize.name,
+        },
+      );
       return Ok(file);
     } catch (e) {
       return Err(FailureKind.unknown, 'Image conversion failed', cause: e);

@@ -8,6 +8,7 @@ import 'package:syncfusion_flutter_pdf/pdf.dart' as sf;
 import '../../core/utils/cancellation_token.dart';
 import '../../core/utils/result.dart';
 import '../models/pdf_document.dart';
+import 'audit_service.dart';
 
 /// One inspected AcroForm field. We expose a flat, UI-friendly view
 /// instead of leaking Syncfusion's class hierarchy to the screens.
@@ -172,6 +173,19 @@ class PdfFormService {
         '${_safeBase(input.displayName)}_filled',
       );
       onProgress?.call(1.0, 'Done');
+
+      // Audit records counts only — never the field values themselves.
+      // A filled IRS form is privileged tax data; the log notes that a
+      // form was filled, not what was written in it.
+      await AuditService.instance.record(
+        tool: 'form_fill',
+        inputFile: input.file,
+        outputFile: outFile,
+        params: {
+          'fieldsFilled': '$filled',
+          'flattened': '$flatten',
+        },
+      );
 
       return Ok(FormSaveOutcome(
         file: outFile,

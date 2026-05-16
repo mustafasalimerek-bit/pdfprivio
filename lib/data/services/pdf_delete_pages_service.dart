@@ -8,6 +8,7 @@ import 'package:syncfusion_flutter_pdf/pdf.dart' as sf;
 import '../../core/utils/cancellation_token.dart';
 import '../../core/utils/result.dart';
 import '../models/pdf_document.dart';
+import 'audit_service.dart';
 
 /// Drops the chosen pages from a PDF and writes a new file with everything
 /// that wasn't selected.
@@ -65,6 +66,15 @@ class PdfDeletePagesService {
       final outFile = await _writeOutput(
         outBytes,
         '${input.displayName}_trimmed',
+      );
+      await AuditService.instance.record(
+        tool: 'delete_pages',
+        inputFile: input.file,
+        outputFile: outFile,
+        params: {
+          'deletedCount': '${pageIndicesToDelete.length}',
+          'keptCount': '$keptCount',
+        },
       );
       return Ok(outFile);
     } catch (e) {

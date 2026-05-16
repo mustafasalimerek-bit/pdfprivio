@@ -8,6 +8,7 @@ import 'package:syncfusion_flutter_pdf/pdf.dart' as sf;
 import '../../core/utils/cancellation_token.dart';
 import '../../core/utils/result.dart';
 import '../models/pdf_document.dart';
+import 'audit_service.dart';
 
 /// How the page number text renders.
 ///
@@ -164,6 +165,17 @@ class PdfPageNumberService {
       final outFile = await _writeOutput(
         outBytes,
         '${input.displayName}_numbered',
+      );
+      await AuditService.instance.record(
+        tool: 'page_numbers',
+        inputFile: input.file,
+        outputFile: outFile,
+        params: {
+          'format': settings.format.name,
+          'position': settings.position.name,
+          'startNumber': '${settings.startNumber}',
+          'skipFirst': '${settings.skipFirst}',
+        },
       );
       return Ok(outFile);
     } catch (e) {

@@ -8,6 +8,7 @@ import 'package:syncfusion_flutter_pdf/pdf.dart' as sf;
 import '../../core/utils/cancellation_token.dart';
 import '../../core/utils/result.dart';
 import '../models/pdf_document.dart';
+import 'audit_service.dart';
 
 /// Three concrete split strategies — every shipping competitor supports a
 /// subset of these and most of them gate them behind different paywalls;
@@ -50,6 +51,16 @@ class PdfSplitService {
       final file = await _writeOutput(
         outBytes,
         '${input.displayName}_p$startPage-$endPage',
+      );
+      await AuditService.instance.record(
+        tool: 'split',
+        inputFile: input.file,
+        outputFile: file,
+        params: {
+          'mode': 'extractRange',
+          'startPage': '$startPage',
+          'endPage': '$endPage',
+        },
       );
       return Ok(file);
     } catch (e) {
@@ -148,6 +159,14 @@ class PdfSplitService {
         }
         onProgress?.call((r + 1) / ranges.length);
       }
+      await AuditService.instance.record(
+        tool: 'split',
+        inputFile: input.file,
+        params: {
+          'mode': 'multiRange',
+          'partCount': '${outputs.length}',
+        },
+      );
       return Ok(outputs);
     } catch (e) {
       return _classify(e);

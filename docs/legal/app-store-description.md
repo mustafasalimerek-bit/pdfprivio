@@ -131,24 +131,28 @@ Apple matches keywords AND the title + subtitle. Don't repeat the app
 name. Lawyer/CPA-tilted to support the wedge.
 
 ```
-pdf,scanner,ocr,redact,esign,sign,form,fill,merge,split,compress,bates,watermark,lawyer,accountant
+pdf,scanner,ocr,redact,sign,merge,compress,bates,receipt,expense,summary,ai,lawyer,accountant
 ```
 
-99 chars. Squeezes 15 high-intent terms.
+98 chars. Drops "esign" (overlaps with sign), "form/fill/split/watermark"
+(catch-all "pdf" handles search intent), in favour of the new
+high-intent terms: receipt (CPA / freelancer), expense (tax season),
+summary + ai (Apple Intelligence summary).
 
 Alternative, prosumer-tilted:
 
 ```
-pdf,scanner,ocr,redact,sign,merge,split,compress,form,fillable,bates,watermark,tools,editor
+pdf,scanner,ocr,redact,sign,merge,split,compress,form,bates,watermark,receipt,summary,editor
 ```
 
-90 chars. (Originally included "acrobat" — removed; Apple guideline 4.7
+96 chars. (Originally included "acrobat" — removed; Apple guideline 4.7
 / 5.6 prohibit competitor trademarks as keywords and Adobe could file
 a DMCA-style complaint. Brand-free keywords are safe.)
 
-Recommendation: lawyer-tilted at launch. If Reddit /r/LawFirm post lands
-and we get any organic search ranking, swap broader prosumer keywords
-in a v1.1 metadata-only release.
+Recommendation: lawyer/CPA-tilted at launch — receipt + expense + ai
+catch the new feature surface. If Reddit /r/LawFirm post lands and we
+get organic search ranking, swap broader prosumer keywords in a v1.1
+metadata-only release.
 
 ---
 

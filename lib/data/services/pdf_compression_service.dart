@@ -13,6 +13,7 @@ import '../../core/utils/cancellation_token.dart';
 import '../../core/utils/result.dart';
 import '../models/compression_settings.dart';
 import '../models/pdf_document.dart';
+import 'audit_service.dart';
 
 /// Outcome of a successful compression — exposes both files so the result
 /// screen can show "1.4 MB → 320 KB · 77% saved".
@@ -106,6 +107,18 @@ class PdfCompressionService {
       final finalSize = await _fileSize(outPath);
       stopwatch.stop();
       onProgress?.call(1.0, 'Ready');
+
+      await AuditService.instance.record(
+        tool: 'compress',
+        inputFile: inputFile,
+        outputFile: File(outPath),
+        params: {
+          'level': settings.level.name,
+          'originalBytes': '$originalSize',
+          'compressedBytes': '$finalSize',
+          'elapsedMs': '${stopwatch.elapsedMilliseconds}',
+        },
+      );
 
       return Ok(CompressionOutcome(
         original: inputFile,

@@ -8,6 +8,7 @@ import 'package:syncfusion_flutter_pdf/pdf.dart' as sf;
 import '../../core/utils/cancellation_token.dart';
 import '../../core/utils/result.dart';
 import '../models/pdf_document.dart';
+import 'audit_service.dart';
 
 /// Quarter-turn page rotation. UI surfaces the same names users see in
 /// Photos and Files, not the engine's enum names.
@@ -98,6 +99,12 @@ class PdfRotateService {
       final outFile = await _writeOutput(
         outBytes,
         '${input.displayName}_rotated',
+      );
+      await AuditService.instance.record(
+        tool: 'rotate',
+        inputFile: input.file,
+        outputFile: outFile,
+        params: {'rotation': rotation.name},
       );
       return Ok(outFile);
     } catch (e) {

@@ -6,6 +6,7 @@ import 'package:syncfusion_flutter_pdf/pdf.dart' as sf;
 
 import '../../core/utils/result.dart';
 import '../models/pdf_document.dart';
+import 'audit_service.dart';
 
 /// What the encrypted PDF will allow non-owner viewers to do.
 ///
@@ -88,6 +89,19 @@ class PdfPasswordService {
         outBytes,
         '${input.displayName}_protected',
       );
+      // Audit records ACTION, never the password itself — privilege
+      // applies to the log too. Log length so the user can later
+      // verify "I used a 12-char password".
+      await AuditService.instance.record(
+        tool: 'password',
+        inputFile: input.file,
+        outputFile: outFile,
+        params: {
+          'action': 'protect',
+          'level': level.name,
+          'passwordLength': '${userPassword.length}',
+        },
+      );
       return Ok(outFile);
     } catch (e) {
       return Err(FailureKind.unknown, 'Protection failed', cause: e);
@@ -118,6 +132,12 @@ class PdfPasswordService {
       final outFile = await _writeOutput(
         outBytes,
         '${input.displayName}_unlocked',
+      );
+      await AuditService.instance.record(
+        tool: 'password',
+        inputFile: input.file,
+        outputFile: outFile,
+        params: {'action': 'unlock'},
       );
       return Ok(outFile);
     } catch (e) {

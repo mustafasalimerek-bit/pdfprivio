@@ -8,6 +8,7 @@ import 'package:syncfusion_flutter_pdf/pdf.dart' as sf;
 import '../../core/utils/cancellation_token.dart';
 import '../../core/utils/result.dart';
 import '../models/pdf_document.dart';
+import 'audit_service.dart';
 
 /// Visual layout of the watermark across each page.
 enum WatermarkLayout {
@@ -104,6 +105,16 @@ class PdfWatermarkService {
       final outFile = await _writeOutput(
         outBytes,
         '${input.displayName}_watermarked',
+      );
+      await AuditService.instance.record(
+        tool: 'watermark',
+        inputFile: input.file,
+        outputFile: outFile,
+        params: {
+          'text': settings.text,
+          'layout': settings.layout.name,
+          'opacity': settings.opacity.name,
+        },
       );
       return Ok(outFile);
     } catch (e) {
