@@ -202,7 +202,7 @@ class _RedeemPromoDialogState extends State<RedeemPromoDialog> {
               LengthLimitingTextInputFormatter(20),
             ],
             decoration: InputDecoration(
-              hintText: 'e.g. LAWYER14',
+              hintText: 'Enter your code',
               errorText: _error,
               border: const OutlineInputBorder(),
             ),
