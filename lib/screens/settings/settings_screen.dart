@@ -13,6 +13,7 @@ import '../../data/services/purchase_service.dart';
 import '../../data/services/widget_data_service.dart';
 import '../../widgets/redeem_promo_dialog.dart';
 import '../audit_log/audit_log_screen.dart';
+import '../receipts/expense_ledger_screen.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
@@ -218,7 +219,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             _SettingsTile(
               icon: Icons.receipt_long_outlined,
               title: 'Audit log',
-              subtitle: 'Every Sign / Redact / OCR / Merge / PII Scan '
+              subtitle: 'Every tool operation (sign, redact, OCR, merge, '
+                  'batch, receipt, PII scan, summarize, Live Text) '
                   'recorded with timestamp + file metadata. Browse, '
                   'export as CSV, or clear.',
               onTap: () {
@@ -226,6 +228,21 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 Navigator.of(context).push(
                   MaterialPageRoute(
                     builder: (_) => const AuditLogScreen(),
+                  ),
+                );
+              },
+            ),
+            _SettingsTile(
+              icon: Icons.account_balance_wallet_outlined,
+              title: 'Expense ledger',
+              subtitle: 'Browse every captured receipt and export the '
+                  'year-end CSV for QuickBooks / Xero / FreshBooks. '
+                  'Stays on this device.',
+              onTap: () {
+                HapticsService.instance.tap();
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => const ExpenseLedgerScreen(),
                   ),
                 );
               },
