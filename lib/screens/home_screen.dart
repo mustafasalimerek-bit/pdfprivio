@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../core/theme/colors.dart';
+import '../core/utils/responsive.dart';
 import '../data/services/haptics_service.dart';
 import '../data/services/purchase_service.dart';
 import '../data/services/usage_limits_service.dart';
@@ -36,6 +37,7 @@ class HomeScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final tiles = _tiles();
     return Scaffold(
       appBar: AppBar(
         title: const Text(
@@ -44,177 +46,207 @@ class HomeScreen extends ConsumerWidget {
         ),
       ),
       body: SafeArea(
-        child: ListView(
-          padding: const EdgeInsets.all(16),
-          children: [
-            const SizedBox(height: 4),
-            const Text(
-              'Offline PDF tools',
-              style: TextStyle(
-                fontSize: 14,
-                color: AppColors.textSecondary,
-              ),
-            ),
-            const SizedBox(height: 16),
-            _ToolTile(
-              icon: Icons.document_scanner_outlined,
-              title: 'Scan to PDF',
-              subtitle: 'Camera → auto-edge → multi-page → one PDF',
-              toolId: 'scan_to_pdf',
-              builder: (_) => const ScanScreen(),
-            ),
-            _ToolTile(
-              icon: Icons.find_in_page_outlined,
-              title: 'OCR PDF',
-              subtitle: 'Scanned PDF → searchable text (Apple Vision)',
-              toolId: 'ocr_pdf',
-              builder: (_) => const OcrPdfScreen(),
-            ),
-            _ToolTile(
-              icon: Icons.library_books_outlined,
-              title: 'Merge PDFs',
-              subtitle: 'Combine multiple PDFs into one',
-              toolId: 'merge',
-              builder: (_) => const MergeScreen(),
-            ),
-            _ToolTile(
-              icon: Icons.compress_outlined,
-              title: 'Compress PDF',
-              subtitle: 'Shrink for email — keep quality',
-              toolId: 'compress',
-              builder: (_) => const CompressScreen(),
-            ),
-            _ToolTile(
-              icon: Icons.content_cut_outlined,
-              title: 'Split PDF',
-              subtitle: 'Extract range, every N pages, or N parts',
-              toolId: 'split',
-              builder: (_) => const SplitScreen(),
-            ),
-            _ToolTile(
-              icon: Icons.image_outlined,
-              title: 'Image to PDF',
-              subtitle: 'Photos, receipts, screenshots → one PDF',
-              toolId: 'image_to_pdf',
-              builder: (_) => const ImageToPdfScreen(),
-            ),
-            _ToolTile(
-              icon: Icons.rotate_right_outlined,
-              title: 'Rotate pages',
-              subtitle: 'Fix sideways scans or flip a PDF',
-              toolId: 'rotate',
-              builder: (_) => const RotateScreen(),
-            ),
-            _ToolTile(
-              icon: Icons.delete_sweep_outlined,
-              title: 'Delete pages',
-              subtitle: 'Pick the pages to drop, keep the rest',
-              toolId: 'delete_pages',
-              builder: (_) => const DeletePagesScreen(),
-            ),
-            _ToolTile(
-              icon: Icons.draw_outlined,
-              title: 'Sign PDF',
-              subtitle: 'Draw, place, save — audit-trail included',
-              toolId: 'sign',
-              builder: (_) => const SignScreen(),
-            ),
-            _ToolTile(
-              icon: Icons.edit_document,
-              title: 'Fill form',
-              subtitle: 'IRS, USCIS, court forms — flatten on save',
-              toolId: 'form_fill',
-              builder: (_) => const FormFillScreen(),
-            ),
-            _ToolTile(
-              icon: Icons.format_list_numbered,
-              title: 'Page numbers',
-              subtitle: 'Page 1 of 20 — pick format and position',
-              toolId: 'page_numbers',
-              builder: (_) => const PageNumbersScreen(),
-            ),
-            _ToolTile(
-              icon: Icons.tag,
-              title: 'Bates numbering',
-              subtitle: 'Sequential page IDs — legal discovery standard',
-              toolId: 'bates',
-              builder: (_) => const BatesScreen(),
-            ),
-            _ToolTile(
-              icon: Icons.lock_outline,
-              title: 'Password protect',
-              subtitle: 'AES-256 encrypt or unlock — pick auto-detects',
-              toolId: 'password',
-              builder: (_) => const PasswordScreen(),
-            ),
-            _ToolTile(
-              icon: Icons.water_drop_outlined,
-              title: 'Watermark',
-              subtitle: 'CONFIDENTIAL / DRAFT — diagonal, center, or tile',
-              toolId: 'watermark',
-              builder: (_) => const WatermarkScreen(),
-            ),
-            _ToolTile(
-              icon: Icons.text_snippet_outlined,
-              title: 'Extract text',
-              subtitle: 'Pull text out — born-digital PDFs only',
-              toolId: 'extract_text',
-              builder: (_) => const ExtractTextScreen(),
-            ),
-            _ToolTile(
-              icon: Icons.compare_arrows,
-              title: 'Compare PDFs',
-              subtitle: 'Redline two versions — added & removed text',
-              toolId: 'compare',
-              builder: (_) => const CompareScreen(),
-            ),
-            _ToolTile(
-              icon: Icons.menu_book_outlined,
-              title: 'Bookmarks / TOC',
-              subtitle: 'Jump to a chapter in one tap — long briefs, depositions',
-              toolId: 'bookmarks',
-              builder: (_) => const BookmarksScreen(),
-            ),
-            _ToolTile(
-              icon: Icons.auto_awesome,
-              title: 'Summarize PDF',
-              subtitle: 'On-device Apple Intelligence summary — never uploaded',
-              toolId: 'summarize',
-              builder: (_) => const SummarizeScreen(),
-            ),
-            _ToolTile(
-              icon: Icons.center_focus_strong_outlined,
-              title: 'Live Text view',
-              subtitle: 'Select text from any PDF page — Apple Live Text + Markup',
-              toolId: 'quick_look',
-              builder: (_) => const QuickLookLauncherScreen(),
-            ),
-            _ToolTile(
-              icon: Icons.dynamic_feed_outlined,
-              title: 'Batch operations',
-              subtitle: 'Compress / Watermark / Rotate many PDFs at once',
-              toolId: 'batch',
-              builder: (_) => const BatchScreen(),
-            ),
-            _ToolTile(
-              icon: Icons.shield_outlined,
-              title: 'Find sensitive data',
-              subtitle: 'Auto-detect SSN, EIN, credit cards, emails, phone numbers',
-              toolId: 'pii_scan',
-              builder: (_) => const PiiScanScreen(),
-            ),
-            _ToolTile(
-              icon: Icons.format_color_fill,
-              title: 'Redact',
-              subtitle: 'Search and black out names, account numbers, etc.',
-              toolId: 'redact',
-              builder: (_) => const RedactScreen(),
-            ),
-          ],
+        child: MaxWidthBody(
+          maxWidth: 1200,
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final w = constraints.maxWidth;
+              final columns = w >= Breakpoints.iPadRegular
+                  ? 3
+                  : w >= Breakpoints.iPadCompact
+                      ? 2
+                      : 1;
+              if (columns == 1) {
+                return ListView(
+                  padding: const EdgeInsets.all(16),
+                  children: const [
+                    SizedBox(height: 4),
+                    Text(
+                      'Offline PDF tools',
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                    SizedBox(height: 16),
+                  ] +
+                      tiles,
+                );
+              }
+              return GridView.builder(
+                padding: const EdgeInsets.fromLTRB(16, 20, 16, 16),
+                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: columns,
+                  mainAxisSpacing: 4,
+                  crossAxisSpacing: 12,
+                  mainAxisExtent: 96,
+                ),
+                itemCount: tiles.length,
+                itemBuilder: (_, i) => tiles[i],
+              );
+            },
+          ),
         ),
       ),
     );
   }
+
+  List<Widget> _tiles() => [
+        _ToolTile(
+          icon: Icons.document_scanner_outlined,
+          title: 'Scan to PDF',
+          subtitle: 'Camera → auto-edge → multi-page → one PDF',
+          toolId: 'scan_to_pdf',
+          builder: (_) => const ScanScreen(),
+        ),
+        _ToolTile(
+          icon: Icons.find_in_page_outlined,
+          title: 'OCR PDF',
+          subtitle: 'Scanned PDF → searchable text (Apple Vision)',
+          toolId: 'ocr_pdf',
+          builder: (_) => const OcrPdfScreen(),
+        ),
+        _ToolTile(
+          icon: Icons.library_books_outlined,
+          title: 'Merge PDFs',
+          subtitle: 'Combine multiple PDFs into one',
+          toolId: 'merge',
+          builder: (_) => const MergeScreen(),
+        ),
+        _ToolTile(
+          icon: Icons.compress_outlined,
+          title: 'Compress PDF',
+          subtitle: 'Shrink for email — keep quality',
+          toolId: 'compress',
+          builder: (_) => const CompressScreen(),
+        ),
+        _ToolTile(
+          icon: Icons.content_cut_outlined,
+          title: 'Split PDF',
+          subtitle: 'Extract range, every N pages, or N parts',
+          toolId: 'split',
+          builder: (_) => const SplitScreen(),
+        ),
+        _ToolTile(
+          icon: Icons.image_outlined,
+          title: 'Image to PDF',
+          subtitle: 'Photos, receipts, screenshots → one PDF',
+          toolId: 'image_to_pdf',
+          builder: (_) => const ImageToPdfScreen(),
+        ),
+        _ToolTile(
+          icon: Icons.rotate_right_outlined,
+          title: 'Rotate pages',
+          subtitle: 'Fix sideways scans or flip a PDF',
+          toolId: 'rotate',
+          builder: (_) => const RotateScreen(),
+        ),
+        _ToolTile(
+          icon: Icons.delete_sweep_outlined,
+          title: 'Delete pages',
+          subtitle: 'Pick the pages to drop, keep the rest',
+          toolId: 'delete_pages',
+          builder: (_) => const DeletePagesScreen(),
+        ),
+        _ToolTile(
+          icon: Icons.draw_outlined,
+          title: 'Sign PDF',
+          subtitle: 'Draw, place, save — audit-trail included',
+          toolId: 'sign',
+          builder: (_) => const SignScreen(),
+        ),
+        _ToolTile(
+          icon: Icons.edit_document,
+          title: 'Fill form',
+          subtitle: 'IRS, USCIS, court forms — flatten on save',
+          toolId: 'form_fill',
+          builder: (_) => const FormFillScreen(),
+        ),
+        _ToolTile(
+          icon: Icons.format_list_numbered,
+          title: 'Page numbers',
+          subtitle: 'Page 1 of 20 — pick format and position',
+          toolId: 'page_numbers',
+          builder: (_) => const PageNumbersScreen(),
+        ),
+        _ToolTile(
+          icon: Icons.tag,
+          title: 'Bates numbering',
+          subtitle: 'Sequential page IDs — legal discovery standard',
+          toolId: 'bates',
+          builder: (_) => const BatesScreen(),
+        ),
+        _ToolTile(
+          icon: Icons.lock_outline,
+          title: 'Password protect',
+          subtitle: 'AES-256 encrypt or unlock — pick auto-detects',
+          toolId: 'password',
+          builder: (_) => const PasswordScreen(),
+        ),
+        _ToolTile(
+          icon: Icons.water_drop_outlined,
+          title: 'Watermark',
+          subtitle: 'CONFIDENTIAL / DRAFT — diagonal, center, or tile',
+          toolId: 'watermark',
+          builder: (_) => const WatermarkScreen(),
+        ),
+        _ToolTile(
+          icon: Icons.text_snippet_outlined,
+          title: 'Extract text',
+          subtitle: 'Pull text out — born-digital PDFs only',
+          toolId: 'extract_text',
+          builder: (_) => const ExtractTextScreen(),
+        ),
+        _ToolTile(
+          icon: Icons.compare_arrows,
+          title: 'Compare PDFs',
+          subtitle: 'Redline two versions — added & removed text',
+          toolId: 'compare',
+          builder: (_) => const CompareScreen(),
+        ),
+        _ToolTile(
+          icon: Icons.menu_book_outlined,
+          title: 'Bookmarks / TOC',
+          subtitle: 'Jump to a chapter in one tap — long briefs, depositions',
+          toolId: 'bookmarks',
+          builder: (_) => const BookmarksScreen(),
+        ),
+        _ToolTile(
+          icon: Icons.auto_awesome,
+          title: 'Summarize PDF',
+          subtitle: 'On-device Apple Intelligence summary — never uploaded',
+          toolId: 'summarize',
+          builder: (_) => const SummarizeScreen(),
+        ),
+        _ToolTile(
+          icon: Icons.center_focus_strong_outlined,
+          title: 'Live Text view',
+          subtitle: 'Select text from any PDF page — Apple Live Text + Markup',
+          toolId: 'quick_look',
+          builder: (_) => const QuickLookLauncherScreen(),
+        ),
+        _ToolTile(
+          icon: Icons.dynamic_feed_outlined,
+          title: 'Batch operations',
+          subtitle: 'Compress / Watermark / Rotate many PDFs at once',
+          toolId: 'batch',
+          builder: (_) => const BatchScreen(),
+        ),
+        _ToolTile(
+          icon: Icons.shield_outlined,
+          title: 'Find sensitive data',
+          subtitle: 'Auto-detect SSN, EIN, credit cards, emails, phone numbers',
+          toolId: 'pii_scan',
+          builder: (_) => const PiiScanScreen(),
+        ),
+        _ToolTile(
+          icon: Icons.format_color_fill,
+          title: 'Redact',
+          subtitle: 'Search and black out names, account numbers, etc.',
+          toolId: 'redact',
+          builder: (_) => const RedactScreen(),
+        ),
+      ];
 }
 
 /// A row in the tool grid that knows about Pro entitlement and daily

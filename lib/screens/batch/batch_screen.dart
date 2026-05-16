@@ -7,6 +7,7 @@ import 'package:share_plus/share_plus.dart';
 
 import '../../core/theme/colors.dart';
 import '../../core/utils/cancellation_token.dart';
+import '../../core/utils/responsive.dart';
 import '../../data/models/compression_settings.dart';
 import '../../data/services/batch_operations_service.dart';
 import '../../data/services/haptics_service.dart';
@@ -158,7 +159,7 @@ class _BatchScreenState extends ConsumerState<BatchScreen> {
     return Scaffold(
       appBar: AppBar(title: const Text('Batch operations')),
       body: SafeArea(
-        child: _busy ? _busyView() : _editorView(),
+        child: MaxWidthBody(child: _busy ? _busyView() : _editorView()),
       ),
     );
   }

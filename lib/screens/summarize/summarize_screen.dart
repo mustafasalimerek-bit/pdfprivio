@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/theme/colors.dart';
 import '../../core/utils/format_bytes.dart';
+import '../../core/utils/responsive.dart';
 import '../../data/services/audit_service.dart';
 import '../../data/services/haptics_service.dart';
 import '../../data/services/share_intent_service.dart';
@@ -193,15 +194,17 @@ class _SummarizeScreenState extends ConsumerState<SummarizeScreen> {
         ],
       ),
       body: SafeArea(
-        child: Column(
-          children: [
-            const SizedBox(height: 8),
-            const Center(child: PrivacyBadge()),
-            const SizedBox(height: 8),
-            if (!_availability.isReady && !_checkingAvailability)
-              _AvailabilityBanner(availability: _availability),
-            Expanded(child: _body()),
-          ],
+        child: MaxWidthBody(
+          child: Column(
+            children: [
+              const SizedBox(height: 8),
+              const Center(child: PrivacyBadge()),
+              const SizedBox(height: 8),
+              if (!_availability.isReady && !_checkingAvailability)
+                _AvailabilityBanner(availability: _availability),
+              Expanded(child: _body()),
+            ],
+          ),
         ),
       ),
     );

@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:pdfx/pdfx.dart' as pdfx;
 
 import '../../core/theme/colors.dart';
+import '../../core/utils/responsive.dart';
 import '../../data/services/haptics_service.dart';
 import '../../data/services/pdf_outline_service.dart';
 import '../../data/services/share_intent_service.dart';
@@ -99,13 +100,15 @@ class _BookmarksScreenState extends ConsumerState<BookmarksScreen> {
         ],
       ),
       body: SafeArea(
-        child: Column(
-          children: [
-            const SizedBox(height: 8),
-            const Center(child: PrivacyBadge()),
-            const SizedBox(height: 8),
-            Expanded(child: _body()),
-          ],
+        child: MaxWidthBody(
+          child: Column(
+            children: [
+              const SizedBox(height: 8),
+              const Center(child: PrivacyBadge()),
+              const SizedBox(height: 8),
+              Expanded(child: _body()),
+            ],
+          ),
         ),
       ),
     );

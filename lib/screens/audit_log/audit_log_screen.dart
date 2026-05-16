@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 import 'package:share_plus/share_plus.dart';
 
 import '../../core/theme/colors.dart';
+import '../../core/utils/responsive.dart';
 import '../../data/models/audit_entry.dart';
 import '../../data/services/audit_service.dart';
 import '../../data/services/haptics_service.dart';
@@ -111,7 +112,7 @@ class _AuditLogScreenState extends ConsumerState<AuditLogScreen> {
             ),
         ],
       ),
-      body: SafeArea(child: _body()),
+      body: SafeArea(child: MaxWidthBody(child: _body())),
     );
   }
 

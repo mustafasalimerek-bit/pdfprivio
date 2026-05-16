@@ -5,6 +5,7 @@ import 'package:package_info_plus/package_info_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../core/theme/colors.dart';
+import '../../core/utils/responsive.dart';
 import '../../data/services/consent_service.dart';
 import '../../data/services/haptics_service.dart';
 import '../../data/services/promo_code_service.dart';
@@ -134,9 +135,10 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     return Scaffold(
       appBar: AppBar(title: const Text('Settings')),
       body: SafeArea(
-        child: ListView(
-          padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
-          children: [
+        child: MaxWidthBody(
+          child: ListView(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+            children: [
             _SectionHeader(title: 'Subscription'),
             _SettingsTile(
               icon: Icons.workspace_premium_outlined,
@@ -301,6 +303,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               ),
             ),
           ],
+          ),
         ),
       ),
     );

@@ -4,6 +4,7 @@ import 'package:share_plus/share_plus.dart';
 
 import '../../core/theme/colors.dart';
 import '../../core/utils/format_bytes.dart';
+import '../../core/utils/responsive.dart';
 import '../../data/models/recent_file.dart';
 import '../../data/services/haptics_service.dart';
 import '../../data/services/recent_files_service.dart';
@@ -112,7 +113,8 @@ class _RecentScreenState extends State<RecentScreen> {
         ],
       ),
       body: SafeArea(
-        child: !_loaded
+        child: MaxWidthBody(
+          child: !_loaded
             ? const Center(
                 child: SizedBox(
                   width: 22,
@@ -153,6 +155,7 @@ class _RecentScreenState extends State<RecentScreen> {
                       );
                     },
                   ),
+        ),
       ),
     );
   }

@@ -85,10 +85,16 @@
 		<true/>
 		<key>LSRequiresIPhoneOS</key>
 		<true/>
+		<!-- Multi-scene ON — gives iPad users two PDFPrivio windows
+		     side by side under Stage Manager / Split View. The second
+		     window starts from the home screen; each window has its
+		     own navigator stack so a redact in window A doesn't reset
+		     the scan in window B. FlutterSceneDelegate handles the
+		     engine multiplexing for us. -->
 		<key>UIApplicationSceneManifest</key>
 		<dict>
 			<key>UIApplicationSupportsMultipleScenes</key>
-			<false/>
+			<true/>
 			<key>UISceneConfigurations</key>
 			<dict>
 				<key>UIWindowSceneSessionRoleApplication</key>
@@ -106,6 +112,12 @@
 				</array>
 			</dict>
 		</dict>
+		<!-- iPad: opt into "Requires full screen = NO" so Stage Manager,
+		     Split View, and Slide Over all work. Most app-store-ranked
+		     PDF tools have this on; without it iPad users can't park
+		     PDFPrivio next to Notes/Mail. -->
+		<key>UIRequiresFullScreen</key>
+		<false/>
 		<key>UIApplicationSupportsIndirectInputEvents</key>
 		<true/>
 		<key>UILaunchStoryboardName</key>

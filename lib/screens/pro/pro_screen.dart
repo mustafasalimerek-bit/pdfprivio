@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 import '../../core/theme/colors.dart';
+import '../../core/utils/responsive.dart';
 import '../../data/services/haptics_service.dart';
 import '../../data/services/purchase_service.dart';
 import '../../widgets/paywall_sheet.dart';
@@ -70,8 +71,9 @@ class _ProScreenState extends State<ProScreen> {
         ),
       ),
       body: SafeArea(
-        child: ListView(
-          padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+        child: MaxWidthBody(
+          child: ListView(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
           children: [
             if (_hasPro) _ActiveBanner(activeSku: _activeSku),
             if (!_hasPro) const _Hero(),
@@ -125,6 +127,7 @@ class _ProScreenState extends State<ProScreen> {
             const SizedBox(height: 4),
             const _Faq(),
           ],
+          ),
         ),
       ),
     );
