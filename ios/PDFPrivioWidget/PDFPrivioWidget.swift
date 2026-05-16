@@ -95,8 +95,95 @@ private struct PDFPrivioWidgetEntryView: View {
             SmallView(entry: entry)
         case .systemMedium:
             MediumView(entry: entry)
+        case .accessoryRectangular:
+            AccessoryRectangularView(entry: entry)
+        case .accessoryCircular:
+            AccessoryCircularView(entry: entry)
+        case .accessoryInline:
+            AccessoryInlineView(entry: entry)
         default:
             SmallView(entry: entry)
+        }
+    }
+}
+
+// MARK: - Lock Screen accessory views (iOS 16+)
+//
+// Three small widgets that live on the Lock Screen / Always-On Display.
+// Rendered in a monochrome tint by the system, so we lean on shape +
+// SF Symbols rather than colour. accessoryRectangular gives the most
+// space; accessoryCircular is the small round badge; accessoryInline
+// is the single line above the clock.
+
+private struct AccessoryRectangularView: View {
+    let entry: PDFPrivioEntry
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 2) {
+            HStack(spacing: 4) {
+                Image(systemName: "doc.text.fill")
+                    .font(.system(size: 11))
+                Text("PDFPrivio")
+                    .font(.system(size: 11, weight: .semibold))
+                Spacer()
+            }
+            if let first = entry.files.first {
+                // Privacy mode (empty name): show tool only.
+                if first.name.isEmpty {
+                    Text(first.tool)
+                        .font(.system(size: 13, weight: .semibold))
+                        .lineLimit(1)
+                    Text(relativeTime(from: first.openedAtDate))
+                        .font(.system(size: 10))
+                } else {
+                    Text(first.name)
+                        .font(.system(size: 12, weight: .semibold))
+                        .lineLimit(1)
+                    Text("\(first.tool) · \(relativeTime(from: first.openedAtDate))")
+                        .font(.system(size: 10))
+                        .lineLimit(1)
+                }
+            } else {
+                Text("No recent files")
+                    .font(.system(size: 11))
+            }
+            Spacer(minLength: 0)
+        }
+    }
+}
+
+private struct AccessoryCircularView: View {
+    let entry: PDFPrivioEntry
+
+    var body: some View {
+        ZStack {
+            AccessoryWidgetBackground()
+            VStack(spacing: 0) {
+                Image(systemName: "doc.text.fill")
+                    .font(.system(size: 12))
+                Text("\(entry.files.count)")
+                    .font(.system(size: 16, weight: .bold))
+            }
+        }
+    }
+}
+
+private struct AccessoryInlineView: View {
+    let entry: PDFPrivioEntry
+
+    var body: some View {
+        if let first = entry.files.first {
+            Label {
+                if first.name.isEmpty {
+                    Text("\(first.tool) · \(relativeTime(from: first.openedAtDate))")
+                } else {
+                    Text("\(first.name) · \(relativeTime(from: first.openedAtDate))")
+                }
+            } icon: {
+                Image(systemName: "doc.text.fill")
+            }
+        } else {
+            Label("PDFPrivio — no recent files", systemImage: "doc.text.fill")
         }
     }
 }
@@ -261,6 +348,12 @@ struct PDFPrivioWidget: Widget {
         }
         .configurationDisplayName("PDFPrivio Recent")
         .description("Pick up where you left off with your recent PDFs.")
-        .supportedFamilies([.systemSmall, .systemMedium])
+        .supportedFamilies([
+            .systemSmall,
+            .systemMedium,
+            .accessoryRectangular,
+            .accessoryCircular,
+            .accessoryInline
+        ])
     }
 }
