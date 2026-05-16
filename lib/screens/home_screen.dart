@@ -35,7 +35,7 @@ class HomeScreen extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text(
-          'PDFWork',
+          'PDFPrivio',
           style: TextStyle(fontWeight: FontWeight.w800, fontSize: 22),
         ),
       ),

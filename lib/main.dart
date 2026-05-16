@@ -54,7 +54,7 @@ Future<void> main() async {
 
     runApp(
       const ProviderScope(
-        child: PdfWorkApp(),
+        child: PdfPrivioApp(),
       ),
     );
   }, (error, stack) {

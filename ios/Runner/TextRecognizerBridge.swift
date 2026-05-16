@@ -5,7 +5,7 @@ import Vision
 /// Bridges Apple Vision's `VNRecognizeTextRequest` to Flutter so we can do
 /// on-device OCR with no model downloads and no cloud calls.
 ///
-/// MethodChannel: `com.erekstudio.pdfwork/text_recognizer`
+/// MethodChannel: `com.erekstudio.pdfprivio/text_recognizer`
 ///
 /// Methods:
 ///   `recognize` — args: { imagePath: String, languages: [String], level: "fast"|"accurate" }
@@ -24,7 +24,7 @@ import Vision
 ///     }
 ///   `supportedLanguages` — args: { level: "fast"|"accurate" } → [String]
 class TextRecognizerBridge: NSObject, FlutterPlugin {
-  static let channelName = "com.erekstudio.pdfwork/text_recognizer"
+  static let channelName = "com.erekstudio.pdfprivio/text_recognizer"
 
   static func register(with registrar: FlutterPluginRegistrar) {
     let instance = TextRecognizerBridge()

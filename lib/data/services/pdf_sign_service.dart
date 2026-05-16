@@ -43,7 +43,7 @@ extension SignaturePositionLabel on SignaturePosition {
 /// goes through a copy on disk first, because there's no scenario where
 /// destroying the user's original is the right behaviour.
 ///
-/// The audit footer (timestamp + document hash + "Signed with PDFWork")
+/// The audit footer (timestamp + document hash + "Signed with PDFPrivio")
 /// gives us a starting point for the full ESIGN/UETA chain we'll need
 /// before this lands in the lawyer-targeted version of the app. The hash
 /// commits the signature to the pre-signed contents of the document.
@@ -148,7 +148,7 @@ class PdfSignService {
     final signerLine =
         signerName == null || signerName.isEmpty ? '' : '$signerName · ';
     final auditText =
-        'Signed $signerLine$timestamp · doc-sha256:$hashShort · PDFWork';
+        'Signed $signerLine$timestamp · doc-sha256:$hashShort · PDFPrivio';
 
     final font = sf.PdfStandardFont(
       sf.PdfFontFamily.helvetica,

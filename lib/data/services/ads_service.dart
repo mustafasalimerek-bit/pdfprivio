@@ -20,7 +20,7 @@ import 'purchase_service.dart';
 ///   * Cooldown of 3 minutes between interstitial shows is enforced
 ///     in-memory. Apple HIG and AdMob policy both push back on more
 ///     aggressive frequency; the lawyer/CPA wedge is rage-uninstall
-///     sensitive (`project_pdfwork_launch_checklist.md` item #4).
+///     sensitive (`project_pdfprivio_launch_checklist.md` item #4).
 class AdsService {
   AdsService._();
   static final AdsService instance = AdsService._();

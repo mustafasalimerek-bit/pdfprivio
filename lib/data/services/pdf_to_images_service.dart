@@ -31,7 +31,7 @@ class PdfToImagesService {
       final pageCount = doc.pagesCount;
       final stamp = DateTime.now().millisecondsSinceEpoch;
       final tmpRoot = await getTemporaryDirectory();
-      final outDir = Directory(p.join(tmpRoot.path, 'pdfwork_render_$stamp'));
+      final outDir = Directory(p.join(tmpRoot.path, 'pdfprivio_render_$stamp'));
       await outDir.create(recursive: true);
 
       final files = <File>[];

@@ -403,7 +403,7 @@ class PdfRedactService {
     final root = await getTemporaryDirectory();
     final dir = Directory(p.join(
       root.path,
-      'pdfwork_redact_${DateTime.now().millisecondsSinceEpoch}',
+      'pdfprivio_redact_${DateTime.now().millisecondsSinceEpoch}',
     ));
     await dir.create(recursive: true);
     return dir;

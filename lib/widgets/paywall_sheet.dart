@@ -251,7 +251,7 @@ class _Header extends StatelessWidget {
                 borderRadius: BorderRadius.circular(99),
               ),
               child: const Text(
-                'PDFWORK PRO',
+                'PDFPRIVIO PRO',
                 style: TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.w800,
@@ -264,7 +264,7 @@ class _Header extends StatelessWidget {
             Text(
               quotaContext != null
                   ? "Free $quotaContext is used up for today"
-                  : 'Unlock the full PDFWork toolkit',
+                  : 'Unlock the full PDFPrivio toolkit',
               style: const TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.w800,
@@ -494,14 +494,14 @@ class _LegalFooter extends StatelessWidget {
             text: 'Terms of Service',
             style: linkStyle,
             recognizer: TapGestureRecognizer()
-              ..onTap = () => _open('https://mustafasalimerek-bit.github.io/pdfwork/terms/'),
+              ..onTap = () => _open('https://mustafasalimerek-bit.github.io/pdfprivio/terms/'),
           ),
           const TextSpan(text: ' and '),
           TextSpan(
             text: 'Privacy Policy',
             style: linkStyle,
             recognizer: TapGestureRecognizer()
-              ..onTap = () => _open('https://mustafasalimerek-bit.github.io/pdfwork/privacy/'),
+              ..onTap = () => _open('https://mustafasalimerek-bit.github.io/pdfprivio/privacy/'),
           ),
           const TextSpan(text: '.'),
         ],

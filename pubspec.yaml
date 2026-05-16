@@ -1,5 +1,5 @@
-name: pdfwork
-description: "PDFWork: Merge, split, compress, sign, OCR PDFs on-device. No subscription, no cloud."
+name: pdfprivio
+description: "PDFPrivio: Merge, split, compress, sign, OCR PDFs on-device. No subscription, no cloud."
 publish_to: 'none'
 version: 1.0.0+2
 

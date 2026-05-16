@@ -9,8 +9,16 @@ import 'package:flutter/foundation.dart';
 ///
 /// In `kDebugMode` we always return Google's published sandbox IDs so
 /// development clicks are safe. In release builds we return the real
-/// PDFWork unit IDs from the AdMob console (publisher
-/// `pub-7294127185571156`, registered 2026-05-15).
+/// PDFPrivio unit IDs from the AdMob console (publisher
+/// `pub-7294127185571156`).
+///
+/// ⚠️ STALE WARNING (2026-05-16, rebrand to PDFPrivio):
+/// The six "real" unit IDs below were issued to the OLD `com.erekstudio.pdfwork`
+/// bundle. After the trademark-driven rename to `com.erekstudio.pdfprivio`,
+/// new AdMob app entries must be registered (Chrome session) and these six
+/// constants replaced with the new unit IDs before any release build ships.
+/// In debug builds the Google test IDs are used so nothing breaks during
+/// development; release builds with these stale IDs will get no-fill.
 class AdUnitIds {
   AdUnitIds._();
 
@@ -42,7 +50,8 @@ class AdUnitIds {
   static const _testInterstitial = 'ca-app-pub-3940256099942544/4411468910';
   static const _testRewarded = 'ca-app-pub-3940256099942544/1712485313';
 
-  // ---- Real units (release) ----
+  // ---- Real units (release) — ⚠️ STALE, bound to old pdfwork bundle ----
+  // Replace with new PDFPrivio unit IDs after AdMob console reset.
 
   static const _iosBanner = 'ca-app-pub-7294127185571156/9557430009';
   static const _iosInterstitial = 'ca-app-pub-7294127185571156/8244348331';

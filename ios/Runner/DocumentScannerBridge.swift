@@ -3,7 +3,7 @@ import UIKit
 import VisionKit
 
 class DocumentScannerBridge: NSObject, FlutterPlugin, VNDocumentCameraViewControllerDelegate {
-  static let channelName = "com.erekstudio.pdfwork/scanner"
+  static let channelName = "com.erekstudio.pdfprivio/scanner"
 
   private var pendingResult: FlutterResult?
 
@@ -68,7 +68,7 @@ class DocumentScannerBridge: NSObject, FlutterPlugin, VNDocumentCameraViewContro
   ) {
     let stamp = Int(Date().timeIntervalSince1970 * 1000)
     let outputDir = FileManager.default.temporaryDirectory
-      .appendingPathComponent("pdfwork_scans_\(stamp)", isDirectory: true)
+      .appendingPathComponent("pdfprivio_scans_\(stamp)", isDirectory: true)
 
     do {
       try FileManager.default.createDirectory(

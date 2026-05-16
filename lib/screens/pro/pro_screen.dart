@@ -65,7 +65,7 @@ class _ProScreenState extends State<ProScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text(
-          'PDFWork Pro',
+          'PDFPrivio Pro',
           style: TextStyle(fontWeight: FontWeight.w800),
         ),
       ),
@@ -230,7 +230,7 @@ class _Hero extends StatelessWidget {
               borderRadius: BorderRadius.circular(99),
             ),
             child: const Text(
-              'PDFWORK PRO',
+              'PDFPRIVIO PRO',
               style: TextStyle(
                 fontSize: 10,
                 fontWeight: FontWeight.w800,
@@ -521,7 +521,7 @@ class _Faq extends StatelessWidget {
     ),
     _FaqItem(
       q: 'How do I cancel a subscription?',
-      a: "Apple ID Settings → Subscriptions → PDFWork. We can't cancel "
+      a: "Apple ID Settings → Subscriptions → PDFPrivio. We can't cancel "
           'on your behalf — Apple handles all subscription management.',
     ),
   ];

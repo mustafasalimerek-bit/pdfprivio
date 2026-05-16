@@ -1,6 +1,6 @@
 import 'package:firebase_analytics/firebase_analytics.dart';
 
-/// Type-safe event API for PDFWork.
+/// Type-safe event API for PDFPrivio.
 ///
 /// All UI code goes through this service so:
 /// - Event names stay consistent (no typos)

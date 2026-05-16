@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-/// PDFWork brand palette. Deep teal — "professional document" feel,
+/// PDFPrivio brand palette. Deep teal — "professional document" feel,
 /// intentionally distinct from Squeezly's indigo.
 class AppColors {
   AppColors._();

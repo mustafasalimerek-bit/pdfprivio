@@ -1,4 +1,4 @@
-package com.erekstudio.pdfwork
+package com.erekstudio.pdfprivio
 
 import io.flutter.embedding.android.FlutterActivity
 

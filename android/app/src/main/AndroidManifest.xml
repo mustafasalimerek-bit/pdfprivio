@@ -1,6 +1,6 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <application
-        android:label="PDFWork"
+        android:label="PDFPrivio"
         android:name="${applicationName}"
         android:icon="@mipmap/launcher_icon">
         <activity
@@ -30,7 +30,7 @@
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />
-        <!-- Real PDFWork Android AdMob App ID (publisher pub-7294127185571156).
+        <!-- Real PDFPrivio Android AdMob App ID (publisher pub-7294127185571156).
              Registered 2026-05-15. Unit IDs in lib/core/ads/ad_unit_ids.dart. -->
         <meta-data
             android:name="com.google.android.gms.ads.APPLICATION_ID"

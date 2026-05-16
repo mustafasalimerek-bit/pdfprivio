@@ -1,4 +1,4 @@
-# PDFWork — App Store Connect listing copy
+# PDFPrivio — App Store Connect listing copy
 
 Paste each section into the matching field in App Store Connect → App
 Information / App Store / Localization. Character limits are noted next
@@ -10,7 +10,7 @@ whose metadata overflows.
 ## App Name (max 30 chars)
 
 ```
-PDFWork
+PDFPrivio
 ```
 
 7 characters. Stays well under the limit so iOS doesn't truncate it on
@@ -60,7 +60,7 @@ entirely on your iPhone. No cloud uploads, no subscription, no account.
 ## Description (max 4000 chars)
 
 ```
-PDFWork is the offline PDF toolkit for lawyers, accountants, real estate
+PDFPrivio is the offline PDF toolkit for lawyers, accountants, real estate
 professionals, and anyone who handles documents that should not be
 uploaded to a stranger's server.
 
@@ -105,7 +105,7 @@ PRIVACY POSITIONING
 
 Other PDF apps upload your file to "process" it in the cloud — meaning
 their staff, their server logs, and their attackers could all see your
-documents. PDFWork was built so the lawyer-client privilege, the
+documents. PDFPrivio was built so the lawyer-client privilege, the
 accountant-client confidentiality, and your personal data stay where
 they belong: on your phone.
 
@@ -172,7 +172,7 @@ review time, so the page MUST be live before submission.
 ## Marketing URL (optional but recommended)
 
 ```
-https://mustafasalimerek-bit.github.io/pdfwork/
+https://mustafasalimerek-bit.github.io/pdfprivio/
 ```
 
 The landing page. Drives ProductHunt and Reddit traffic.
@@ -182,7 +182,7 @@ The landing page. Drives ProductHunt and Reddit traffic.
 ## Privacy Policy URL (required)
 
 ```
-https://mustafasalimerek-bit.github.io/pdfwork/privacy/
+https://mustafasalimerek-bit.github.io/pdfprivio/privacy/
 ```
 
 Maps to `docs/legal/privacy-policy.md` in this repo. Host it as plain
@@ -195,7 +195,7 @@ HTML before submission.
 For the initial v1.0.0:
 
 ```
-First release of PDFWork.
+First release of PDFPrivio.
 
 18 PDF tools built for lawyers, accountants, and anyone who handles
 sensitive documents.
@@ -270,11 +270,11 @@ the code. Adding Turkish description + screenshots is a 1-day job.
 ## Review notes (Apple Reviewer sees this, users don't)
 
 ```
-PDFWork is an entirely on-device PDF toolkit. No backend, no account,
+PDFPrivio is an entirely on-device PDF toolkit. No backend, no account,
 no data upload of any kind. Test the privacy claim by:
 
 1. Open Settings > Privacy & Security > App Privacy Report on the test
-   device. PDFWork should show zero outbound contacts beyond Firebase
+   device. PDFPrivio should show zero outbound contacts beyond Firebase
    crash and (consented) analytics.
 2. In the app, open any tool, pick a sample PDF, run it. The result
    stays in the app's sandbox until you tap Share.
@@ -292,8 +292,8 @@ taps Scan or Image to PDF. Tracking (NSUserTrackingUsageDescription) is
 requested only after the GDPR/UMP consent form, per Google's UMP
 guidelines.
 
-Privacy Policy: https://mustafasalimerek-bit.github.io/pdfwork/privacy/
-Terms of Service: https://mustafasalimerek-bit.github.io/pdfwork/terms/
+Privacy Policy: https://mustafasalimerek-bit.github.io/pdfprivio/privacy/
+Terms of Service: https://mustafasalimerek-bit.github.io/pdfprivio/terms/
 ```
 
 This pre-empts the most common reasons reviewers ask follow-up
@@ -308,7 +308,7 @@ Before tapping "Submit for Review":
 - [ ] Privacy Policy URL resolves from a private window
 - [ ] Support URL resolves
 - [ ] App Privacy Labels match `docs/legal/app-store-privacy-labels.md`
-- [ ] Bundle ID `com.erekstudio.pdfwork` registered in Apple Developer
+- [ ] Bundle ID `com.erekstudio.pdfprivio` registered in Apple Developer
 - [ ] Real AdMob iOS App ID in `Info.plist` (not the test ID)
 - [ ] Firebase `GoogleService-Info.plist` is the production one (not
       the sed-patched placeholder)

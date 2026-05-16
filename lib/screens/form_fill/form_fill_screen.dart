@@ -335,7 +335,7 @@ class _EmptyState extends StatelessWidget {
             const SizedBox(height: 8),
             const Text(
               'IRS, USCIS, court motions, intake forms — anything with '
-              'AcroForm fields. PDFWork detects text boxes, checkboxes, '
+              'AcroForm fields. PDFPrivio detects text boxes, checkboxes, '
               'radio groups, and dropdowns, then bakes your answers in '
               'so the recipient gets a final, uneditable PDF.',
               textAlign: TextAlign.center,

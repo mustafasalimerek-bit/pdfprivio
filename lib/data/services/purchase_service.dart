@@ -46,17 +46,17 @@ class PurchaseService {
   PurchaseService._();
   static final PurchaseService instance = PurchaseService._();
 
-  static const String proMonthlyId = 'com.erekstudio.pdfwork.pro_monthly';
-  static const String proYearlyId = 'com.erekstudio.pdfwork.pro_yearly';
-  static const String proLifetimeId = 'com.erekstudio.pdfwork.pro_lifetime';
+  static const String proMonthlyId = 'com.erekstudio.pdfprivio.pro_monthly';
+  static const String proYearlyId = 'com.erekstudio.pdfprivio.pro_yearly';
+  static const String proLifetimeId = 'com.erekstudio.pdfprivio.pro_lifetime';
   static const Set<String> _allProductIds = {
     proMonthlyId,
     proYearlyId,
     proLifetimeId,
   };
 
-  static const String _prefsKey = 'pdfwork.pro.v1';
-  static const String _prefsActiveSkuKey = 'pdfwork.pro.active_sku.v1';
+  static const String _prefsKey = 'pdfprivio.pro.v1';
+  static const String _prefsActiveSkuKey = 'pdfprivio.pro.active_sku.v1';
 
   final InAppPurchase _iap = InAppPurchase.instance;
 

@@ -14,7 +14,7 @@ class ScanOutcome {
 }
 
 /// Bridges to the native `VNDocumentCameraViewController` on iOS via a
-/// MethodChannel ("com.erekstudio.pdfwork/scanner").
+/// MethodChannel ("com.erekstudio.pdfprivio/scanner").
 ///
 /// VisionKit does edge detection, perspective correction, multi-page
 /// capture, and color/black-and-white modes for us. The Swift side
@@ -25,7 +25,7 @@ class DocumentScannerService {
   static final DocumentScannerService instance = DocumentScannerService._();
 
   static const MethodChannel _channel =
-      MethodChannel('com.erekstudio.pdfwork/scanner');
+      MethodChannel('com.erekstudio.pdfprivio/scanner');
 
   /// Returns true on iPhone/iPad with a rear camera. Always false on the
   /// iOS Simulator (no camera) and on iPads without a usable camera.

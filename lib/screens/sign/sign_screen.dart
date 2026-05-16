@@ -378,7 +378,7 @@ class _SignSetup extends StatelessWidget {
         ),
         const SizedBox(height: 14),
         const DisclaimerBanner(
-          message: 'PDFWork embeds a SHA-256 hash + UTC timestamp as an '
+          message: 'PDFPrivio embeds a SHA-256 hash + UTC timestamp as an '
               "audit footer, but it isn't a certified e-signature "
               'service. Legal binding depends on jurisdiction, the '
               'transaction type, and recipient acceptance. For '

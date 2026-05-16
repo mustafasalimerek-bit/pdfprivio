@@ -68,7 +68,7 @@ class UsageLimitsService {
   UsageLimitsService._();
   static final UsageLimitsService instance = UsageLimitsService._();
 
-  static const String _keyPrefix = 'pdfwork.usage.v1';
+  static const String _keyPrefix = 'pdfprivio.usage.v1';
 
   final _controller = StreamController<String>.broadcast();
   Stream<String> get changes => _controller.stream;

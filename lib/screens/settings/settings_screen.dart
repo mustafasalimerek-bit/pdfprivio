@@ -79,8 +79,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             _SettingsTile(
               icon: Icons.workspace_premium_outlined,
               title: PurchaseService.instance.hasPro
-                  ? 'PDFWork Pro · active'
-                  : 'PDFWork Pro · not active',
+                  ? 'PDFPrivio Pro · active'
+                  : 'PDFPrivio Pro · not active',
               subtitle: PurchaseService.instance.hasPro
                   ? 'Tap to view your plan and manage in App Store settings'
                   : 'Tap to see pricing and unlock everything',
@@ -125,23 +125,23 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               icon: Icons.description_outlined,
               title: 'Privacy Policy',
               subtitle: 'What we collect — and what we never collect',
-              onTap: () => _open('https://mustafasalimerek-bit.github.io/pdfwork/privacy/'),
+              onTap: () => _open('https://mustafasalimerek-bit.github.io/pdfprivio/privacy/'),
             ),
             _SettingsTile(
               icon: Icons.gavel_outlined,
               title: 'Terms of Service',
-              subtitle: 'The rules of using PDFWork',
-              onTap: () => _open('https://mustafasalimerek-bit.github.io/pdfwork/terms/'),
+              subtitle: 'The rules of using PDFPrivio',
+              onTap: () => _open('https://mustafasalimerek-bit.github.io/pdfprivio/terms/'),
             ),
             const SizedBox(height: 18),
             _SectionHeader(title: 'About'),
             _SettingsTile(
               icon: Icons.info_outline,
-              title: 'About PDFWork',
+              title: 'About PDFPrivio',
               subtitle:
                   'On-device PDF toolkit by Erek Studio. Your documents '
                   'never leave this device.',
-              onTap: () => _open('https://mustafasalimerek-bit.github.io/pdfwork/'),
+              onTap: () => _open('https://mustafasalimerek-bit.github.io/pdfprivio/'),
             ),
             _SettingsTile(
               icon: Icons.mail_outline,
@@ -158,7 +158,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 border: Border.all(color: AppColors.border),
               ),
               child: const Text(
-                'PDFWork is a tool, not legal, medical, financial, or tax '
+                'PDFPrivio is a tool, not legal, medical, financial, or tax '
                 'advice. Outputs from automated detection, redaction, '
                 'OCR, signature, and comparison features are aids — not '
                 'substitutes for human review. You are responsible for '
@@ -176,7 +176,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               child: Text(
                 info == null
                     ? ''
-                    : 'PDFWork ${info.version} (${info.buildNumber})',
+                    : 'PDFPrivio ${info.version} (${info.buildNumber})',
                 style: const TextStyle(
                   fontSize: 12,
                   color: AppColors.textTertiary,

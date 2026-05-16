@@ -7,13 +7,13 @@ import 'data/services/onboarding_service.dart';
 import 'screens/onboarding/onboarding_screen.dart';
 import 'screens/root/root_scaffold.dart';
 
-class PdfWorkApp extends StatelessWidget {
-  const PdfWorkApp({super.key});
+class PdfPrivioApp extends StatelessWidget {
+  const PdfPrivioApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'PDFWork',
+      title: 'PDFPrivio',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light(),
       home: const _BootGate(),

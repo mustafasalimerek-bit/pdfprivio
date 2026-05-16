@@ -27,7 +27,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   static const _pages = <_Page>[
     _Page(
       icon: Icons.picture_as_pdf,
-      title: 'Welcome to PDFWork',
+      title: 'Welcome to PDFPrivio',
       lead: 'The PDF toolkit lawyers, CPAs, and pros pick when '
           'Adobe Acrobat feels like overkill.',
       body: '18 tools in one app — scan paper, OCR scans, sign '
@@ -47,7 +47,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       icon: Icons.workspaces_outline,
       title: 'Built for daily workflows',
       lead: 'Recent files at the top, no account required.',
-      body: "PDFWork remembers what you produced — last week's "
+      body: "PDFPrivio remembers what you produced — last week's "
           "redacted file is one tap away. Pick from Files, iCloud, "
           'Dropbox, or Drive through the iOS picker. Output goes '
           'wherever you tell it.',
@@ -282,14 +282,14 @@ class _LegalAcceptance extends StatelessWidget {
             text: 'Terms of Service',
             style: linkStyle,
             recognizer: TapGestureRecognizer()
-              ..onTap = () => _open('https://mustafasalimerek-bit.github.io/pdfwork/terms/'),
+              ..onTap = () => _open('https://mustafasalimerek-bit.github.io/pdfprivio/terms/'),
           ),
           const TextSpan(text: ' and '),
           TextSpan(
             text: 'Privacy Policy',
             style: linkStyle,
             recognizer: TapGestureRecognizer()
-              ..onTap = () => _open('https://mustafasalimerek-bit.github.io/pdfwork/privacy/'),
+              ..onTap = () => _open('https://mustafasalimerek-bit.github.io/pdfprivio/privacy/'),
           ),
           const TextSpan(text: '.'),
         ],

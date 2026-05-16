@@ -56,7 +56,7 @@ class OcrService {
   static final OcrService instance = OcrService._();
 
   static const MethodChannel _channel =
-      MethodChannel('com.erekstudio.pdfwork/text_recognizer');
+      MethodChannel('com.erekstudio.pdfprivio/text_recognizer');
 
   Future<List<String>> supportedLanguages({
     OcrLevel level = OcrLevel.accurate,

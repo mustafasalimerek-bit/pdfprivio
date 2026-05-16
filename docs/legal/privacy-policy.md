@@ -1,12 +1,12 @@
-# PDFWork Privacy Policy
+# PDFPrivio Privacy Policy
 
 **Last updated:** 2026-05-15
 **Effective date:** 2026-05-15
 **Operator:** Erek Studio (Mustafa Salim Erek, sole proprietor)
 **Contact:** mustafasalimerek@gmail.com  (← change to your real email before publishing)
-**App:** PDFWork (iOS / Android), bundle id `com.erekstudio.pdfwork`
+**App:** PDFPrivio (iOS / Android), bundle id `com.erekstudio.pdfprivio`
 
-This policy describes what data PDFWork does and does not collect, why, and what choices you have. It is written to be readable; the short version is at the top.
+This policy describes what data PDFPrivio does and does not collect, why, and what choices you have. It is written to be readable; the short version is at the top.
 
 ---
 
@@ -19,19 +19,19 @@ This policy describes what data PDFWork does and does not collect, why, and what
 
 ---
 
-## 1. The data PDFWork **does not** collect
+## 1. The data PDFPrivio **does not** collect
 
 We want to be very explicit about this because it's the centerpiece of the product:
 
 - The **contents of your PDFs** — text, images, signatures, tables, form fields, anything. Never transmitted off your device. Never stored on our servers.
 - **OCR text** generated from your scans. Stays on your device.
-- **PII Scan results** — SSNs, IBANs, account numbers, etc. that PDFWork detects in your documents. Detection runs locally; results are not transmitted.
-- **File names** of the documents you open in PDFWork.
-- **Your contacts, photos, calendar, or location.** PDFWork has no access to these except as you grant for a specific operation (e.g. the photo picker when you choose images to convert into a PDF), and any photos you pick are processed only in memory and never uploaded.
+- **PII Scan results** — SSNs, IBANs, account numbers, etc. that PDFPrivio detects in your documents. Detection runs locally; results are not transmitted.
+- **File names** of the documents you open in PDFPrivio.
+- **Your contacts, photos, calendar, or location.** PDFPrivio has no access to these except as you grant for a specific operation (e.g. the photo picker when you choose images to convert into a PDF), and any photos you pick are processed only in memory and never uploaded.
 
 ---
 
-## 2. The data PDFWork **does** collect
+## 2. The data PDFPrivio **does** collect
 
 ### 2.1 Crash reports (Firebase Crashlytics)
 
@@ -49,7 +49,7 @@ You can opt out by not using the app; we do not currently expose a Crashlytics t
 
 ### 2.2 Analytics (Firebase Analytics) — **off by default**
 
-If, and only if, you give consent through the in-app prompt, PDFWork collects anonymous usage stats:
+If, and only if, you give consent through the in-app prompt, PDFPrivio collects anonymous usage stats:
 
 - Which screens you open and in what order (e.g. "Scan to PDF → Save")
 - Which features you use (e.g. "Sign PDF used", "OCR PDF run")
@@ -74,7 +74,7 @@ Pro / Business tier users see no ads and we don't share any identifier with AdMo
 
 ### 2.4 In-app purchases (Apple / Google)
 
-If you upgrade to Pro or Business, the transaction is processed entirely by Apple's App Store or Google Play. PDFWork receives a receipt validation token from Apple/Google so it can unlock features locally; we don't see your payment method, credit card, or address. Apple's and Google's privacy policies cover that data:
+If you upgrade to Pro or Business, the transaction is processed entirely by Apple's App Store or Google Play. PDFPrivio receives a receipt validation token from Apple/Google so it can unlock features locally; we don't see your payment method, credit card, or address. Apple's and Google's privacy policies cover that data:
 - Apple: <https://www.apple.com/legal/privacy/>
 - Google: <https://policies.google.com/privacy>
 
@@ -85,28 +85,28 @@ If you upgrade to Pro or Business, the transaction is processed entirely by Appl
 On first launch, you'll see (in order, where applicable):
 
 1. **GDPR/CCPA consent form** (Google UMP) — shown automatically when your IP is in the EU, UK, Switzerland, certain US states, or other regulated regions. You can accept, reject, or customize what's used.
-2. **Apple ATT prompt** (iOS only) — Apple's "Allow PDFWork to track your activity across apps and websites?" prompt. iOS shows this regardless of UMP and lets you decline IDFA access.
+2. **Apple ATT prompt** (iOS only) — Apple's "Allow PDFPrivio to track your activity across apps and websites?" prompt. iOS shows this regardless of UMP and lets you decline IDFA access.
 
-You can re-open the GDPR consent form any time from **Settings → Privacy → Manage data preferences** inside PDFWork. (Coming with the Settings screen in the next update.)
+You can re-open the GDPR consent form any time from **Settings → Privacy → Manage data preferences** inside PDFPrivio. (Coming with the Settings screen in the next update.)
 
-If you decline both, PDFWork still works exactly the same — you just see fewer relevant ads and no anonymous usage telemetry flows to us.
+If you decline both, PDFPrivio still works exactly the same — you just see fewer relevant ads and no anonymous usage telemetry flows to us.
 
 ---
 
 ## 4. Storage on your device
 
-PDFWork saves the following files in its sandbox on your device (which only PDFWork and you can access):
+PDFPrivio saves the following files in its sandbox on your device (which only PDFPrivio and you can access):
 
 - Output PDFs you generate (merged, signed, redacted, OCR'd, etc.) — kept until you delete them or uninstall the app.
 - Tool preferences (paper size, signature font, etc.) via `shared_preferences`.
 - A small Hive database for things like recent files. Tiny, plain.
 - Temporary cache of rasterized page images during OCR / redaction. Auto-cleared when you exit a tool.
 
-None of this leaves your device unless you explicitly tap "Share" inside PDFWork (which uses the iOS / Android share sheet — sending the file goes to whichever app you pick).
+None of this leaves your device unless you explicitly tap "Share" inside PDFPrivio (which uses the iOS / Android share sheet — sending the file goes to whichever app you pick).
 
 ## 5. Children's privacy
 
-PDFWork is not directed at children under 13 (or the equivalent minimum age in your country). We do not knowingly collect personal information from children. If you believe a child has used PDFWork in a way that needed consent, contact us at mustafasalimerek@gmail.com.
+PDFPrivio is not directed at children under 13 (or the equivalent minimum age in your country). We do not knowingly collect personal information from children. If you believe a child has used PDFPrivio in a way that needed consent, contact us at mustafasalimerek@gmail.com.
 
 ## 6. Your rights
 
@@ -129,7 +129,7 @@ The minimal data we do collect (crash reports if you crash, anonymous events if 
 
 ## 9. Security
 
-We don't store your documents on our servers, so the typical "data breach" risk for SaaS products doesn't apply to PDFWork's design. The data we do receive — Crashlytics stack traces, anonymous analytics events — is held by Google Firebase under their security controls (<https://firebase.google.com/support/privacy>).
+We don't store your documents on our servers, so the typical "data breach" risk for SaaS products doesn't apply to PDFPrivio's design. The data we do receive — Crashlytics stack traces, anonymous analytics events — is held by Google Firebase under their security controls (<https://firebase.google.com/support/privacy>).
 
 ## 10. Changes to this policy
 

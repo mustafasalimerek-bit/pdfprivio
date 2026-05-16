@@ -17,7 +17,7 @@ class RecentFilesService {
   RecentFilesService._();
   static final RecentFilesService instance = RecentFilesService._();
 
-  static const String _key = 'pdfwork.recent_files.v1';
+  static const String _key = 'pdfprivio.recent_files.v1';
   static const int _max = 30;
 
   /// Broadcast so any widget listening (home screen carousel) refreshes

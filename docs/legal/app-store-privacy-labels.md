@@ -1,6 +1,6 @@
 # App Store Privacy "Nutrition Labels" — fill-in checklist
 
-Apple App Store Connect (App → App Privacy) requires every shipping app to declare what data it collects, in 14 categories. Below is exactly how to answer for PDFWork. **Verify each line before submitting — Apple Reviewers do not forgive incorrect labels.**
+Apple App Store Connect (App → App Privacy) requires every shipping app to declare what data it collects, in 14 categories. Below is exactly how to answer for PDFPrivio. **Verify each line before submitting — Apple Reviewers do not forgive incorrect labels.**
 
 Console URL when ready: <https://appstoreconnect.apple.com/apps/{APPLE_ID}/distribution/privacy>
 
@@ -77,7 +77,7 @@ Apple asks per-data-type: (a) collected? (b) linked to identity? (c) used for tr
 
 ## Question 4: Privacy Policy URL
 
-Put `https://mustafasalimerek-bit.github.io/pdfwork/privacy/` (once the page is up at that path).
+Put `https://mustafasalimerek-bit.github.io/pdfprivio/privacy/` (once the page is up at that path).
 
 Same URL goes into:
 - App Store Connect → App Privacy → Privacy Policy URL
@@ -104,6 +104,6 @@ This is the lawyer-wedge headline. Don't bury it.
 
 ## Common reviewer rejections to pre-empt
 
-- **"We can see your app stores user content."** Often triggered by anything that backs up to iCloud. PDFWork's outputs go to the app sandbox and the user's Files via the share sheet — we don't initiate iCloud sync ourselves. If Apple flags this, point to our privacy policy section 4.
+- **"We can see your app stores user content."** Often triggered by anything that backs up to iCloud. PDFPrivio's outputs go to the app sandbox and the user's Files via the share sheet — we don't initiate iCloud sync ourselves. If Apple flags this, point to our privacy policy section 4.
 - **"Tracking is enabled but ATT prompt is missing."** Make sure `NSUserTrackingUsageDescription` is in Info.plist (already added) and `ConsentService.gather()` runs at app start (already wired). If the reviewer is in a region where UMP returns "not required", they should still see ATT.
 - **"Privacy Policy URL inaccessible."** Test the URL from a private browser window 1 hour before submission. Apple Reviewers' IPs are often in California / Singapore / Cork — make sure your hosting doesn't geo-block.
