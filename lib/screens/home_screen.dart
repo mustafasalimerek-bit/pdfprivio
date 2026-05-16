@@ -122,6 +122,7 @@ class HomeScreen extends ConsumerWidget {
           subtitle: 'Scanned PDF → searchable text · on-device',
           toolId: 'ocr_pdf',
           builder: _buildOcrScreen,
+          gridLabel: 'OCR',
         ),
         _ToolSpec(
           icon: Icons.library_books_outlined,
@@ -129,6 +130,7 @@ class HomeScreen extends ConsumerWidget {
           subtitle: 'Combine multiple PDFs into one',
           toolId: 'merge',
           builder: _buildMergeScreen,
+          gridLabel: 'Merge',
         ),
         _ToolSpec(
           icon: Icons.compress_outlined,
@@ -136,6 +138,7 @@ class HomeScreen extends ConsumerWidget {
           subtitle: 'Shrink for email — keep quality',
           toolId: 'compress',
           builder: _buildCompressScreen,
+          gridLabel: 'Compress',
         ),
         _ToolSpec(
           icon: Icons.content_cut_outlined,
@@ -143,6 +146,7 @@ class HomeScreen extends ConsumerWidget {
           subtitle: 'Extract range, every N pages, or N parts',
           toolId: 'split',
           builder: _buildSplitScreen,
+          gridLabel: 'Split',
         ),
         _ToolSpec(
           icon: Icons.image_outlined,
@@ -171,6 +175,7 @@ class HomeScreen extends ConsumerWidget {
           subtitle: 'Draw, place, save — audit-trail included',
           toolId: 'sign',
           builder: _buildSignScreen,
+          gridLabel: 'Sign',
         ),
         _ToolSpec(
           icon: Icons.edit_document,
@@ -393,13 +398,21 @@ class _ToolSpec {
   final String subtitle;
   final String toolId;
   final WidgetBuilder builder;
+  /// Shorter label shown in the home-screen grid cell. Grid cells
+  /// are ~80 dp wide and a wrapped "Compress PDF" eats the icon
+  /// area; we strip the "PDF" / "PDFs" suffix that everyone reading
+  /// "Sign" / "Merge" / "Compress" already understands from context.
+  final String? gridLabel;
   const _ToolSpec({
     required this.icon,
     required this.title,
     required this.subtitle,
     required this.toolId,
     required this.builder,
+    this.gridLabel,
   });
+
+  String get displayGridLabel => gridLabel ?? title;
 }
 
 /// 4×2 hero grid of the 7 wedge-critical tools plus a "More" cell
@@ -531,77 +544,70 @@ class _CompactToolTileState extends State<_CompactToolTile> {
       button: true,
       label: '${widget.spec.title}. ${widget.spec.subtitle}.',
       excludeSemantics: true,
-      child: Material(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(16),
-        child: InkWell(
-          borderRadius: BorderRadius.circular(16),
-          onTap: _onTap,
-          child: Container(
-            padding: const EdgeInsets.fromLTRB(10, 12, 10, 10),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: AppColors.border),
-            ),
-            child: Stack(
+      child: InkWell(
+        borderRadius: BorderRadius.circular(20),
+        onTap: _onTap,
+        child: Stack(
+          clipBehavior: Clip.none,
+          children: [
+            Column(
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Container(
-                      width: 40,
-                      height: 40,
-                      decoration: BoxDecoration(
-                        color: AppColors.primary.withValues(alpha: 0.10),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Icon(
-                        widget.spec.icon,
-                        color: AppColors.primary,
-                        size: 22,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      widget.spec.title,
-                      style: const TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w700,
-                        height: 1.15,
-                      ),
-                      maxLines: 2,
-                      textAlign: TextAlign.center,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ],
-                ),
-                if (showProBadge)
-                  Positioned(
-                    top: -2,
-                    right: -2,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 5,
-                        vertical: 1,
-                      ),
-                      decoration: BoxDecoration(
-                        color: AppColors.warning,
-                        borderRadius: BorderRadius.circular(99),
-                      ),
-                      child: const Text(
-                        'PRO',
-                        style: TextStyle(
-                          fontSize: 8,
-                          fontWeight: FontWeight.w800,
-                          color: Colors.white,
-                          letterSpacing: 0.4,
-                        ),
-                      ),
-                    ),
+                Container(
+                  width: 64,
+                  height: 64,
+                  decoration: BoxDecoration(
+                    // Soft teal-tinted neutral matches the editorial-
+                    // utility aesthetic (Bear, Things, Mona) the
+                    // mockup is borrowing.
+                    color: AppColors.iconTint,
+                    borderRadius: BorderRadius.circular(18),
                   ),
+                  child: Icon(
+                    widget.spec.icon,
+                    color: AppColors.primary,
+                    size: 28,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  widget.spec.displayGridLabel,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                    height: 1.15,
+                  ),
+                  maxLines: 1,
+                  textAlign: TextAlign.center,
+                  overflow: TextOverflow.ellipsis,
+                ),
               ],
             ),
-          ),
+            if (showProBadge)
+              Positioned(
+                top: 0,
+                right: 0,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 5,
+                    vertical: 1,
+                  ),
+                  decoration: BoxDecoration(
+                    color: AppColors.warning,
+                    borderRadius: BorderRadius.circular(99),
+                  ),
+                  child: const Text(
+                    'PRO',
+                    style: TextStyle(
+                      fontSize: 8,
+                      fontWeight: FontWeight.w800,
+                      color: Colors.white,
+                      letterSpacing: 0.4,
+                    ),
+                  ),
+                ),
+              ),
+          ],
         ),
       ),
     );
@@ -620,46 +626,35 @@ class _MoreTile extends StatelessWidget {
       button: true,
       label: 'More tools — opens the full list',
       excludeSemantics: true,
-      child: Material(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(16),
-        child: InkWell(
-          borderRadius: BorderRadius.circular(16),
-          onTap: onTap,
-          child: Container(
-            padding: const EdgeInsets.fromLTRB(10, 12, 10, 10),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: AppColors.border),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(20),
+        onTap: onTap,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              width: 64,
+              height: 64,
+              decoration: BoxDecoration(
+                color: AppColors.textSecondary.withValues(alpha: 0.10),
+                borderRadius: BorderRadius.circular(18),
+              ),
+              child: const Icon(
+                Icons.more_horiz,
+                color: AppColors.textSecondary,
+                size: 28,
+              ),
             ),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Container(
-                  width: 40,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    color: AppColors.textSecondary.withValues(alpha: 0.10),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: const Icon(
-                    Icons.more_horiz,
-                    color: AppColors.textSecondary,
-                    size: 22,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                const Text(
-                  'More',
-                  style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w700,
-                    height: 1.15,
-                  ),
-                ),
-              ],
+            const SizedBox(height: 8),
+            const Text(
+              'More',
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+                height: 1.15,
+              ),
             ),
-          ),
+          ],
         ),
       ),
     );
@@ -749,7 +744,7 @@ class _OfflineStatusPill extends StatelessWidget {
           ),
           const SizedBox(width: 8),
           const Text(
-            'Working offline · Nothing leaves your iPhone',
+            'Working offline — nothing leaves your iPhone',
             style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w700,
@@ -804,7 +799,7 @@ class _HeroScanCard extends StatelessWidget {
               ),
               const SizedBox(height: 4),
               Text(
-                'Camera → auto-edge → multi-page → one PDF',
+                'Camera → auto-edge → searchable PDF',
                 style: TextStyle(
                   fontSize: 12,
                   color: Colors.white.withValues(alpha: 0.86),

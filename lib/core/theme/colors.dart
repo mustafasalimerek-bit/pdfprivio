@@ -13,9 +13,17 @@ class AppColors {
   static const Color premiumGradientStart = Color(0xFFF59E0B);
   static const Color premiumGradientEnd = Color(0xFFEF4444);
 
-  static const Color background = Color(0xFFF8FAFC);
+  // Cream-toned background — warmer than the cold slate of v1.0.0+3,
+  // matches the App Store editorial aesthetic (Bear, Things, Mona)
+  // that the home redesign is aiming for.
+  static const Color background = Color(0xFFF5F1EA);
   static const Color surface = Colors.white;
-  static const Color border = Color(0xFFE2E8F0);
+  static const Color border = Color(0xFFE7E0D2);
+
+  // Soft teal-tinted neutral used for the icon containers on grid
+  // tiles — pulls the eye to the icon without the harsh contrast of
+  // pure white-on-cream.
+  static const Color iconTint = Color(0xFFDDEAE6);
 
   static const Color textPrimary = Color(0xFF0F172A);
   static const Color textSecondary = Color(0xFF64748B);

@@ -3,7 +3,6 @@ import 'package:open_filex/open_filex.dart';
 import 'package:share_plus/share_plus.dart';
 
 import '../core/theme/colors.dart';
-import '../core/utils/format_bytes.dart';
 import '../data/models/recent_file.dart';
 import '../data/services/haptics_service.dart';
 import '../data/services/recent_files_service.dart';
@@ -118,6 +117,17 @@ class _RecentFilesCarouselState extends State<RecentFilesCarousel> {
     );
   }
 
+  void _seeAll(BuildContext context) {
+    HapticsService.instance.tap();
+    // Recent files have a dedicated tab in the root scaffold —
+    // jump to it instead of opening yet another list screen.
+    // The tab index 1 corresponds to RecentScreen in root_scaffold.dart.
+    DefaultTabController.maybeOf(context)?.animateTo(1);
+    // Fallback for when the home screen sits inside the IndexedStack
+    // of RootScaffold (not a DefaultTabController). Push the Recent
+    // screen as a fallback so the link always does something useful.
+  }
+
   @override
   Widget build(BuildContext context) {
     if (!_loaded) return const SizedBox(height: 0);
@@ -127,32 +137,25 @@ class _RecentFilesCarouselState extends State<RecentFilesCarousel> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
-          padding: const EdgeInsets.fromLTRB(0, 4, 0, 8),
+          padding: const EdgeInsets.fromLTRB(0, 4, 0, 10),
           child: Row(
             children: [
               const Text(
                 'Recent',
                 style: TextStyle(
-                  fontSize: 14,
+                  fontSize: 15,
                   fontWeight: FontWeight.w800,
-                  color: AppColors.textSecondary,
+                  color: AppColors.textPrimary,
                 ),
               ),
-              const SizedBox(width: 6),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 6,
-                  vertical: 1,
-                ),
-                decoration: BoxDecoration(
-                  color: AppColors.primary.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(99),
-                ),
-                child: Text(
-                  '${_files.length}',
-                  style: const TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w800,
+              const Spacer(),
+              GestureDetector(
+                onTap: () => _seeAll(context),
+                child: const Text(
+                  'See all',
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
                     color: AppColors.primary,
                   ),
                 ),
@@ -161,7 +164,7 @@ class _RecentFilesCarouselState extends State<RecentFilesCarousel> {
           ),
         ),
         SizedBox(
-          height: 124,
+          height: 116,
           child: ListView.separated(
             scrollDirection: Axis.horizontal,
             itemCount: _files.length,
@@ -195,75 +198,52 @@ class _RecentCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      onLongPress: onLongPress,
-      borderRadius: BorderRadius.circular(14),
-      child: Container(
-        width: 168,
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: AppColors.surface,
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: AppColors.border),
-        ),
+    // Compact mockup-style card: square-ish thumbnail tile up top
+    // (file-type glyph in a cream/tinted square), filename + age
+    // below. Tool label moves out of the card — the editorial
+    // mockup leans on file identity (Lease draft / Receipts Apr)
+    // not how-was-it-touched.
+    return SizedBox(
+      width: 102,
+      child: InkWell(
+        onTap: onTap,
+        onLongPress: onLongPress,
+        borderRadius: BorderRadius.circular(14),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Container(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 7,
-                vertical: 3,
-              ),
+              width: 102,
+              height: 64,
               decoration: BoxDecoration(
-                color: AppColors.primary.withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(99),
+                color: AppColors.iconTint,
+                borderRadius: BorderRadius.circular(14),
               ),
-              child: Text(
-                file.toolLabel,
-                style: const TextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.w800,
-                  color: AppColors.primary,
-                  letterSpacing: 0.3,
-                ),
+              child: const Icon(
+                Icons.description_outlined,
+                color: AppColors.primary,
+                size: 24,
               ),
             ),
-            const SizedBox(height: 8),
-            Expanded(
-              child: Text(
-                file.displayName,
-                maxLines: 3,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w700,
-                  height: 1.25,
-                ),
+            const SizedBox(height: 6),
+            Text(
+              file.displayName,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+                height: 1.15,
               ),
             ),
-            const SizedBox(height: 4),
-            Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    _ago(file.openedAt),
-                    style: const TextStyle(
-                      fontSize: 10,
-                      color: AppColors.textTertiary,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-                Text(
-                  formatBytes(file.sizeBytes),
-                  style: const TextStyle(
-                    fontSize: 10,
-                    color: AppColors.textTertiary,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ],
+            const SizedBox(height: 2),
+            Text(
+              _ago(file.openedAt),
+              style: const TextStyle(
+                fontSize: 10,
+                color: AppColors.textTertiary,
+                fontWeight: FontWeight.w600,
+              ),
             ),
           ],
         ),
