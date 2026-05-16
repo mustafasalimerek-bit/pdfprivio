@@ -18,6 +18,7 @@ import 'bookmarks/bookmarks_screen.dart';
 import 'extract_text/extract_text_screen.dart';
 import 'form_fill/form_fill_screen.dart';
 import 'quick_look/quick_look_launcher_screen.dart';
+import 'receipts/receipt_capture_screen.dart';
 import 'summarize/summarize_screen.dart';
 import 'image_to_pdf/image_to_pdf_screen.dart';
 import 'merge/merge_screen.dart';
@@ -231,6 +232,13 @@ class HomeScreen extends ConsumerWidget {
           subtitle: 'Compress / Watermark / Rotate many PDFs at once',
           toolId: 'batch',
           builder: (_) => const BatchScreen(),
+        ),
+        _ToolTile(
+          icon: Icons.receipt_long_outlined,
+          title: 'Receipt scanner',
+          subtitle: 'Scan → auto-extract date/vendor/total → CSV for QuickBooks',
+          toolId: 'receipt',
+          builder: (_) => const ReceiptCaptureScreen(),
         ),
         _ToolTile(
           icon: Icons.shield_outlined,

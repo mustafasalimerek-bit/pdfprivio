@@ -13,6 +13,7 @@ import 'app.dart';
 import 'data/services/ads_service.dart';
 import 'data/services/app_intent_service.dart';
 import 'data/services/audit_service.dart';
+import 'data/services/expense_ledger_service.dart';
 import 'data/services/promo_code_service.dart';
 import 'data/services/purchase_service.dart';
 import 'data/services/share_intent_service.dart';
@@ -52,6 +53,7 @@ Future<void> main() async {
     await PurchaseService.instance.init();
     await PromoCodeService.instance.init();
     await AuditService.instance.init();
+    await ExpenseLedgerService.instance.init();
     await UsageLimitsService.instance.pruneOldEntries();
     // Home Screen widget bridge — pushes recent files into the App
     // Group shared store so the iOS WidgetKit extension can render

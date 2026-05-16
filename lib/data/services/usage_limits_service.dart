@@ -37,11 +37,15 @@ class ToolLimits {
   ///   * redact — wrong usage = client leak, only paying customers
   ///   * batch — amplifies any tool 50x; the wedge for stacks of
   ///     exhibits/receipts. Free users keep per-tool daily caps.
+  ///   * receipt — CPA/freelancer expense ledger. Heuristic field
+  ///     extraction + persistent ledger + QuickBooks CSV is the
+  ///     buying trigger for the tax-season audience.
   static const Set<String> proOnly = {
     'form_fill',
     'bates',
     'redact',
     'batch',
+    'receipt',
   };
 
   /// Optional page-count guardrail on top of the daily cap. Keeps free
