@@ -6,25 +6,37 @@ import 'package:url_launcher/url_launcher.dart';
 import '../core/theme/colors.dart';
 import '../data/services/haptics_service.dart';
 import '../data/services/purchase_service.dart';
-import '../data/services/usage_limits_service.dart';
 import 'redeem_promo_dialog.dart';
 
-/// Drop-in bottom sheet that pitches Pro with all three SKUs side by
-/// side. Used from two places:
-///   * tile tap on a Pro-only tool (Form Fill / Bates / Redact)
-///   * tile tap on a free-tier-exhausted tool
+/// Contextual paywall sheet. Two entry points and three visual modes:
 ///
-/// Pass `quotaContext` if the user hit a daily limit — the heading then
-/// reads "You've used today's free X" instead of the generic upsell
-/// line, which converts much better than a vague "go Pro" prompt.
+///   * **Pro-only tap** (Form Fill / Bates / Redact / Batch / Receipt)
+///     → feature-aware hero ("Unlock signing", "Unlock Bates", …)
+///     with the tool's own icon. This is the highest-converting
+///     surface — user just felt the need and we name what they're
+///     paying for.
+///   * **Quota-exhausted free tool** (Sign / Compress / Merge / …
+///     hit daily cap) → generic "You've maxed today's free Sign"
+///     hero with the tool icon.
+///   * **Generic upsell** (Pro tab, Settings) → "Unlock the full
+///     toolkit" sparkles hero.
+///
+/// Layout shape borrowed from the App-Store-editorial paywall pattern
+/// (small "Pro feature" pill + close, tinted hero icon, perk list,
+/// stacked plans with yearly default, big primary CTA, transparent
+/// pricing microcopy, Restore / Terms / Privacy footer). The pricing
+/// model — Monthly / Yearly / Lifetime, real App Store prices, no
+/// hardcoded $X.XX in the sheet — is intentionally kept; the
+/// lifetime tier serves the "subscription-averse" buyer segment and
+/// the wedge audit decided that's worth keeping despite the
+/// editorial mockup dropping it.
 class PaywallSheet extends StatefulWidget {
-  final String? quotaContext; // e.g. "Compress PDF"
+  final String? quotaContext; // e.g. "Sign PDF", "Form Fill"
 
   const PaywallSheet({super.key, this.quotaContext});
 
-  /// Pushes the sheet and resolves when it closes. Returns true if the
-  /// user successfully purchased while inside — caller can re-attempt
-  /// the gated action on the back of that.
+  /// Returns `true` if the user successfully purchased while inside —
+  /// caller can re-attempt the gated action on the back of that.
   static Future<bool> show(BuildContext context, {String? quotaContext}) {
     return showModalBottomSheet<bool>(
       context: context,
@@ -41,18 +53,14 @@ class PaywallSheet extends StatefulWidget {
 class _PaywallSheetState extends State<PaywallSheet> {
   ProSku _selected = ProSku.yearly; // anchor — best value
   bool _busy = false;
-  late final void Function() _entitlementListener;
 
   @override
   void initState() {
     super.initState();
-    _entitlementListener = () {
+    PurchaseService.instance.entitlementChanges.listen((_) {
       if (mounted && PurchaseService.instance.hasPro) {
         Navigator.of(context).pop(true);
       }
-    };
-    PurchaseService.instance.entitlementChanges.listen((_) {
-      _entitlementListener();
     });
   }
 
@@ -98,6 +106,7 @@ class _PaywallSheetState extends State<PaywallSheet> {
     final monthly = PurchaseService.instance.productFor(ProSku.monthly);
     final yearly = PurchaseService.instance.productFor(ProSku.yearly);
     final lifetime = PurchaseService.instance.productFor(ProSku.lifetime);
+    final hero = _heroFor(widget.quotaContext);
 
     return DraggableScrollableSheet(
       initialChildSize: 0.92,
@@ -111,25 +120,30 @@ class _PaywallSheetState extends State<PaywallSheet> {
           ),
           child: SingleChildScrollView(
             controller: scrollCtrl,
-            padding: const EdgeInsets.fromLTRB(20, 12, 20, 28),
+            padding: const EdgeInsets.fromLTRB(20, 10, 20, 24),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Center(
-                  child: Container(
-                    width: 38,
-                    height: 4,
-                    margin: const EdgeInsets.only(bottom: 18),
-                    decoration: BoxDecoration(
-                      color: AppColors.textTertiary.withValues(alpha: 0.35),
-                      borderRadius: BorderRadius.circular(99),
-                    ),
-                  ),
-                ),
-                _Header(quotaContext: widget.quotaContext),
-                const SizedBox(height: 18),
-                _PerkList(),
+                _DragHandle(),
+                const SizedBox(height: 6),
+                _TopBar(onClose: () => Navigator.of(context).pop(false)),
                 const SizedBox(height: 22),
+                _Hero(icon: hero.icon, title: hero.title, subtitle: hero.subtitle),
+                const SizedBox(height: 20),
+                const _PerkList(),
+                const SizedBox(height: 18),
+                _PricingCard(
+                  sku: ProSku.yearly,
+                  title: 'Yearly',
+                  product: yearly,
+                  fallbackPrice: '\$39.99',
+                  cadence: 'per year',
+                  badge: 'BEST VALUE',
+                  splitMonthly: true,
+                  selected: _selected == ProSku.yearly,
+                  onSelect: () => setState(() => _selected = ProSku.yearly),
+                ),
+                const SizedBox(height: 10),
                 _PricingCard(
                   sku: ProSku.monthly,
                   title: 'Monthly',
@@ -141,17 +155,6 @@ class _PaywallSheetState extends State<PaywallSheet> {
                 ),
                 const SizedBox(height: 10),
                 _PricingCard(
-                  sku: ProSku.yearly,
-                  title: 'Yearly',
-                  product: yearly,
-                  fallbackPrice: '\$39.99',
-                  cadence: 'per year',
-                  badge: 'BEST VALUE',
-                  selected: _selected == ProSku.yearly,
-                  onSelect: () => setState(() => _selected = ProSku.yearly),
-                ),
-                const SizedBox(height: 10),
-                _PricingCard(
                   sku: ProSku.lifetime,
                   title: 'Lifetime',
                   product: lifetime,
@@ -160,7 +163,7 @@ class _PaywallSheetState extends State<PaywallSheet> {
                   selected: _selected == ProSku.lifetime,
                   onSelect: () => setState(() => _selected = ProSku.lifetime),
                 ),
-                const SizedBox(height: 22),
+                const SizedBox(height: 20),
                 SizedBox(
                   width: double.infinity,
                   child: FilledButton(
@@ -190,41 +193,53 @@ class _PaywallSheetState extends State<PaywallSheet> {
                           ),
                   ),
                 ),
+                const SizedBox(height: 8),
+                Center(
+                  child: Text(
+                    _microcopyFor(_selected, monthly, yearly, lifetime),
+                    style: const TextStyle(
+                      fontSize: 11,
+                      color: AppColors.textSecondary,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
                 const SizedBox(height: 10),
-                Center(
-                  child: TextButton(
-                    onPressed: _busy ? null : _restore,
-                    child: const Text(
-                      'Restore purchases',
-                      style: TextStyle(
-                        color: AppColors.textSecondary,
-                        fontWeight: FontWeight.w600,
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    _FooterLink(
+                      label: 'Restore',
+                      onTap: _busy ? null : _restore,
+                    ),
+                    _Dot(),
+                    _FooterLink(
+                      label: 'Promo code',
+                      onTap: _busy
+                          ? null
+                          : () {
+                              HapticsService.instance.tap();
+                              RedeemPromoDialog.show(context);
+                            },
+                    ),
+                    _Dot(),
+                    _FooterLink(
+                      label: 'Terms',
+                      onTap: () => _openUrl(
+                        'https://mustafasalimerek-bit.github.io/pdfprivio/terms/',
                       ),
                     ),
-                  ),
-                ),
-                Center(
-                  child: TextButton(
-                    onPressed: _busy
-                        ? null
-                        : () {
-                            HapticsService.instance.tap();
-                            // A successful redeem flips PurchaseService.hasPro
-                            // through the OR-gate, and our entitlementChanges
-                            // listener pops the sheet — no manual cleanup.
-                            RedeemPromoDialog.show(context);
-                          },
-                    child: const Text(
-                      'Have a promo code?',
-                      style: TextStyle(
-                        color: AppColors.textSecondary,
-                        fontWeight: FontWeight.w600,
+                    _Dot(),
+                    _FooterLink(
+                      label: 'Privacy',
+                      onTap: () => _openUrl(
+                        'https://mustafasalimerek-bit.github.io/pdfprivio/privacy/',
                       ),
                     ),
-                  ),
+                  ],
                 ),
-                const SizedBox(height: 4),
-                const _LegalFooter(),
+                const SizedBox(height: 10),
+                const _LegalDisclosure(),
               ],
             ),
           ),
@@ -233,131 +248,328 @@ class _PaywallSheetState extends State<PaywallSheet> {
     );
   }
 
+  Future<void> _openUrl(String url) async {
+    final uri = Uri.parse(url);
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    }
+  }
+
   String _ctaFor(ProSku sku) {
     switch (sku) {
       case ProSku.monthly:
-        return 'Start monthly';
+        return 'Continue with monthly';
       case ProSku.yearly:
-        return 'Start yearly';
+        return 'Continue with yearly';
       case ProSku.lifetime:
         return 'Buy lifetime';
     }
   }
+
+  String _microcopyFor(
+    ProSku sku,
+    ProductDetails? monthly,
+    ProductDetails? yearly,
+    ProductDetails? lifetime,
+  ) {
+    switch (sku) {
+      case ProSku.monthly:
+        final p = monthly?.price ?? '\$4.99';
+        return '$p / month · Cancel anytime in Apple ID settings';
+      case ProSku.yearly:
+        final p = yearly?.price ?? '\$39.99';
+        return '$p / year · Cancel anytime in Apple ID settings';
+      case ProSku.lifetime:
+        final p = lifetime?.price ?? '\$79.99';
+        return '$p one-time · No subscription, no renewal';
+    }
+  }
 }
 
-class _Header extends StatelessWidget {
-  final String? quotaContext;
-  const _Header({this.quotaContext});
+// ---------------------------------------------------------------------------
+// Feature-aware hero mapping
+// ---------------------------------------------------------------------------
+
+class _PaywallHero {
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  const _PaywallHero({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+  });
+}
+
+/// Map the gated tile's title to a hero icon + a short headline.
+/// "Unlock signing" reads infinitely better than "Pro" when the user
+/// just tapped Sign and got bounced here — and the icon match is the
+/// non-verbal half of that message.
+_PaywallHero _heroFor(String? ctx) {
+  switch (ctx) {
+    // Pro-only tools (5)
+    case 'Fill form':
+      return const _PaywallHero(
+        icon: Icons.edit_document,
+        title: 'Unlock form filling',
+        subtitle: 'And 4 other Pro tools',
+      );
+    case 'Bates numbering':
+      return const _PaywallHero(
+        icon: Icons.tag,
+        title: 'Unlock Bates numbering',
+        subtitle: 'And 4 other Pro tools',
+      );
+    case 'Redact':
+      return const _PaywallHero(
+        icon: Icons.format_color_fill,
+        title: 'Unlock redaction',
+        subtitle: 'And 4 other Pro tools',
+      );
+    case 'Batch operations':
+      return const _PaywallHero(
+        icon: Icons.dynamic_feed_outlined,
+        title: 'Unlock batch operations',
+        subtitle: 'And 4 other Pro tools',
+      );
+    case 'Receipt scanner':
+      return const _PaywallHero(
+        icon: Icons.receipt_long_outlined,
+        title: 'Unlock receipt scanning',
+        subtitle: 'And 4 other Pro tools',
+      );
+
+    // Free tools that hit daily quota — icon-matched, copy says "used up"
+    case 'Sign PDF':
+      return const _PaywallHero(
+        icon: Icons.draw_outlined,
+        title: 'Sign is used up for today',
+        subtitle: 'Pro removes the daily cap',
+      );
+    case 'Merge PDFs':
+      return const _PaywallHero(
+        icon: Icons.library_books_outlined,
+        title: 'Merge is used up for today',
+        subtitle: 'Pro removes the daily cap',
+      );
+    case 'Compress PDF':
+      return const _PaywallHero(
+        icon: Icons.compress_outlined,
+        title: 'Compress is used up for today',
+        subtitle: 'Pro removes the daily cap',
+      );
+    case 'Split PDF':
+      return const _PaywallHero(
+        icon: Icons.content_cut_outlined,
+        title: 'Split is used up for today',
+        subtitle: 'Pro removes the daily cap',
+      );
+    case 'OCR PDF':
+      return const _PaywallHero(
+        icon: Icons.find_in_page_outlined,
+        title: 'OCR is used up for today',
+        subtitle: 'Pro removes the daily cap',
+      );
+    case 'Scan to PDF':
+      return const _PaywallHero(
+        icon: Icons.document_scanner_outlined,
+        title: 'Scan is used up for today',
+        subtitle: 'Pro removes the daily cap',
+      );
+    case 'Find sensitive data':
+      return const _PaywallHero(
+        icon: Icons.shield_outlined,
+        title: 'PII scan is used up for today',
+        subtitle: 'Pro removes the daily cap',
+      );
+
+    // Generic upsell (Pro tab, Settings)
+    default:
+      return const _PaywallHero(
+        icon: Icons.auto_awesome,
+        title: 'Unlock the full toolkit',
+        subtitle: '5 Pro tools + no daily limits',
+      );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Sub-widgets
+// ---------------------------------------------------------------------------
+
+class _DragHandle extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Container(
+        width: 38,
+        height: 4,
+        decoration: BoxDecoration(
+          color: AppColors.textTertiary.withValues(alpha: 0.35),
+          borderRadius: BorderRadius.circular(99),
+        ),
+      ),
+    );
+  }
+}
+
+class _TopBar extends StatelessWidget {
+  final VoidCallback onClose;
+  const _TopBar({required this.onClose});
 
   @override
   Widget build(BuildContext context) {
-    final reset = UsageLimitsService.instance
-        .stateFor('merge'); // any tool, just for resetsAt
-    return FutureBuilder(
-      future: reset,
-      builder: (context, snap) {
-        final resetsAt = snap.data?.resetsAt;
-        final inHours = resetsAt?.difference(DateTime.now()).inHours;
-
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 10,
-                vertical: 4,
+    return Row(
+      children: [
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+          decoration: BoxDecoration(
+            color: AppColors.iconTint,
+            borderRadius: BorderRadius.circular(99),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: const [
+              Icon(
+                Icons.auto_awesome,
+                size: 13,
+                color: AppColors.primary,
               ),
-              decoration: BoxDecoration(
-                color: AppColors.primary.withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(99),
-              ),
-              child: const Text(
-                'PDFPRIVIO PRO',
+              SizedBox(width: 5),
+              Text(
+                'Pro feature',
                 style: TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.w800,
                   color: AppColors.primary,
-                  letterSpacing: 0.8,
+                  letterSpacing: 0.3,
                 ),
               ),
-            ),
-            const SizedBox(height: 10),
-            Text(
-              quotaContext != null
-                  ? "Free $quotaContext is used up for today"
-                  : 'Unlock the full PDFPrivio toolkit',
-              style: const TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.w800,
-                height: 1.25,
-              ),
-            ),
-            const SizedBox(height: 6),
-            Text(
-              quotaContext != null
-                  ? 'Your daily quota resets at midnight'
-                      '${inHours != null ? ' — in ${inHours}h' : ''}. '
-                      'Or remove the cap and unlock Form Fill, Bates, '
-                      'Redact, Batch, and Receipt scanner right now.'
-                  : 'Remove daily limits across 15 tools and unlock '
-                      'Form Fill, Bates, Redact, Batch operations, and '
-                      'Receipt scanner.',
-              style: const TextStyle(
-                fontSize: 13,
-                color: AppColors.textSecondary,
-                height: 1.45,
-              ),
-            ),
-          ],
-        );
-      },
+            ],
+          ),
+        ),
+        const Spacer(),
+        // Close button required by Apple App Review Guidelines 3.1.2 +
+        // 3.2.2 — must be visible and tappable. Kept neutral grey so
+        // the default visual pull stays on the primary CTA below.
+        IconButton(
+          onPressed: onClose,
+          icon: const Icon(
+            Icons.close,
+            color: AppColors.textTertiary,
+            size: 22,
+          ),
+          padding: EdgeInsets.zero,
+          constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+          tooltip: 'Close',
+        ),
+      ],
+    );
+  }
+}
+
+class _Hero extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  const _Hero({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Container(
+          width: 76,
+          height: 76,
+          decoration: BoxDecoration(
+            color: AppColors.iconTint,
+            borderRadius: BorderRadius.circular(22),
+          ),
+          child: Icon(
+            icon,
+            color: AppColors.primary,
+            size: 36,
+          ),
+        ),
+        const SizedBox(height: 14),
+        Text(
+          title,
+          textAlign: TextAlign.center,
+          style: const TextStyle(
+            fontSize: 22,
+            fontWeight: FontWeight.w800,
+            color: AppColors.textPrimary,
+            height: 1.2,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          subtitle,
+          textAlign: TextAlign.center,
+          style: const TextStyle(
+            fontSize: 13,
+            color: AppColors.textSecondary,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ],
     );
   }
 }
 
 class _PerkList extends StatelessWidget {
+  const _PerkList();
+
   static const _items = <String>[
+    'Form Fill, Bates, Redact, Batch, Receipts',
     'No daily limits on any tool',
-    'Form Fill, Bates, Redact, Batch, Receipt scanner — unlocked',
-    'No ads',
-    'Same on-device privacy guarantee',
+    'No ads anywhere',
+    'Same on-device privacy — files never leave',
   ];
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.border),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          for (final item in _items)
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 3),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Icon(
-                    Icons.check_circle,
-                    color: AppColors.primary,
-                    size: 17,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        for (final item in _items)
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 5),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  width: 22,
+                  height: 22,
+                  decoration: BoxDecoration(
+                    color: AppColors.iconTint,
+                    shape: BoxShape.circle,
                   ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Text(
-                      item,
-                      style: const TextStyle(fontSize: 13, height: 1.35),
+                  child: const Icon(
+                    Icons.check,
+                    color: AppColors.primary,
+                    size: 14,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    item,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      height: 1.35,
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
-        ],
-      ),
+          ),
+      ],
     );
   }
 }
@@ -371,6 +583,9 @@ class _PricingCard extends StatelessWidget {
   final String? badge;
   final bool selected;
   final VoidCallback onSelect;
+  /// When true (yearly), the price row shows the $/mo split anchor:
+  /// "$3.33 /mo · billed $39.99/yr". The other tiers show flat price.
+  final bool splitMonthly;
 
   const _PricingCard({
     required this.sku,
@@ -381,6 +596,7 @@ class _PricingCard extends StatelessWidget {
     required this.selected,
     required this.onSelect,
     this.badge,
+    this.splitMonthly = false,
   });
 
   @override
@@ -391,14 +607,15 @@ class _PricingCard extends StatelessWidget {
         HapticsService.instance.select();
         onSelect();
       },
-      borderRadius: BorderRadius.circular(14),
-      child: Container(
-        padding: const EdgeInsets.fromLTRB(14, 14, 14, 14),
+      borderRadius: BorderRadius.circular(16),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 140),
+        padding: const EdgeInsets.fromLTRB(16, 14, 14, 14),
         decoration: BoxDecoration(
           color: selected
               ? AppColors.primary.withValues(alpha: 0.06)
               : AppColors.surface,
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(16),
           border: Border.all(
             color: selected ? AppColors.primary : AppColors.border,
             width: selected ? 1.6 : 1,
@@ -406,16 +623,6 @@ class _PricingCard extends StatelessWidget {
         ),
         child: Row(
           children: [
-            Icon(
-              selected
-                  ? Icons.radio_button_checked
-                  : Icons.radio_button_off,
-              color: selected
-                  ? AppColors.primary
-                  : AppColors.textTertiary,
-              size: 22,
-            ),
-            const SizedBox(width: 12),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -425,20 +632,20 @@ class _PricingCard extends StatelessWidget {
                       Text(
                         title,
                         style: const TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w800,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.textPrimary,
                         ),
                       ),
                       if (badge != null) ...[
                         const SizedBox(width: 8),
                         Container(
                           padding: const EdgeInsets.symmetric(
-                            horizontal: 6,
+                            horizontal: 7,
                             vertical: 2,
                           ),
                           decoration: BoxDecoration(
-                            color: AppColors.warning
-                                .withValues(alpha: 0.18),
+                            color: AppColors.primary,
                             borderRadius: BorderRadius.circular(99),
                           ),
                           child: Text(
@@ -446,41 +653,166 @@ class _PricingCard extends StatelessWidget {
                             style: const TextStyle(
                               fontSize: 9,
                               fontWeight: FontWeight.w800,
-                              color: AppColors.warning,
-                              letterSpacing: 0.6,
+                              color: Colors.white,
+                              letterSpacing: 0.5,
                             ),
                           ),
                         ),
                       ],
                     ],
                   ),
-                  const SizedBox(height: 2),
-                  Text(
-                    cadence,
-                    style: const TextStyle(
-                      fontSize: 12,
-                      color: AppColors.textSecondary,
+                  const SizedBox(height: 4),
+                  if (splitMonthly)
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Text(
+                          _approxMonthlyForYearly(price),
+                          style: const TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.w800,
+                            color: AppColors.textPrimary,
+                            height: 1.1,
+                          ),
+                        ),
+                        const SizedBox(width: 4),
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 3),
+                          child: Text(
+                            '/mo · billed $price/yr',
+                            style: const TextStyle(
+                              fontSize: 11,
+                              color: AppColors.textSecondary,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ],
+                    )
+                  else
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Text(
+                          price,
+                          style: const TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.w800,
+                            color: AppColors.textPrimary,
+                            height: 1.1,
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 3),
+                          child: Text(
+                            cadence,
+                            style: const TextStyle(
+                              fontSize: 11,
+                              color: AppColors.textSecondary,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
-                  ),
                 ],
               ),
             ),
-            Text(
-              price,
-              style: const TextStyle(
-                fontSize: 17,
-                fontWeight: FontWeight.w800,
-              ),
-            ),
+            const SizedBox(width: 8),
+            _RadioBubble(selected: selected),
           ],
+        ),
+      ),
+    );
+  }
+
+  /// Best-effort split: extract leading currency symbol + the number,
+  /// divide by 12, re-attach the symbol. Falls back to the full price
+  /// string if we can't parse — better to show "$39.99 /mo" than crash.
+  String _approxMonthlyForYearly(String price) {
+    final match = RegExp(r'(\D*)(\d+[\.,]?\d*)').firstMatch(price);
+    if (match == null) return price;
+    final symbol = match.group(1) ?? '';
+    final raw = match.group(2) ?? '';
+    final normalised = raw.replaceAll(',', '.');
+    final yearly = double.tryParse(normalised);
+    if (yearly == null) return price;
+    final monthly = yearly / 12;
+    final formatted = monthly.toStringAsFixed(2);
+    return '$symbol$formatted';
+  }
+}
+
+class _RadioBubble extends StatelessWidget {
+  final bool selected;
+  const _RadioBubble({required this.selected});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 26,
+      height: 26,
+      decoration: BoxDecoration(
+        color: selected ? AppColors.primary : Colors.transparent,
+        shape: BoxShape.circle,
+        border: Border.all(
+          color: selected ? AppColors.primary : AppColors.border,
+          width: 1.6,
+        ),
+      ),
+      child: selected
+          ? const Icon(Icons.check, color: Colors.white, size: 16)
+          : const SizedBox.shrink(),
+    );
+  }
+}
+
+class _FooterLink extends StatelessWidget {
+  final String label;
+  final VoidCallback? onTap;
+  const _FooterLink({required this.label, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontSize: 11,
+            fontWeight: FontWeight.w700,
+            color: onTap == null
+                ? AppColors.textTertiary
+                : AppColors.primary,
+          ),
         ),
       ),
     );
   }
 }
 
-class _LegalFooter extends StatelessWidget {
-  const _LegalFooter();
+class _Dot extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 2),
+      child: Text(
+        '·',
+        style: TextStyle(
+          fontSize: 11,
+          color: AppColors.textTertiary.withValues(alpha: 0.7),
+          fontWeight: FontWeight.w800,
+        ),
+      ),
+    );
+  }
+}
+
+class _LegalDisclosure extends StatelessWidget {
+  const _LegalDisclosure();
 
   Future<void> _open(String url) async {
     final uri = Uri.parse(url);
@@ -497,8 +829,8 @@ class _LegalFooter extends StatelessWidget {
       height: 1.5,
     );
     final linkStyle = baseStyle.copyWith(
-      color: AppColors.primary,
-      fontWeight: FontWeight.w600,
+      color: AppColors.textSecondary,
+      fontWeight: FontWeight.w700,
       decoration: TextDecoration.underline,
     );
     return RichText(
@@ -510,22 +842,23 @@ class _LegalFooter extends StatelessWidget {
             text: 'Subscriptions automatically renew unless cancelled at '
                 'least 24 hours before the end of the current period. '
                 'Payment is charged to your Apple ID at confirmation. '
-                'Manage or cancel anytime in your Apple ID account '
-                'settings. Lifetime is a one-time purchase with no '
-                'renewal. By continuing you agree to our ',
+                'Lifetime is a one-time purchase with no renewal. '
+                'By continuing you agree to our ',
           ),
           TextSpan(
-            text: 'Terms of Service',
+            text: 'Terms',
             style: linkStyle,
             recognizer: TapGestureRecognizer()
-              ..onTap = () => _open('https://mustafasalimerek-bit.github.io/pdfprivio/terms/'),
+              ..onTap = () =>
+                  _open('https://mustafasalimerek-bit.github.io/pdfprivio/terms/'),
           ),
           const TextSpan(text: ' and '),
           TextSpan(
             text: 'Privacy Policy',
             style: linkStyle,
             recognizer: TapGestureRecognizer()
-              ..onTap = () => _open('https://mustafasalimerek-bit.github.io/pdfprivio/privacy/'),
+              ..onTap = () =>
+                  _open('https://mustafasalimerek-bit.github.io/pdfprivio/privacy/'),
           ),
           const TextSpan(text: '.'),
         ],
