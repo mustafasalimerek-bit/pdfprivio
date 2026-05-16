@@ -51,17 +51,26 @@ class WidgetDataService {
       return;
     }
 
-    await _publishRecents();
+    await _publishRecents(allowEmptyOverwrite: false);
     _sub = RecentFilesService.instance.changes.listen((_) => _publishRecents());
   }
 
   /// Read up to _maxRows recent files and write them as JSON to the
   /// shared App Group store, then ask WidgetKit to redraw.
-  Future<void> _publishRecents() async {
+  ///
+  /// When [allowEmptyOverwrite] is false (default for the boot-time
+  /// publish), an empty Recent list is NOT written through — that
+  /// avoids a freshly-launched app instantly clobbering whatever the
+  /// widget was previously showing before the user has done anything.
+  /// Real changes (record / clear) pass `true` so the widget tracks
+  /// them faithfully.
+  Future<void> _publishRecents({bool allowEmptyOverwrite = true}) async {
     if (!Platform.isIOS) return;
 
     try {
       final files = await RecentFilesService.instance.getAll();
+      if (files.isEmpty && !allowEmptyOverwrite) return;
+
       final top = files.take(_maxRows).map((f) {
         return {
           'name': f.displayName,
