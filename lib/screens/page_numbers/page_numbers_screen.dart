@@ -353,7 +353,7 @@ class _EmptyState extends StatelessWidget {
       primaryLabel: 'Pick a PDF',
       onPrimary: onPick,
       altSources: [
-        ToolAltSource(icon: Icons.history, label: 'Recent', onTap: onPick),
+        ToolAltSource(icon: Icons.camera_alt_outlined, label: 'Scan', onTap: onPick),
       ],
     );
   }

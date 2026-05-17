@@ -256,7 +256,7 @@ class _EmptyState extends StatelessWidget {
       primaryIcon: Icons.add,
       onPrimary: onAdd,
       altSources: [
-        ToolAltSource(icon: Icons.history, label: 'Recent', onTap: onAdd),
+        ToolAltSource(icon: Icons.camera_alt_outlined, label: 'Scan', onTap: onAdd),
       ],
     );
   }
