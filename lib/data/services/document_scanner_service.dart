@@ -1,25 +1,38 @@
 import 'dart:io';
 
 import 'package:flutter/services.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../core/utils/result.dart';
 
 /// Outcome from a single scanner session.
+///
+/// The native scanner (custom AVFoundation UI or VisionKit fallback)
+/// runs its own multi-page capture + review loop entirely on the iOS
+/// side and writes a finished PDF to a temp file. We return that path
+/// so the Flutter UI can hand it straight to MergeResultScreen without
+/// another assembly pass.
+///
+/// `pdfFile == null` means the user cancelled — empty, not an error.
 class ScanOutcome {
-  final List<File> pages;
-  const ScanOutcome({required this.pages});
+  final File? pdfFile;
+  const ScanOutcome({this.pdfFile});
 
-  bool get isEmpty => pages.isEmpty;
-  int get pageCount => pages.length;
+  bool get isEmpty => pdfFile == null;
 }
 
-/// Bridges to the native `VNDocumentCameraViewController` on iOS via a
-/// MethodChannel ("com.erekstudio.pdfprivio/scanner").
+/// Bridges to the native PDFPrivio scanner via MethodChannel.
 ///
-/// VisionKit does edge detection, perspective correction, multi-page
-/// capture, and color/black-and-white modes for us. The Swift side
-/// writes each scanned page as a JPEG into a session-scoped temp dir and
-/// returns the absolute paths — no cloud, all on-device.
+/// Two scanner backends are available:
+///   * **Custom** (default) — full AVCaptureSession + Vision rectangle
+///     detection + stability tracking + auto-capture + 5 enhancement
+///     modes + review screen. iPhone-class UX.
+///   * **Apple VisionKit** (debug toggle) — kept as a fallback inside
+///     `Settings → DEBUG → Use Apple scanner` so we can isolate bugs
+///     between Apple's framework and ours.
+///
+/// Both backends end the same way: a PDF file path is returned over
+/// the channel. Null/empty result == user cancelled.
 class DocumentScannerService {
   DocumentScannerService._();
   static final DocumentScannerService instance = DocumentScannerService._();
@@ -27,7 +40,12 @@ class DocumentScannerService {
   static const MethodChannel _channel =
       MethodChannel('com.erekstudio.pdfprivio/scanner');
 
-  /// Returns true on iPhone/iPad with a rear camera. Always false on the
+  /// Pref key for the hidden debug toggle. Treated as `false` when
+  /// missing — production users never see the toggle.
+  static const String prefsUseAppleScanner =
+      'pdfprivio.debug.use_apple_scanner';
+
+  /// True on iPhone/iPad with a rear camera. Always false on the
   /// iOS Simulator (no camera) and on iPads without a usable camera.
   Future<bool> isAvailable() async {
     if (!Platform.isIOS) return false;
@@ -40,20 +58,26 @@ class DocumentScannerService {
   }
 
   /// Opens the native scanner. Returns:
-  ///   Ok(ScanOutcome) on success (may be empty if the user cancelled).
-  ///   Err(needsPermission) if camera permission is denied.
-  ///   Err(unsupported) on simulator or unsupported devices.
-  ///   Err(unknown) on unexpected native failure.
+  ///   Ok(ScanOutcome(pdfFile: …)) on success.
+  ///   Ok(ScanOutcome(pdfFile: null)) on cancel.
+  ///   Err(unknown) on platform / native failure or unsupported device.
   Future<Result<ScanOutcome>> scan() async {
     if (!Platform.isIOS) {
       return Err(FailureKind.unknown,
           'Document Scanner is iOS-only right now — Android scanner is coming.');
     }
+
+    final prefs = await SharedPreferences.getInstance();
+    final useAppleVisionKit = prefs.getBool(prefsUseAppleScanner) ?? false;
+
     try {
-      final result = await _channel.invokeMethod<List<dynamic>>('scan');
-      final paths = (result ?? const <dynamic>[]).cast<String>();
-      final files = paths.map((p) => File(p)).toList();
-      return Ok(ScanOutcome(pages: files));
+      final result = await _channel.invokeMethod<String?>('scan', {
+        'useAppleVisionKit': useAppleVisionKit,
+      });
+      if (result == null || result.isEmpty) {
+        return Ok(const ScanOutcome(pdfFile: null));
+      }
+      return Ok(ScanOutcome(pdfFile: File(result)));
     } on PlatformException catch (e) {
       switch (e.code) {
         case 'unsupported':
@@ -63,8 +87,10 @@ class DocumentScannerService {
           return Err(FailureKind.unknown,
               'Could not open the scanner UI — try again.');
         case 'busy':
+          return Err(FailureKind.unknown, 'Scanner is already open.');
+        case 'pdf_failed':
           return Err(FailureKind.unknown,
-              'Scanner is already open.');
+              e.message ?? 'Failed to write the scanned PDF.');
         default:
           return Err(FailureKind.unknown,
               e.message ?? 'Scanning failed.',

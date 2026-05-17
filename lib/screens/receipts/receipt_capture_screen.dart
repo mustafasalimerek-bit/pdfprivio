@@ -4,6 +4,8 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:pdfx/pdfx.dart';
 
 import '../../core/theme/colors.dart';
 import '../../core/utils/responsive.dart';
@@ -83,10 +85,48 @@ class _ReceiptCaptureScreenState
     if (!mounted) return;
     switch (res) {
       case Ok(:final value):
-        if (value.isEmpty) return;
-        await _processSource(value.pages.first);
+        final pdf = value.pdfFile;
+        if (pdf == null) return; // cancelled
+        // The new scanner returns a finished PDF; OCR needs a raster
+        // image. Render the first page of the PDF to a PNG and feed
+        // that into the existing receipt-extraction pipeline.
+        final image = await _renderFirstPageAsImage(pdf);
+        if (!mounted) return;
+        if (image == null) {
+          _snack("Couldn't read the scanned page for OCR.");
+          return;
+        }
+        await _processSource(image);
       case Err(:final message):
         _snack(message);
+    }
+  }
+
+  /// Renders page 1 of [pdf] to a PNG file at 2× display density so
+  /// Apple Vision OCR has enough resolution to find the smaller line
+  /// items on a typical receipt. Returns null on failure.
+  Future<File?> _renderFirstPageAsImage(File pdf) async {
+    PdfDocument? doc;
+    try {
+      doc = await PdfDocument.openFile(pdf.path);
+      if (doc.pagesCount < 1) return null;
+      final page = await doc.getPage(1);
+      final pageImage = await page.render(
+        width: page.width * 2,
+        height: page.height * 2,
+        format: PdfPageImageFormat.png,
+      );
+      await page.close();
+      final bytes = pageImage?.bytes;
+      if (bytes == null) return null;
+      final tmp = await getTemporaryDirectory();
+      final out = File('${tmp.path}/receipt_${DateTime.now().millisecondsSinceEpoch}.png');
+      await out.writeAsBytes(bytes, flush: true);
+      return out;
+    } catch (_) {
+      return null;
+    } finally {
+      await doc?.close();
     }
   }
 
