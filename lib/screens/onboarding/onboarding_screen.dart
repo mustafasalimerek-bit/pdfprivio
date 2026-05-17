@@ -1,6 +1,9 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../core/constants/price_fallbacks.dart';
 import '../../core/theme/colors.dart';
 import '../../data/services/haptics_service.dart';
 import '../../data/services/onboarding_service.dart';
@@ -11,10 +14,14 @@ import '../../data/services/purchase_service.dart';
 ///   2. Features — 4 tool highlights
 ///   3. Pro trial paywall — plan picker + free-trial CTA
 ///
-/// Vertical rhythm rule (all three pages): exactly one flexible
-/// `Spacer()` sits between the content stack and the bottom dots-
-/// button-footer group. Every other gap is a fixed `SizedBox` —
-/// without that, the content drifts and dwarfs the CTA.
+/// Vertical rhythm rule (all three pages): two flexible `Spacer()`s
+/// sandwich the content cluster — one above, one between content
+/// and the bottom dots-button-footer group. The two Spacers split
+/// the leftover vertical space evenly, so the cluster sits in the
+/// vertical center on tall devices (17 Pro Max) and compresses
+/// gracefully on small ones (SE). Every other gap is a fixed
+/// `SizedBox`. A "fixed top + flexible bottom" arrangement left a
+/// huge dead zone above the CTA on Pro Max.
 class OnboardingScreen extends StatefulWidget {
   final VoidCallback onDone;
   const OnboardingScreen({super.key, required this.onDone});
@@ -63,11 +70,61 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     if (_buying) return;
     HapticsService.instance.tap();
     setState(() => _buying = true);
-    final ok = await PurchaseService.instance.buy(_selectedSku);
+
+    // Subscribe to the result stream BEFORE launching the dialog —
+    // broadcast streams don't replay history, so if we awaited after
+    // buy() we could miss a fast cancel. `.first` returns a Future
+    // that resolves on the next event; the listener attaches now.
+    final resultFuture = PurchaseService.instance.purchaseResults.first
+        .timeout(
+          const Duration(minutes: 5),
+          onTimeout: () => PurchaseResult.error,
+        );
+
+    // 1. Launch the StoreKit dialog. `buy()` returns true once the
+    //    dialog is *shown*, not when the purchase actually completes —
+    //    a `false` here means we couldn't even surface one (StoreKit
+    //    unreachable, SKU not provisioned in ASC, etc.).
+    final launched = await PurchaseService.instance.buy(_selectedSku);
+    if (!mounted) return;
+    if (!launched) {
+      setState(() => _buying = false);
+      _showTrialError(
+        "Couldn't start the trial. Check your connection, or tap × to skip.",
+      );
+      return;
+    }
+
+    // 2. Wait for a terminal event from the purchase stream. Cancel
+    //    fires immediately when the user taps Cancel on the Apple ID
+    //    sheet — no 60-second timeout needed. The 5-minute outer
+    //    timeout is just a safety net for genuinely stuck transactions.
+    final result = await resultFuture;
     if (!mounted) return;
     setState(() => _buying = false);
-    if (ok) HapticsService.instance.success();
+
+    if (result != PurchaseResult.success || !PurchaseService.instance.hasPro) {
+      _showTrialError(
+        result == PurchaseResult.canceled
+            ? 'Trial cancelled. Tap Start to try again, or × to skip.'
+            : "Trial didn't activate. Try again, or tap × to skip.",
+      );
+      return;
+    }
+
+    HapticsService.instance.success();
     await _finish();
+  }
+
+  void _showTrialError(String message) {
+    HapticsService.instance.error();
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        behavior: SnackBarBehavior.floating,
+        duration: const Duration(seconds: 4),
+      ),
+    );
   }
 
   Future<void> _openTerms() async {
@@ -140,56 +197,56 @@ class PrivacyPromiseView extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        const SizedBox(height: 28),
+        const Spacer(),
         Container(
-          width: 72,
-          height: 72,
+          width: 80,
+          height: 80,
           decoration: BoxDecoration(
             color: _OnboardingScreenState._tealBg,
             borderRadius: BorderRadius.circular(22),
           ),
           child: const Icon(
             Icons.security,
-            size: 38,
+            size: 42,
             color: _OnboardingScreenState._teal,
           ),
         ),
-        const SizedBox(height: 22),
+        const SizedBox(height: 24),
         const Text(
           'Your documents stay private',
           textAlign: TextAlign.center,
           style: TextStyle(
-            fontSize: 22,
+            fontSize: 24,
             fontWeight: FontWeight.w600,
             color: _OnboardingScreenState._textPrimary,
             height: 1.2,
             letterSpacing: -0.3,
           ),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 10),
         const Padding(
           padding: EdgeInsets.symmetric(horizontal: 32),
           child: Text(
             'Everything happens on your iPhone.\nNothing goes to the cloud.',
             textAlign: TextAlign.center,
             style: TextStyle(
-              fontSize: 14,
+              fontSize: 15,
               fontWeight: FontWeight.w400,
               color: _OnboardingScreenState._textSecondary,
               height: 1.45,
             ),
           ),
         ),
-        const SizedBox(height: 28),
+        const SizedBox(height: 32),
         const Padding(
-          padding: EdgeInsets.symmetric(horizontal: 60),
+          padding: EdgeInsets.symmetric(horizontal: 70),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _CheckRow('No cloud uploads'),
-              SizedBox(height: 14),
+              SizedBox(height: 16),
               _CheckRow('No tracking, ever'),
-              SizedBox(height: 14),
+              SizedBox(height: 16),
               _CheckRow('On-device AI only'),
             ],
           ),
@@ -241,36 +298,36 @@ class FeaturesShowcaseView extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        const SizedBox(height: 28),
+        const Spacer(),
         const Text(
           'Everything PDF, offline',
           textAlign: TextAlign.center,
           style: TextStyle(
-            fontSize: 22,
+            fontSize: 24,
             fontWeight: FontWeight.w600,
             color: _OnboardingScreenState._textPrimary,
             height: 1.2,
             letterSpacing: -0.3,
           ),
         ),
-        const SizedBox(height: 6),
+        const SizedBox(height: 8),
         const Text(
-          '10+ pro tools in your pocket',
+          '23 tools · 18 free forever',
           textAlign: TextAlign.center,
           style: TextStyle(
-            fontSize: 14,
+            fontSize: 15,
             fontWeight: FontWeight.w400,
             color: _OnboardingScreenState._textSecondary,
           ),
         ),
-        const SizedBox(height: 32),
+        const SizedBox(height: 36),
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24),
+          padding: const EdgeInsets.symmetric(horizontal: 28),
           child: Column(
             children: [
               for (var i = 0; i < _features.length; i++) ...[
                 _FeatureRow(feature: _features[i]),
-                if (i != _features.length - 1) const SizedBox(height: 18),
+                if (i != _features.length - 1) const SizedBox(height: 20),
               ],
             ],
           ),
@@ -311,7 +368,7 @@ class TrialPaywallView extends StatelessWidget {
 
   String _yearlyPerMonth() {
     final p = PurchaseService.instance.productFor(ProSku.yearly);
-    if (p == null) return '\$3.33';
+    if (p == null) return PriceFallbacks.yearlyPerMonth;
     final raw = p.rawPrice / 12.0;
     final symbol = p.currencySymbol;
     return '$symbol${raw.toStringAsFixed(2)}';
@@ -319,19 +376,19 @@ class TrialPaywallView extends StatelessWidget {
 
   String _monthlyPrice() {
     final p = PurchaseService.instance.productFor(ProSku.monthly);
-    if (p == null) return '\$4.99';
+    if (p == null) return PriceFallbacks.monthly;
     return p.price;
   }
 
   String _yearlyTotal() {
     final p = PurchaseService.instance.productFor(ProSku.yearly);
-    if (p == null) return '\$39.99/yr';
+    if (p == null) return PriceFallbacks.yearlyWithYearSuffix;
     return '${p.price}/yr';
   }
 
   String _lifetimePrice() {
     final p = PurchaseService.instance.productFor(ProSku.lifetime);
-    if (p == null) return '\$79.99';
+    if (p == null) return PriceFallbacks.lifetime;
     return p.price;
   }
 
@@ -385,42 +442,43 @@ class TrialPaywallView extends StatelessWidget {
             ],
           ),
         ),
+        const Spacer(),
         Container(
-          width: 72,
-          height: 72,
+          width: 80,
+          height: 80,
           decoration: BoxDecoration(
             color: _OnboardingScreenState._tealBg,
             borderRadius: BorderRadius.circular(22),
           ),
           child: const Icon(
             Icons.auto_awesome,
-            size: 36,
+            size: 40,
             color: _OnboardingScreenState._teal,
           ),
         ),
-        const SizedBox(height: 18),
+        const SizedBox(height: 20),
         const Text(
           'Try Pro free for 7 days',
           textAlign: TextAlign.center,
           style: TextStyle(
-            fontSize: 22,
+            fontSize: 24,
             fontWeight: FontWeight.w600,
             color: _OnboardingScreenState._textPrimary,
             height: 1.2,
             letterSpacing: -0.3,
           ),
         ),
-        const SizedBox(height: 6),
+        const SizedBox(height: 8),
         const Text(
           'Unlock everything. Cancel anytime.',
           textAlign: TextAlign.center,
           style: TextStyle(
-            fontSize: 14,
+            fontSize: 15,
             fontWeight: FontWeight.w400,
             color: _OnboardingScreenState._textSecondary,
           ),
         ),
-        const SizedBox(height: 24),
+        const SizedBox(height: 28),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 18),
           child: Column(
@@ -537,15 +595,15 @@ class _FeatureRow extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         Container(
-          width: 48,
-          height: 48,
+          width: 52,
+          height: 52,
           decoration: BoxDecoration(
             color: _OnboardingScreenState._tealBg,
             borderRadius: BorderRadius.circular(14),
           ),
           child: Icon(
             feature.icon,
-            size: 22,
+            size: 24,
             color: _OnboardingScreenState._teal,
           ),
         ),
@@ -558,13 +616,13 @@ class _FeatureRow extends StatelessWidget {
               Text(
                 feature.title,
                 style: const TextStyle(
-                  fontSize: 15,
+                  fontSize: 16,
                   fontWeight: FontWeight.w500,
                   color: _OnboardingScreenState._textPrimary,
                   height: 1.2,
                 ),
               ),
-              const SizedBox(height: 2),
+              const SizedBox(height: 3),
               Text(
                 feature.subtitle,
                 style: const TextStyle(

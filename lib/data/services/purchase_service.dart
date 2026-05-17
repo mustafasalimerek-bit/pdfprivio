@@ -8,6 +8,12 @@ import 'promo_code_service.dart';
 
 enum EntitlementTier { free, pro }
 
+/// Terminal outcome of a single `buy()` request. Emitted on
+/// `purchaseResults` so callers (e.g. the onboarding paywall) can
+/// react to cancel / error without polling — `entitlementChanges`
+/// only fires on success.
+enum PurchaseResult { success, canceled, error }
+
 /// One of the three SKUs we sell. The tier they unlock is the same —
 /// monthly and yearly are auto-renewable subscriptions inside one ASC
 /// subscription group, lifetime is a separate non-consumable.
@@ -70,6 +76,14 @@ class PurchaseService {
 
   final _controller = StreamController<EntitlementTier>.broadcast();
   Stream<EntitlementTier> get entitlementChanges => _controller.stream;
+
+  /// Fires once per `buy()` attempt with the terminal outcome. Cancel
+  /// and error don't change the entitlement, so `entitlementChanges`
+  /// stays silent — listen here when you need to know "did the user
+  /// actually go through with it?" (e.g. dismiss onboarding only on
+  /// success, surface a retry snackbar on cancel).
+  final _resultController = StreamController<PurchaseResult>.broadcast();
+  Stream<PurchaseResult> get purchaseResults => _resultController.stream;
 
   StreamSubscription<List<PurchaseDetails>>? _purchaseSub;
 
@@ -193,7 +207,7 @@ class PurchaseService {
     for (final p in purchases) {
       switch (p.status) {
         case PurchaseStatus.pending:
-          // Spinner in UI; transaction not yet settled.
+          // Spinner in UI; transaction not yet settled. No result emit.
           break;
         case PurchaseStatus.purchased:
         case PurchaseStatus.restored:
@@ -204,6 +218,7 @@ class PurchaseService {
           if (p.pendingCompletePurchase) {
             _iap.completePurchase(p);
           }
+          _resultController.add(PurchaseResult.success);
         case PurchaseStatus.error:
           if (kDebugMode) {
             debugPrint('Purchase error: ${p.error?.message}');
@@ -211,10 +226,12 @@ class PurchaseService {
           if (p.pendingCompletePurchase) {
             _iap.completePurchase(p);
           }
+          _resultController.add(PurchaseResult.error);
         case PurchaseStatus.canceled:
           if (p.pendingCompletePurchase) {
             _iap.completePurchase(p);
           }
+          _resultController.add(PurchaseResult.canceled);
       }
     }
   }
