@@ -134,7 +134,7 @@ class HomeScreen extends ConsumerWidget {
     'form_fill',
     'redact',
     'merge',
-    'compress',
+    'summarize',
     'split',
   };
 
@@ -269,6 +269,7 @@ class HomeScreen extends ConsumerWidget {
           subtitle: 'On-device Apple Intelligence summary — never uploaded',
           toolId: 'summarize',
           builder: _buildSummarizeScreen,
+          gridLabel: 'Summarize',
         ),
         _ToolSpec(
           icon: Icons.center_focus_strong_outlined,
