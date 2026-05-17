@@ -15,7 +15,14 @@ import '../pro/pro_screen.dart';
 import '../recent/recent_screen.dart';
 import '../settings/settings_screen.dart';
 
-/// Four-tab bottom nav shell: Tools / Recent / Pro / Settings.
+/// Three-tab bottom nav shell: Tools / Recent / Settings.
+///
+/// Pro used to live as a fourth tab, but the upgrade pitch reads more
+/// natural as a hero card pinned to the top of Settings — the bottom
+/// nav stays focused on tasks the user came here to do. Pro screen is
+/// still reachable via that card, paywalls, and the `tab:pro` Siri /
+/// Shortcuts route (which now pushes ProScreen as a fullscreen route
+/// instead of switching tabs).
 ///
 /// IndexedStack keeps each tab's state alive between switches — a
 /// half-typed redaction term won't disappear when the user pops into
@@ -38,7 +45,6 @@ class _RootScaffoldState extends ConsumerState<RootScaffold>
   static const _tabs = <Widget>[
     HomeScreen(),
     RecentScreen(),
-    ProScreen(),
     SettingsScreen(),
   ];
 
@@ -89,10 +95,14 @@ class _RootScaffoldState extends ConsumerState<RootScaffold>
       switch (route.substring(4)) {
         case 'recent':
           setState(() => _index = 1);
-        case 'pro':
-          setState(() => _index = 2);
         case 'settings':
-          setState(() => _index = 3);
+          setState(() => _index = 2);
+        case 'pro':
+          // Pro is no longer a tab; push it as a fullscreen route so
+          // Shortcuts / Siri intents still land somewhere meaningful.
+          Navigator.of(context).push(
+            MaterialPageRoute(builder: (_) => const ProScreen()),
+          );
         case 'tools':
         default:
           setState(() => _index = 0);
@@ -137,17 +147,6 @@ class _RootScaffoldState extends ConsumerState<RootScaffold>
             icon: Icon(Icons.history_outlined),
             selectedIcon: Icon(Icons.history, color: AppColors.primary),
             label: 'Recent',
-          ),
-          NavigationDestination(
-            // Sparkles for the Pro tab — Apple standardised this glyph
-            // for "AI / premium" in iOS 18+, so it reads as "value
-            // unlock" instead of a generic decoration.
-            icon: Icon(Icons.auto_awesome_outlined),
-            selectedIcon: Icon(
-              Icons.auto_awesome,
-              color: AppColors.primary,
-            ),
-            label: 'Pro',
           ),
           NavigationDestination(
             icon: Icon(Icons.settings_outlined),

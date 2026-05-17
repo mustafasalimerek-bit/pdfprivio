@@ -16,6 +16,7 @@ import '../../data/services/purchase_service.dart';
 import '../../data/services/widget_data_service.dart';
 import '../../widgets/redeem_promo_dialog.dart';
 import '../audit_log/audit_log_screen.dart';
+import '../pro/pro_screen.dart';
 import '../receipts/expense_ledger_screen.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
@@ -207,6 +208,14 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
   /// Subscription management deep link. iOS opens the App Store
   /// directly when this resolves; on simulator / signed-out devices
+  Future<void> _openProScreen() async {
+    HapticsService.instance.tap();
+    await Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => const ProScreen()),
+    );
+    if (mounted) setState(() {}); // pick up post-purchase state change
+  }
+
   /// it doesn't, so fall back to a dialog with the URL the user can
   /// copy + open manually.
   Future<void> _openSubscriptions() async {
@@ -377,22 +386,24 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   ),
                 ),
               ),
-              const _PrivacyHero(),
+              _ProTopCard(
+                onOpenPro: _openProScreen,
+                onManageSubscription: _openSubscriptions,
+              ),
               const SizedBox(height: 24),
 
               // ACCOUNT -----------------------------------------------------
               const _SectionLabel('Account'),
               _SettingsCard(
                 children: [
-                  _SettingsRow(
-                    icon: Icons.auto_awesome,
-                    title: _proPlanLabel(),
-                    subtitle: _proPlanSubtitle(),
-                    trailing: PurchaseService.instance.hasPro
-                        ? const _TextLink('Manage')
-                        : null,
-                    onTap: _openSubscriptions,
-                  ),
+                  if (PurchaseService.instance.hasPro)
+                    _SettingsRow(
+                      icon: Icons.auto_awesome,
+                      title: _proPlanLabel(),
+                      subtitle: _proPlanSubtitle(),
+                      trailing: const _TextLink('Manage'),
+                      onTap: _openSubscriptions,
+                    ),
                   _SettingsRow(
                     icon: Icons.restart_alt_outlined,
                     title: 'Restore purchases',
@@ -708,63 +719,118 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 /// Privacy hero card — dark teal, full-width, rounded. Shield glyph
 /// + "Working offline" / "No cloud uploads…" + a small pulse dot.
 /// Sits between the screen title and the first section as the one
-/// piece of decorative real estate, anchoring the on-device promise.
-class _PrivacyHero extends StatelessWidget {
-  const _PrivacyHero();
+/// Top-of-Settings hero card. Free users see the Pro upsell with a
+/// "Start 7-day free trial" pill that pushes ProScreen; Pro users see
+/// a quieter "Pro active" thank-you card with a Manage link that
+/// opens the App Store subscriptions page.
+class _ProTopCard extends StatelessWidget {
+  final VoidCallback onOpenPro;
+  final VoidCallback onManageSubscription;
+  const _ProTopCard({
+    required this.onOpenPro,
+    required this.onManageSubscription,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.fromLTRB(18, 16, 18, 18),
-      decoration: BoxDecoration(
-        color: AppColors.primary,
+    final hasPro = PurchaseService.instance.hasPro;
+    return Material(
+      color: AppColors.primary,
+      borderRadius: BorderRadius.circular(20),
+      child: InkWell(
         borderRadius: BorderRadius.circular(20),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Icon(
-            Icons.verified_user_outlined,
-            color: Colors.white,
-            size: 22,
+        onTap: hasPro ? onManageSubscription : onOpenPro,
+        child: Container(
+          padding: const EdgeInsets.fromLTRB(20, 18, 20, 20),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(20),
           ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'Working offline',
-                  style: TextStyle(
-                    fontSize: 17,
-                    fontWeight: FontWeight.w800,
-                    color: Colors.white,
-                  ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.18),
+                  borderRadius: BorderRadius.circular(99),
                 ),
-                const SizedBox(height: 4),
-                Text(
-                  'No cloud uploads. No tracking. Powered by Apple '
-                  'on-device AI.',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Colors.white.withValues(alpha: 0.86),
-                    height: 1.4,
-                  ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      hasPro ? Icons.check_circle : Icons.auto_awesome,
+                      color: Colors.white,
+                      size: 12,
+                    ),
+                    const SizedBox(width: 5),
+                    Text(
+                      hasPro ? 'PDFPRIVIO PRO · ACTIVE' : 'PDFPRIVIO PRO',
+                      style: const TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w800,
+                        color: Colors.white,
+                        letterSpacing: 0.6,
+                      ),
+                    ),
+                  ],
                 ),
-              ],
-            ),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                hasPro ? 'Full toolkit unlocked' : 'Unlock the full toolkit',
+                style: const TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.w800,
+                  color: Colors.white,
+                  letterSpacing: -0.3,
+                ),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                hasPro
+                    ? 'Manages in Apple ID · same on-device privacy'
+                    : 'No daily limits. 5 Pro-only features.',
+                style: TextStyle(
+                  fontSize: 13,
+                  color: Colors.white.withValues(alpha: 0.86),
+                  fontWeight: FontWeight.w500,
+                  height: 1.4,
+                ),
+              ),
+              const SizedBox(height: 16),
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(99),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      hasPro
+                          ? 'Manage subscription'
+                          : 'Start 7-day free trial',
+                      style: const TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.primary,
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    const Icon(
+                      Icons.arrow_forward,
+                      color: AppColors.primary,
+                      size: 14,
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
-          const SizedBox(width: 8),
-          Container(
-            width: 8,
-            height: 8,
-            margin: const EdgeInsets.only(top: 8),
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.85),
-              shape: BoxShape.circle,
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }
