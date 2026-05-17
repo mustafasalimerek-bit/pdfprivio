@@ -25,6 +25,12 @@ class AdsService {
   AdsService._();
   static final AdsService instance = AdsService._();
 
+  /// Global ads kill switch. When `false`, no banner is created, no
+  /// interstitial is loaded or shown, and `BannerAdWidget` collapses
+  /// to zero height — irrespective of Pro state. Flip to `true` to
+  /// re-enable monetization for free-tier users.
+  static const bool kAdsEnabled = false;
+
   static const Duration interstitialCooldown = Duration(minutes: 3);
 
   InterstitialAd? _interstitial;
@@ -32,7 +38,7 @@ class AdsService {
   bool _interstitialLoadInFlight = false;
   bool _initialized = false;
 
-  bool get _adsAllowed => !PurchaseService.instance.hasPro;
+  bool get _adsAllowed => kAdsEnabled && !PurchaseService.instance.hasPro;
 
   /// Called once during app bootstrap, AFTER MobileAds.instance.initialize()
   /// (which `ConsentService` already handles). Kicks off the first
@@ -41,6 +47,12 @@ class AdsService {
   Future<void> init() async {
     if (_initialized) return;
     _initialized = true;
+
+    // Kill switch — skip all wiring (entitlement listener + preload)
+    // when ads are disabled globally. `_loadInterstitial` already
+    // guards on `_adsAllowed`, but bailing here keeps the bootstrap
+    // path cheap and avoids holding a stream listener for no reason.
+    if (!kAdsEnabled) return;
 
     PurchaseService.instance.entitlementChanges.listen((tier) {
       if (tier == EntitlementTier.pro) {

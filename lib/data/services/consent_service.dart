@@ -6,6 +6,8 @@ import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:flutter/foundation.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 
+import 'ads_service.dart';
+
 /// One-shot consent orchestrator. Runs once per app launch after
 /// `WidgetsFlutterBinding.ensureInitialized()` but before the user can
 /// interact with anything that depends on tracking / personalized ads.
@@ -125,7 +127,7 @@ class ConsentService {
       if (kDebugMode) debugPrint('Analytics toggle failed: $e');
     }
 
-    if (_canRequestAds) {
+    if (_canRequestAds && AdsService.kAdsEnabled) {
       try {
         await MobileAds.instance.initialize();
       } catch (e) {
