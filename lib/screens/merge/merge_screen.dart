@@ -14,6 +14,7 @@ import '../../data/services/pdf_merge_service.dart';
 import '../../data/services/share_intent_service.dart';
 import '../../providers/merge_providers.dart';
 import '../../widgets/progress_overlay.dart';
+import '../../widgets/tool_chrome.dart';
 import 'merge_pages_screen.dart';
 import 'merge_result_screen.dart';
 
@@ -241,272 +242,22 @@ class _MergeScreenState extends ConsumerState<MergeScreen> {
   }
 }
 
-/// First-open state for a tool screen. Hero illustration above the
-/// fold, big primary "Add files" CTA, three alt-source chips
-/// (Photos / Recent / Scan) for the most common pick origins, and
-/// the "Stays on your iPhone" footer pinned to the bottom as a
-/// quiet privacy promise. Pattern is shared with every tool's empty
-/// state going forward — see [_EmptyState] usage elsewhere.
 class _EmptyState extends StatelessWidget {
   final VoidCallback onAdd;
   const _EmptyState({required this.onAdd});
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        const SizedBox(height: 28),
-        const Spacer(),
-        const _MergeHeroIllustration(),
-        const SizedBox(height: 24),
-        const Text(
-          'Combine PDFs into one',
-          style: TextStyle(
-            fontSize: 22,
-            fontWeight: FontWeight.w800,
-            color: AppColors.textPrimary,
-          ),
-        ),
-        const SizedBox(height: 8),
-        const Text(
-          'Add 2 or more files to begin',
-          textAlign: TextAlign.center,
-          style: TextStyle(
-            fontSize: 14,
-            color: AppColors.textSecondary,
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-        const SizedBox(height: 28),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24),
-          child: SizedBox(
-            width: double.infinity,
-            child: FilledButton.icon(
-              onPressed: onAdd,
-              icon: const Icon(Icons.add, size: 20),
-              label: const Text(
-                'Add files',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
-              style: FilledButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(99),
-                ),
-              ),
-            ),
-          ),
-        ),
-        const SizedBox(height: 18),
-        const Text(
-          'Or pick from',
-          style: TextStyle(
-            fontSize: 12,
-            color: AppColors.textTertiary,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-        const SizedBox(height: 10),
-        // Alt source chips — Photos / Recent / Scan. For v1 they
-        // all open the same file picker (PDFs only). v1.1 will
-        // route each to its dedicated source (photo library, recent
-        // files, VisionKit scanner) and convert as needed.
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            _AltSourceChip(
-              icon: Icons.image_outlined,
-              label: 'Photos',
-              onTap: onAdd,
-            ),
-            const SizedBox(width: 8),
-            _AltSourceChip(
-              icon: Icons.history,
-              label: 'Recent',
-              onTap: onAdd,
-            ),
-            const SizedBox(width: 8),
-            _AltSourceChip(
-              icon: Icons.camera_alt_outlined,
-              label: 'Scan',
-              onTap: onAdd,
-            ),
-          ],
-        ),
-        const Spacer(),
-        Padding(
-          padding: const EdgeInsets.fromLTRB(24, 12, 24, 18),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Container(
-                width: 7,
-                height: 7,
-                decoration: const BoxDecoration(
-                  color: AppColors.success,
-                  shape: BoxShape.circle,
-                ),
-              ),
-              const SizedBox(width: 8),
-              const Text(
-                'Stays on your iPhone',
-                style: TextStyle(
-                  fontSize: 12,
-                  color: AppColors.success,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-            ],
-          ),
-        ),
+    return ToolEmptyState(
+      heroIcon: Icons.content_copy_outlined,
+      title: 'Combine PDFs into one',
+      subtitle: 'Add 2 or more files to begin',
+      primaryLabel: 'Add files',
+      primaryIcon: Icons.add,
+      onPrimary: onAdd,
+      altSources: [
+        ToolAltSource(icon: Icons.history, label: 'Recent', onTap: onAdd),
       ],
-    );
-  }
-}
-
-class _MergeHeroIllustration extends StatelessWidget {
-  const _MergeHeroIllustration();
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      width: 220,
-      height: 100,
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          // Two overlapping paper sheets — visual "source documents".
-          SizedBox(
-            width: 84,
-            height: 100,
-            child: Stack(
-              children: [
-                Positioned(
-                  left: 8,
-                  top: 8,
-                  child: _PaperGlyph(opacity: 0.55),
-                ),
-                Positioned(
-                  left: 22,
-                  top: 0,
-                  child: _PaperGlyph(opacity: 1),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 12),
-          const Icon(
-            Icons.arrow_forward,
-            color: AppColors.primary,
-            size: 22,
-          ),
-          const SizedBox(width: 12),
-          // Single merged document — solid teal as the "output" glyph.
-          Container(
-            width: 56,
-            height: 70,
-            decoration: BoxDecoration(
-              color: AppColors.primary,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: const Icon(
-              Icons.content_copy_outlined,
-              color: Colors.white,
-              size: 26,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _PaperGlyph extends StatelessWidget {
-  final double opacity;
-  const _PaperGlyph({required this.opacity});
-
-  @override
-  Widget build(BuildContext context) {
-    return Opacity(
-      opacity: opacity,
-      child: Container(
-        width: 56,
-        height: 70,
-        padding: const EdgeInsets.fromLTRB(7, 12, 7, 0),
-        decoration: BoxDecoration(
-          color: AppColors.surface,
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: AppColors.border, width: 1.2),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            for (final w in [42.0, 36.0, 30.0])
-              Padding(
-                padding: const EdgeInsets.only(bottom: 5),
-                child: Container(
-                  width: w,
-                  height: 3,
-                  decoration: BoxDecoration(
-                    color: AppColors.iconTint,
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-              ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _AltSourceChip extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final VoidCallback onTap;
-  const _AltSourceChip({
-    required this.icon,
-    required this.label,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: AppColors.surface,
-      borderRadius: BorderRadius.circular(99),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(99),
-        onTap: onTap,
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
-          decoration: BoxDecoration(
-            border: Border.all(color: AppColors.border),
-            borderRadius: BorderRadius.circular(99),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(icon, size: 14, color: AppColors.primary),
-              const SizedBox(width: 6),
-              Text(
-                label,
-                style: const TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.textPrimary,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
     );
   }
 }

@@ -15,7 +15,7 @@ import '../../data/services/expense_ledger_service.dart';
 import '../../data/services/haptics_service.dart';
 import '../../data/services/ocr_service.dart';
 import '../../data/services/receipt_extraction_service.dart';
-import '../../widgets/privacy_badge.dart';
+import '../../widgets/tool_chrome.dart';
 import 'expense_ledger_screen.dart';
 
 /// Capture one receipt → OCR → extract → confirm → save. Designed
@@ -222,6 +222,7 @@ class _ReceiptCaptureScreenState
     return Scaffold(
       appBar: AppBar(
         title: const Text('Capture receipt'),
+        centerTitle: true,
         actions: [
           IconButton(
             icon: const Icon(Icons.receipt_long_outlined),
@@ -269,8 +270,6 @@ class _ReceiptCaptureScreenState
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
-        const Center(child: PrivacyBadge()),
-        const SizedBox(height: 12),
         _sourceThumbnail(),
         const SizedBox(height: 16),
         _field(
@@ -360,54 +359,24 @@ class _ReceiptCaptureScreenState
   }
 
   Widget _pickerView() {
-    return ListView(
-      padding: const EdgeInsets.all(20),
-      children: [
-        const Center(child: PrivacyBadge()),
-        const SizedBox(height: 18),
-        const Icon(
-          Icons.receipt_outlined,
-          color: AppColors.primary,
-          size: 56,
-        ),
-        const SizedBox(height: 14),
-        const Text(
-          'Snap a receipt',
-          textAlign: TextAlign.center,
-          style: TextStyle(fontSize: 17, fontWeight: FontWeight.w800),
-        ),
-        const SizedBox(height: 6),
-        const Text(
-          'Apple Vision pulls the date, vendor, total, tax, and '
-          'currency on-device. You confirm, then it lands in your '
-          'ledger ready for the year-end CSV export.',
-          textAlign: TextAlign.center,
-          style: TextStyle(
-            fontSize: 12,
-            color: AppColors.textSecondary,
-            height: 1.45,
-          ),
-        ),
-        const SizedBox(height: 20),
-        if (_scannerAvailable == true)
-          FilledButton.icon(
-            icon: const Icon(Icons.camera_alt_outlined),
-            label: const Text('Scan with camera'),
-            onPressed: _scan,
-            style: FilledButton.styleFrom(
-              minimumSize: const Size.fromHeight(48),
-            ),
-          ),
-        const SizedBox(height: 8),
-        OutlinedButton.icon(
-          icon: const Icon(Icons.photo_library_outlined),
-          label: const Text('Pick photo'),
-          onPressed: _pickImage,
-          style: OutlinedButton.styleFrom(
-            minimumSize: const Size.fromHeight(48),
-          ),
-        ),
-      ],
+    final ready = _scannerAvailable == true;
+    return ToolEmptyState(
+      heroIcon: Icons.receipt_outlined,
+      title: 'Snap a receipt',
+      subtitle: 'Vision pulls date, vendor, total — on-device',
+      primaryLabel: ready ? 'Scan with camera' : 'Pick photo',
+      primaryIcon:
+          ready ? Icons.camera_alt_outlined : Icons.photo_library_outlined,
+      onPrimary: ready ? _scan : _pickImage,
+      altSources: ready
+          ? [
+              ToolAltSource(
+                icon: Icons.photo_library_outlined,
+                label: 'Photos',
+                onTap: _pickImage,
+              ),
+            ]
+          : const [],
     );
   }
 

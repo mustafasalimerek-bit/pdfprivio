@@ -12,8 +12,8 @@ import '../../data/services/haptics_service.dart';
 import '../../data/services/image_to_pdf_service.dart';
 import '../../data/services/ocr_service.dart';
 import '../../data/services/pdf_ocr_compose_service.dart';
-import '../../widgets/privacy_badge.dart';
 import '../../widgets/progress_overlay.dart';
+import '../../widgets/tool_chrome.dart';
 import '../merge/merge_result_screen.dart';
 
 class ScanScreen extends ConsumerStatefulWidget {
@@ -233,6 +233,7 @@ class _ScanScreenState extends ConsumerState<ScanScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Scan to PDF'),
+        centerTitle: true,
         actions: [
           if (hasPages)
             TextButton(
@@ -247,18 +248,16 @@ class _ScanScreenState extends ConsumerState<ScanScreen> {
       body: Stack(
         children: [
           SafeArea(
-            child: Column(
-              children: [
-                const Padding(
-                  padding: EdgeInsets.fromLTRB(16, 8, 16, 8),
-                  child: Align(
-                    alignment: Alignment.centerLeft,
-                    child: PrivacyBadge(),
-                  ),
-                ),
-                Expanded(
-                  child: hasPages
-                      ? _PagesGrid(
+            child: !hasPages
+                ? _EmptyState(
+                    scannerAvailable: _scannerAvailable,
+                    onScan: _scan,
+                    onPickPhotos: _pickPhotosFallback,
+                  )
+                : Column(
+                    children: [
+                      Expanded(
+                        child: _PagesGrid(
                           pages: _pages,
                           paperSize: _paperSize,
                           onPaperSize: (s) =>
@@ -274,43 +273,23 @@ class _ScanScreenState extends ConsumerState<ScanScreen> {
                             HapticsService.instance.select();
                             setState(() => _makeSearchable = v);
                           },
-                        )
-                      : _EmptyState(
-                          scannerAvailable: _scannerAvailable,
-                          onScan: _scan,
-                          onPickPhotos: _pickPhotosFallback,
-                        ),
-                ),
-                if (hasPages && _progress == null)
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-                    child: SizedBox(
-                      width: double.infinity,
-                      child: FilledButton(
-                        onPressed: _savePdf,
-                        style: FilledButton.styleFrom(
-                          backgroundColor: AppColors.primary,
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(14),
-                          ),
-                        ),
-                        child: Text(
-                          _makeSearchable
-                              ? 'Save searchable PDF · ${_pages.length} '
-                                  'page${_pages.length == 1 ? '' : 's'}'
-                              : 'Save as PDF · ${_pages.length} '
-                                  'page${_pages.length == 1 ? '' : 's'}',
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w700,
-                          ),
                         ),
                       ),
-                    ),
+                      if (_progress == null)
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+                          child: ToolPrimaryButton(
+                            label: _makeSearchable
+                                ? 'Save searchable PDF · ${_pages.length} '
+                                    'page${_pages.length == 1 ? '' : 's'}'
+                                : 'Save as PDF · ${_pages.length} '
+                                    'page${_pages.length == 1 ? '' : 's'}',
+                            icon: Icons.document_scanner_outlined,
+                            onTap: _savePdf,
+                          ),
+                        ),
+                    ],
                   ),
-              ],
-            ),
           ),
           if (_progress != null)
             ProgressOverlay(
@@ -342,86 +321,29 @@ class _EmptyState extends StatelessWidget {
     final ready = scannerAvailable == true;
     final noCamera = scannerAvailable == false;
 
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(32),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 96,
-              height: 96,
-              decoration: BoxDecoration(
-                color: AppColors.primary.withValues(alpha: 0.08),
-                shape: BoxShape.circle,
+    if (scannerAvailable == null) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    return ToolEmptyState(
+      heroIcon: Icons.document_scanner_outlined,
+      title: ready ? 'Scan to PDF' : 'Scanner needs a camera',
+      subtitle: ready
+          ? 'VisionKit edge detection, multi-page capture'
+          : 'Use Photos to test the flow on simulator',
+      primaryLabel: ready ? 'Open scanner' : 'Pick photos',
+      primaryIcon: ready
+          ? Icons.document_scanner_outlined
+          : Icons.image_outlined,
+      onPrimary: ready ? onScan : onPickPhotos,
+      altSources: noCamera
+          ? const []
+          : [
+              ToolAltSource(
+                icon: Icons.image_outlined,
+                label: 'Photos',
+                onTap: onPickPhotos,
               ),
-              child: const Icon(
-                Icons.document_scanner_outlined,
-                size: 44,
-                color: AppColors.primary,
-              ),
-            ),
-            const SizedBox(height: 20),
-            Text(
-              ready
-                  ? 'Scan paper into a sharp PDF'
-                  : noCamera
-                      ? 'Scanner needs a camera'
-                      : 'Checking camera…',
-              style: const TextStyle(
-                  fontSize: 20, fontWeight: FontWeight.w700),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              ready
-                  ? 'Apple VisionKit handles edge detection, perspective '
-                      'correction, and multi-page capture. Output is JPEG '
-                      'per page, then combined into one PDF.'
-                  : noCamera
-                      ? "Real scanning needs a rear camera (iPhone or iPad). "
-                          "On the simulator you can pick photos instead to "
-                          "test the Save-as-PDF flow."
-                      : 'One moment.',
-              textAlign: TextAlign.center,
-              style: const TextStyle(color: AppColors.textSecondary),
-            ),
-            const SizedBox(height: 24),
-            if (ready)
-              FilledButton.icon(
-                onPressed: onScan,
-                icon: const Icon(Icons.document_scanner_outlined),
-                label: const Text('Open scanner'),
-                style: FilledButton.styleFrom(
-                  backgroundColor: AppColors.primary,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 24,
-                    vertical: 14,
-                  ),
-                ),
-              )
-            else if (noCamera)
-              OutlinedButton.icon(
-                onPressed: onPickPhotos,
-                icon: const Icon(Icons.image_outlined),
-                label: const Text('Pick photos instead'),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: AppColors.primary,
-                  side: const BorderSide(color: AppColors.primary),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 24,
-                    vertical: 14,
-                  ),
-                ),
-              )
-            else
-              const SizedBox(
-                width: 24,
-                height: 24,
-                child: CircularProgressIndicator(strokeWidth: 2),
-              ),
-          ],
-        ),
-      ),
+            ],
     );
   }
 }

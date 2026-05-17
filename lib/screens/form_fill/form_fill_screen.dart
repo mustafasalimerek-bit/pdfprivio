@@ -11,8 +11,8 @@ import '../../data/models/pdf_document.dart';
 import '../../data/services/haptics_service.dart';
 import '../../data/services/pdf_form_service.dart';
 import '../../data/services/pdf_metadata_service.dart';
-import '../../widgets/privacy_badge.dart';
 import '../../widgets/progress_overlay.dart';
+import '../../widgets/tool_chrome.dart';
 import '../merge/merge_result_screen.dart';
 
 class FormFillScreen extends ConsumerStatefulWidget {
@@ -206,6 +206,7 @@ class _FormFillScreenState extends ConsumerState<FormFillScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Fill form'),
+        centerTitle: true,
         actions: [
           if (doc != null)
             TextButton(
@@ -228,66 +229,43 @@ class _FormFillScreenState extends ConsumerState<FormFillScreen> {
       body: Stack(
         children: [
           SafeArea(
-            child: Column(
-              children: [
-                const Padding(
-                  padding: EdgeInsets.fromLTRB(16, 8, 16, 8),
-                  child: Align(
-                    alignment: Alignment.centerLeft,
-                    child: PrivacyBadge(),
-                  ),
-                ),
-                Expanded(
-                  child: doc == null
-                      ? _EmptyState(onPick: _pick)
-                      : inspect == null
-                          ? const SizedBox.shrink()
-                          : !inspect.hasForm
-                              ? _NoFieldsState(doc: doc)
-                              : _FormFields(
-                                  inspect: inspect,
-                                  values: _values,
-                                  textControllers: _textControllers,
-                                  flatten: _flatten,
-                                  onFlattenChanged: (v) {
-                                    HapticsService.instance.select();
-                                    setState(() => _flatten = v);
-                                  },
-                                  onChange: () => setState(() {}),
-                                ),
-                ),
-                if (doc != null &&
-                    inspect != null &&
-                    inspect.hasForm &&
-                    _progress == null)
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-                    child: SizedBox(
-                      width: double.infinity,
-                      child: FilledButton(
-                        onPressed: _save,
-                        style: FilledButton.styleFrom(
-                          backgroundColor: AppColors.primary,
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(14),
-                          ),
-                        ),
-                        child: Text(
-                          _flatten
-                              ? 'Save flattened PDF · ${inspect.fields.where((f) => f.kind.isEditable).length} field'
-                                  '${inspect.fields.where((f) => f.kind.isEditable).length == 1 ? '' : 's'}'
-                              : 'Save filled (editable) PDF',
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
+            child: doc == null
+                ? _EmptyState(onPick: _pick)
+                : Column(
+                    children: [
+                      Expanded(
+                        child: inspect == null
+                            ? const SizedBox.shrink()
+                            : !inspect.hasForm
+                                ? _NoFieldsState(doc: doc)
+                                : _FormFields(
+                                    inspect: inspect,
+                                    values: _values,
+                                    textControllers: _textControllers,
+                                    flatten: _flatten,
+                                    onFlattenChanged: (v) {
+                                      HapticsService.instance.select();
+                                      setState(() => _flatten = v);
+                                    },
+                                    onChange: () => setState(() {}),
+                                  ),
                       ),
-                    ),
+                      if (inspect != null &&
+                          inspect.hasForm &&
+                          _progress == null)
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+                          child: ToolPrimaryButton(
+                            label: _flatten
+                                ? 'Save flattened PDF · ${inspect.fields.where((f) => f.kind.isEditable).length} field'
+                                    '${inspect.fields.where((f) => f.kind.isEditable).length == 1 ? '' : 's'}'
+                                : 'Save filled (editable) PDF',
+                            icon: Icons.edit_document,
+                            onTap: _save,
+                          ),
+                        ),
+                    ],
                   ),
-              ],
-            ),
           ),
           if (_progress != null)
             ProgressOverlay(
@@ -308,55 +286,15 @@ class _EmptyState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(32),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 96,
-              height: 96,
-              decoration: BoxDecoration(
-                color: AppColors.primary.withValues(alpha: 0.08),
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(
-                Icons.edit_document,
-                size: 44,
-                color: AppColors.primary,
-              ),
-            ),
-            const SizedBox(height: 20),
-            const Text(
-              'Fill in a PDF form',
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
-            ),
-            const SizedBox(height: 8),
-            const Text(
-              'IRS, USCIS, court motions, intake forms — anything with '
-              'AcroForm fields. PDFPrivio detects text boxes, checkboxes, '
-              'radio groups, and dropdowns, then bakes your answers in '
-              'so the recipient gets a final, uneditable PDF.',
-              textAlign: TextAlign.center,
-              style: TextStyle(color: AppColors.textSecondary),
-            ),
-            const SizedBox(height: 24),
-            FilledButton.icon(
-              onPressed: onPick,
-              icon: const Icon(Icons.add),
-              label: const Text('Pick a PDF'),
-              style: FilledButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 24,
-                  vertical: 14,
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
+    return ToolEmptyState(
+      heroIcon: Icons.edit_document,
+      title: 'Fill in a PDF form',
+      subtitle: 'IRS, USCIS, court motions — AcroForm fields',
+      primaryLabel: 'Pick a PDF',
+      onPrimary: onPick,
+      altSources: [
+        ToolAltSource(icon: Icons.history, label: 'Recent', onTap: onPick),
+      ],
     );
   }
 }

@@ -13,7 +13,7 @@ import '../../data/services/batch_operations_service.dart';
 import '../../data/services/haptics_service.dart';
 import '../../data/services/pdf_rotate_service.dart';
 import '../../data/services/pdf_watermark_service.dart';
-import '../../widgets/privacy_badge.dart';
+import '../../widgets/tool_chrome.dart';
 
 /// Batch tool — pick an operation, drop a stack of PDFs in, get a
 /// folder full of processed files at the end. Sequential processing
@@ -156,10 +156,27 @@ class _BatchScreenState extends ConsumerState<BatchScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isEmpty = _files.isEmpty && _outcome == null;
     return Scaffold(
-      appBar: AppBar(title: const Text('Batch operations')),
+      appBar: AppBar(
+        title: const Text('Batch operations'),
+        centerTitle: true,
+      ),
       body: SafeArea(
-        child: MaxWidthBody(child: _busy ? _busyView() : _editorView()),
+        child: MaxWidthBody(
+          child: _busy
+              ? _busyView()
+              : isEmpty
+                  ? ToolEmptyState(
+                      heroIcon: Icons.layers_outlined,
+                      title: 'Batch operations',
+                      subtitle:
+                          'Compress, watermark, rotate — many PDFs at once',
+                      primaryLabel: 'Add files',
+                      onPrimary: _pickFiles,
+                    )
+                  : _editorView(),
+        ),
       ),
     );
   }
@@ -212,8 +229,6 @@ class _BatchScreenState extends ConsumerState<BatchScreen> {
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
       children: [
-        const Center(child: PrivacyBadge()),
-        const SizedBox(height: 14),
         if (outcome != null) ...[
           _ResultCard(outcome: outcome, onShare: _shareOutputs),
           const SizedBox(height: 14),
