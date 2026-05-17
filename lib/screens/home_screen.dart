@@ -306,13 +306,6 @@ class HomeScreen extends ConsumerWidget {
         .toList();
   }
 
-  /// Build the long list shown inside the "More" bottom sheet —
-  /// everything that didn't make it into the hero grid, in original
-  /// declaration order so related tools stay grouped.
-  List<_ToolSpec> _otherSpecs() {
-    return _specs().where((s) => !_heroToolIds.contains(s.toolId)).toList();
-  }
-
   void _showMoreSheet(BuildContext context) {
     HapticsService.instance.tap();
     showModalBottomSheet<void>(
@@ -324,7 +317,10 @@ class HomeScreen extends ConsumerWidget {
             BorderRadius.vertical(top: Radius.circular(20)),
       ),
       builder: (sheetContext) {
-        return _MoreToolsSheet(specs: _otherSpecs());
+        // Pass the full catalog so the sheet can show Frequent +
+        // All tools per the mockup; heroes are repeated intentionally
+        // so a user who taps More can still reach any tool from there.
+        return _MoreToolsSheet(specs: _specs());
       },
     );
   }
@@ -1191,13 +1187,60 @@ class _MoreToolsSheet extends StatefulWidget {
 
 class _MoreToolsSheetState extends State<_MoreToolsSheet> {
   String _query = '';
+  Map<String, int> _lifetime = const {};
+
+  /// Fallback ordering for users with zero history — these four are
+  /// the highest-leverage tools per the wedge, so they make the best
+  /// "first impression" set in the Frequent panel.
+  static const List<String> _frequentSeed = [
+    'scan_to_pdf',
+    'sign',
+    'ocr_pdf',
+    'image_to_pdf',
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadCounts();
+  }
+
+  Future<void> _loadCounts() async {
+    final ids = widget.specs.map((s) => s.toolId).toList();
+    final counts = await UsageLimitsService.instance.lifetimeCountsFor(ids);
+    if (!mounted) return;
+    setState(() => _lifetime = counts);
+  }
+
+  List<_ToolSpec> _frequentSpecs() {
+    final used = widget.specs
+        .where((s) => (_lifetime[s.toolId] ?? 0) > 0)
+        .toList()
+      ..sort((a, b) =>
+          (_lifetime[b.toolId] ?? 0).compareTo(_lifetime[a.toolId] ?? 0));
+    if (used.length >= 4) return used.take(4).toList();
+    // Backfill from the seed list, skipping anything already chosen
+    // and anything missing from the catalog.
+    final chosen = used.map((s) => s.toolId).toSet();
+    final byId = {for (final s in widget.specs) s.toolId: s};
+    for (final id in _frequentSeed) {
+      if (used.length == 4) break;
+      if (chosen.contains(id)) continue;
+      final spec = byId[id];
+      if (spec == null) continue;
+      used.add(spec);
+      chosen.add(id);
+    }
+    return used.take(4).toList();
+  }
 
   @override
   Widget build(BuildContext context) {
     final q = _query.trim().toLowerCase();
-    final filtered = q.isEmpty
-        ? widget.specs
-        : widget.specs.where(_matches).toList();
+    final searching = q.isNotEmpty;
+    final filtered =
+        searching ? widget.specs.where(_matches).toList() : widget.specs;
+    final frequent = searching ? const <_ToolSpec>[] : _frequentSpecs();
     return DraggableScrollableSheet(
       initialChildSize: 0.85,
       maxChildSize: 0.95,
@@ -1215,22 +1258,8 @@ class _MoreToolsSheetState extends State<_MoreToolsSheet> {
                 borderRadius: BorderRadius.circular(99),
               ),
             ),
-            const Padding(
-              padding: EdgeInsets.fromLTRB(20, 6, 20, 14),
-              child: Row(
-                children: [
-                  Text(
-                    'All tools',
-                    style: TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                ],
-              ),
-            ),
             Padding(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+              padding: const EdgeInsets.fromLTRB(16, 6, 16, 14),
               child: _MoreSheetSearchBar(
                 value: _query,
                 onChanged: (v) => setState(() => _query = v),
@@ -1252,9 +1281,17 @@ class _MoreToolsSheetState extends State<_MoreToolsSheet> {
                     )
                   : ListView(
                       controller: scrollController,
-                      padding:
-                          const EdgeInsets.fromLTRB(16, 0, 16, 24),
+                      padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
                       children: [
+                        if (frequent.isNotEmpty) ...[
+                          const _SectionHeader('Frequent'),
+                          for (final spec in frequent) ...[
+                            _FrequentCard(spec: spec),
+                            const SizedBox(height: 8),
+                          ],
+                          const SizedBox(height: 8),
+                        ],
+                        const _SectionHeader('All tools'),
                         Container(
                           decoration: BoxDecoration(
                             color: AppColors.surface,
@@ -1294,6 +1331,190 @@ class _MoreToolsSheetState extends State<_MoreToolsSheet> {
     return spec.title.toLowerCase().contains(q) ||
         spec.subtitle.toLowerCase().contains(q) ||
         spec.toolId.toLowerCase().contains(q);
+  }
+}
+
+class _SectionHeader extends StatelessWidget {
+  final String label;
+  const _SectionHeader(this.label);
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(4, 4, 4, 10),
+      child: Text(
+        label,
+        style: const TextStyle(
+          fontSize: 13,
+          fontWeight: FontWeight.w700,
+          color: AppColors.textSecondary,
+        ),
+      ),
+    );
+  }
+}
+
+/// Frequent-section card: same data as a row, but its own bordered
+/// surface so the four cards stack as discrete tap targets per the
+/// mockup. Reuses [_MoreSheetRow] state-handling indirectly via the
+/// stateful _FrequentCardState below.
+class _FrequentCard extends StatefulWidget {
+  final _ToolSpec spec;
+  const _FrequentCard({required this.spec});
+
+  @override
+  State<_FrequentCard> createState() => _FrequentCardState();
+}
+
+class _FrequentCardState extends State<_FrequentCard> {
+  UsageState? _usage;
+  bool _hasPro = PurchaseService.instance.hasPro;
+  StreamSubscription<void>? _usageSub;
+  StreamSubscription<EntitlementTier>? _entitleSub;
+
+  @override
+  void initState() {
+    super.initState();
+    _refresh();
+    _usageSub = UsageLimitsService.instance.changes.listen((_) => _refresh());
+    _entitleSub =
+        PurchaseService.instance.entitlementChanges.listen((tier) {
+      if (!mounted) return;
+      setState(() => _hasPro = tier == EntitlementTier.pro);
+    });
+  }
+
+  @override
+  void dispose() {
+    _usageSub?.cancel();
+    _entitleSub?.cancel();
+    super.dispose();
+  }
+
+  Future<void> _refresh() async {
+    final usage =
+        await UsageLimitsService.instance.stateFor(widget.spec.toolId);
+    if (!mounted) return;
+    setState(() => _usage = usage);
+  }
+
+  bool get _isProOnly =>
+      ToolLimits.proOnly.contains(widget.spec.toolId);
+
+  Future<void> _onTap() async {
+    HapticsService.instance.tap();
+    if (_hasPro) {
+      _navigate();
+      return;
+    }
+    if (_isProOnly) {
+      final purchased = await PaywallSheet.show(
+        context,
+        quotaContext: widget.spec.title,
+      );
+      if (purchased && mounted) _navigate();
+      return;
+    }
+    final usage = _usage;
+    if (usage != null && !usage.canUse) {
+      final purchased = await PaywallSheet.show(
+        context,
+        quotaContext: widget.spec.title,
+      );
+      if (purchased && mounted) _navigate();
+      return;
+    }
+    _navigate();
+  }
+
+  void _navigate() {
+    Navigator.of(context).pop();
+    Navigator.of(context).push(
+      MaterialPageRoute(builder: widget.spec.builder),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: AppColors.surface,
+      borderRadius: BorderRadius.circular(16),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(16),
+        onTap: _onTap,
+        child: Container(
+          padding: const EdgeInsets.fromLTRB(14, 14, 10, 14),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: AppColors.border),
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: AppColors.iconTint,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(
+                  widget.spec.icon,
+                  color: AppColors.primary,
+                  size: 22,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Row(
+                      children: [
+                        Flexible(
+                          child: Text(
+                            widget.spec.title,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        _MoreSheetBadge(
+                          isProOnly: _isProOnly,
+                          hasPro: _hasPro,
+                          usage: _usage,
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 3),
+                    Text(
+                      widget.spec.subtitle,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: AppColors.textSecondary,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 4),
+              const Icon(
+                Icons.chevron_right,
+                color: AppColors.textTertiary,
+                size: 20,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }
 

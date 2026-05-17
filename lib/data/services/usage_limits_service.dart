@@ -83,9 +83,30 @@ class UsageLimitsService {
   static final UsageLimitsService instance = UsageLimitsService._();
 
   static const String _keyPrefix = 'pdfprivio.usage.v1';
+  static const String _lifetimePrefix = 'pdfprivio.lifetime.v1';
 
   final _controller = StreamController<String>.broadcast();
   Stream<String> get changes => _controller.stream;
+
+  String _lifetimeKey(String toolId) => '$_lifetimePrefix.$toolId';
+
+  /// Lifetime use count for [toolId]. Survives daily resets and Pro
+  /// state, so the "Frequent" tools panel surfaces what the user
+  /// actually reaches for over months — not just today's caps.
+  Future<int> lifetimeCount(String toolId) async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getInt(_lifetimeKey(toolId)) ?? 0;
+  }
+
+  /// Bulk variant — one read of [SharedPreferences.getKeys] instead of
+  /// N round-trips when ranking the whole tool catalog.
+  Future<Map<String, int>> lifetimeCountsFor(List<String> toolIds) async {
+    final prefs = await SharedPreferences.getInstance();
+    return {
+      for (final id in toolIds)
+        id: prefs.getInt(_lifetimeKey(id)) ?? 0,
+    };
+  }
 
   String _todayKey() {
     final now = DateTime.now();
@@ -149,15 +170,19 @@ class UsageLimitsService {
 
   /// Bump the counter for [toolId] by one. Caller invokes this AFTER a
   /// successful operation so a failed/cancelled run doesn't burn a use.
-  /// No-op for Pro users.
+  /// Daily counter is no-op for Pro users; lifetime counter is bumped
+  /// for everyone so the Frequent ranking stays accurate post-upgrade.
   Future<void> recordUse(String toolId) async {
-    if (PurchaseService.instance.hasPro) return;
-    if (!ToolLimits.dailyFree.containsKey(toolId)) return;
     final prefs = await SharedPreferences.getInstance();
-    final key = _counterKey(toolId);
-    final cur = prefs.getInt(key) ?? 0;
-    await prefs.setInt(key, cur + 1);
-    await _gcOldKeys(prefs, toolId);
+    final lk = _lifetimeKey(toolId);
+    await prefs.setInt(lk, (prefs.getInt(lk) ?? 0) + 1);
+    if (!PurchaseService.instance.hasPro &&
+        ToolLimits.dailyFree.containsKey(toolId)) {
+      final key = _counterKey(toolId);
+      final cur = prefs.getInt(key) ?? 0;
+      await prefs.setInt(key, cur + 1);
+      await _gcOldKeys(prefs, toolId);
+    }
     _controller.add(toolId);
   }
 
