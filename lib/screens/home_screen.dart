@@ -662,12 +662,20 @@ class _HomeHeader extends StatefulWidget {
 
 class _HomeHeaderState extends State<_HomeHeader> {
   String? _name;
+  StreamSubscription<void>? _displayNameSub;
 
   @override
   void initState() {
     super.initState();
     _loadName();
-    DisplayNameService.instance.changes.listen((_) => _loadName());
+    _displayNameSub =
+        DisplayNameService.instance.changes.listen((_) => _loadName());
+  }
+
+  @override
+  void dispose() {
+    _displayNameSub?.cancel();
+    super.dispose();
   }
 
   Future<void> _loadName() async {

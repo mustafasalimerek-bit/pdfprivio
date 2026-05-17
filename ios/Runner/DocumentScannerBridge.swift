@@ -241,17 +241,31 @@ struct ScannedPage: Identifiable {
   var side: CardSide?
 
   /// Whether the sharpness score is low enough to suggest a retake.
-  /// Card / ID get a looser threshold because users naturally hold
-  /// the subject closer than the device can quickly lock focus on —
-  /// 0.3 was rejecting otherwise fine captures.
+  /// Thresholds are deliberately conservative — only catch actual
+  /// motion blur, not the HDR-flattened-but-sharp captures that
+  /// were producing false positives in the original 0.18-0.30 band.
   func needsRetake(forMode mode: ScanMode) -> Bool {
     let threshold: Double
     switch mode {
-    case .card, .id: threshold = 0.18
-    case .receipt: threshold = 0.22
-    case .doc: threshold = 0.30
+    case .doc: threshold = 0.08
+    case .receipt: threshold = 0.06
+    case .card, .id: threshold = 0.05
     }
     return blurScore < threshold
+  }
+
+  /// Mode-aware "soft" sharpness threshold. Used by the preview
+  /// screen to surface a quiet hint badge — does NOT block save,
+  /// does NOT pop an alert. Threshold sits above needsRetake so a
+  /// page never both "needs retake" and "low sharpness" at once.
+  func hasLowSharpness(forMode mode: ScanMode) -> Bool {
+    let warnThreshold: Double
+    switch mode {
+    case .doc: warnThreshold = 0.18
+    case .receipt: warnThreshold = 0.12
+    case .card, .id: warnThreshold = 0.10
+    }
+    return blurScore < warnThreshold && !needsRetake(forMode: mode)
   }
 }
 
@@ -928,7 +942,6 @@ final class ScannerCoordinator: NSObject, ObservableObject {
   @Published var capturedPages: [ScannedPage] = []
   @Published var isAutoCapture: Bool = true
   @Published var captureCountdown: Int? = nil
-  @Published var blurWarningPage: ScannedPage? = nil
 
   /// Active capture mode. Drives the Vision rectangle detector tuning,
   /// the default enhancement applied per capture, and the card flip
@@ -952,6 +965,12 @@ final class ScannerCoordinator: NSObject, ObservableObject {
   private var lastStableDetection: Date?
   private var rectangleHistory: [VNRectangleObservation] = []
   private var frameCount = 0
+
+  /// Reference to the active capture device. Held so the auto-capture
+  /// gate can poll device.isAdjustingFocus / isAdjustingExposure
+  /// before firing the shutter — prevents the bulk of motion blur
+  /// without needing post-capture detection alerts.
+  private var captureDevice: AVCaptureDevice?
 
   private let stabilityThreshold: TimeInterval = 0.6
   private let autoCaptureDelay: TimeInterval = 1.0
@@ -1003,6 +1022,7 @@ final class ScannerCoordinator: NSObject, ObservableObject {
     if captureSession.canAddInput(input) {
       captureSession.addInput(input)
     }
+    self.captureDevice = device
 
     try? device.lockForConfiguration()
     if device.isFocusModeSupported(.continuousAutoFocus) {
@@ -1015,7 +1035,17 @@ final class ScannerCoordinator: NSObject, ObservableObject {
 
     if captureSession.canAddOutput(photoOutput) {
       captureSession.addOutput(photoOutput)
-      photoOutput.isHighResolutionCaptureEnabled = true
+      if #available(iOS 16.0, *) {
+        // Modern API — pick the largest supported photo dimensions
+        // for the active format. Replaces the deprecated
+        // isHighResolutionCaptureEnabled flag.
+        if let activeFormat = self.captureDevice?.activeFormat,
+           let maxDims = activeFormat.supportedMaxPhotoDimensions.last {
+          photoOutput.maxPhotoDimensions = maxDims
+        }
+      } else {
+        photoOutput.isHighResolutionCaptureEnabled = true
+      }
     }
 
     let videoQueue = DispatchQueue(label: "scanner.video.queue",
@@ -1063,7 +1093,12 @@ final class ScannerCoordinator: NSObject, ObservableObject {
     guidance = .capturing
 
     let settings = AVCapturePhotoSettings()
-    settings.isHighResolutionPhotoEnabled = true
+    if #available(iOS 16.0, *) {
+      // Match the output's maxPhotoDimensions chosen in setupCamera.
+      settings.maxPhotoDimensions = photoOutput.maxPhotoDimensions
+    } else {
+      settings.isHighResolutionPhotoEnabled = true
+    }
     photoOutput.capturePhoto(with: settings, delegate: self)
   }
 
@@ -1088,13 +1123,6 @@ final class ScannerCoordinator: NSObject, ObservableObject {
       blurScore: blurScore
     )
 
-    // Blur warning disabled — it was firing on captures that looked
-    // perfectly fine to the human eye (parlak ID surfaces, indoor
-    // light, small subjects all push the Laplacian score down even
-    // without motion blur). The blur score is still surfaced in the
-    // review screen so the user can retake if they genuinely don't
-    // like a page.
-    _ = page.needsRetake(forMode: mode)
 
     // Card mode flip flow: the first capture is the front side, then
     // we prompt the user to flip and the next capture is the back —
@@ -1339,16 +1367,26 @@ final class ScannerCoordinator: NSObject, ObservableObject {
     captureCountdown = 1
 
     Task { [weak self] in
+      // Visible 1-second countdown.
       try? await Task.sleep(nanoseconds: 1_000_000_000)
+
+      // Pre-capture focus / exposure stability gate. Stops us shooting
+      // mid-AF cycle — the Laplacian post-capture check was producing
+      // false positives on the HDR pipeline + indoor light, so we
+      // prevent the blur instead of trying to detect it. Hard cap at
+      // 500ms so the shutter never stalls on a difficult subject.
+      if let device = await self?.captureDevice {
+        let deadline = Date().addingTimeInterval(0.5)
+        while Date() < deadline {
+          let adjusting =
+            device.isAdjustingFocus || device.isAdjustingExposure
+          if !adjusting { break }
+          try? await Task.sleep(nanoseconds: 50_000_000) // 50ms poll
+        }
+      }
+
       await MainActor.run {
         guard let self = self else { return }
-        // No more `case .readyToCapture = guidance` guard — once we
-        // armed the countdown and the user didn't dismiss the
-        // scanner, we want the photo fired even if a stray frame
-        // briefly bumped guidance somewhere else. handleObservations
-        // also freezes state while `captureCountdown != nil`, so by
-        // the time we're here the guidance should still be ready —
-        // but treat the guard as defensive, not gating.
         self.captureCountdown = nil
         self.triggerCapture()
       }
@@ -1446,23 +1484,6 @@ struct ScannerView: View {
     }
     .onDisappear {
       coordinator.stopSession()
-    }
-    .alert("Photo too blurry",
-           isPresented: Binding(
-            get: { coordinator.blurWarningPage != nil },
-            set: { if !$0 { coordinator.blurWarningPage = nil } }
-           )) {
-      Button("Retake", role: .cancel) {
-        coordinator.blurWarningPage = nil
-      }
-      Button("Use anyway") {
-        if let page = coordinator.blurWarningPage {
-          coordinator.capturedPages.append(page)
-          coordinator.blurWarningPage = nil
-        }
-      }
-    } message: {
-      Text("This photo looks blurry. Retake for a sharper scan?")
     }
   }
 }
@@ -1915,13 +1936,26 @@ struct ScannerPreviewView: View {
               RoundedRectangle(cornerRadius: 8)
                 .stroke(Color.gray.opacity(0.25), lineWidth: 0.5)
             )
+            .overlay(alignment: .topTrailing) {
+              if page.hasLowSharpness(forMode: coordinator.currentMode) {
+                Image(systemName: "exclamationmark.circle.fill")
+                  .font(.system(size: 14, weight: .semibold))
+                  .foregroundColor(.orange)
+                  .background(
+                    Circle()
+                      .fill(Color.white)
+                      .frame(width: 18, height: 18)
+                  )
+                  .padding(4)
+              }
+            }
 
           VStack(alignment: .leading, spacing: 4) {
             Text(pageTitle(forIndex: idx, page: page))
               .font(.system(size: 15, weight: .semibold))
             Text(qualityLabel(for: page.blurScore))
               .font(.system(size: 12))
-              .foregroundColor(page.blurScore < 0.45 ? .orange : .secondary)
+              .foregroundColor(page.blurScore < 0.15 ? .orange : .secondary)
           }
 
           Spacer()
@@ -2060,8 +2094,8 @@ struct ScannerPreviewView: View {
   }
 
   private func qualityLabel(for score: Double) -> String {
-    if score < 0.3 { return "Blurry · consider retake" }
-    if score < 0.55 { return "Okay" }
+    if score < 0.06 { return "Blurry · consider retake" }
+    if score < 0.15 { return "Slightly soft" }
     return "Sharp"
   }
 

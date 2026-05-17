@@ -12,7 +12,6 @@
 		0D5B11DF8D2766D5F1BF55CD /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B1F2D1347F6D9A0C9B22EB0D /* Foundation.framework */; };
 		1498D2341E8E89220040F4C2 /* GeneratedPluginRegistrant.m in Sources */ = {isa = PBXBuildFile; fileRef = 1498D2331E8E89220040F4C2 /* GeneratedPluginRegistrant.m */; };
 		1CCE61B02DB900151F1C3082 /* ShareViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = BC68728586275ED67B205A85 /* ShareViewController.swift */; };
-		2144F4C18CEFD25703A4CD7F /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = DC422804FBD89E2A96F0AF65 /* GoogleService-Info.plist */; };
 		331C808B294A63AB00263BE5 /* RunnerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 331C807B294A618700263BE5 /* RunnerTests.swift */; };
 		3B3967161E833CAA004F5970 /* AppFrameworkInfo.plist in Resources */ = {isa = PBXBuildFile; fileRef = 3B3967151E833CAA004F5970 /* AppFrameworkInfo.plist */; };
 		587AC37BA8D711082D54B7C6 /* PDFPrivioQuickSign.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = 80CF3E3FD03FC0784078D061 /* PDFPrivioQuickSign.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
@@ -164,7 +163,6 @@
 		C7DFB18333FC1B2A5AC9F31C /* Info.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		CB99833E405AD436DA30A198 /* TextRecognizerBridge.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = TextRecognizerBridge.swift; sourceTree = "<group>"; };
 		D9226A87AE79D4F38C8D6C4D /* PDFPrivioShare.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = PDFPrivioShare.appex; sourceTree = BUILT_PRODUCTS_DIR; };
-		DC422804FBD89E2A96F0AF65 /* GoogleService-Info.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
 		E0852AADFAC1022286E44F2E /* Pods-ShareExtension.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; path = "Pods-ShareExtension.release.xcconfig"; sourceTree = "<group>"; };
 		E946B0CC7A149E0AD26D7836 /* Assets.xcassets */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		FBD13C0073AE4CFFC3AD1318 /* Pods-ShareExtension.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-ShareExtension.release.xcconfig"; path = "Target Support Files/Pods-ShareExtension/Pods-ShareExtension.release.xcconfig"; sourceTree = "<group>"; };
@@ -375,7 +373,6 @@
 				74858FAE1ED2DC5600515810 /* AppDelegate.swift */,
 				7884E8672EC3CC0400C636F2 /* SceneDelegate.swift */,
 				74858FAD1ED2DC5600515810 /* Runner-Bridging-Header.h */,
-				DC422804FBD89E2A96F0AF65 /* GoogleService-Info.plist */,
 				AA96D1015543CE2C25FF53C3 /* DocumentScannerBridge.swift */,
 				CB99833E405AD436DA30A198 /* TextRecognizerBridge.swift */,
 				0C15AD83CEFD78125A03CB20 /* Runner.entitlements */,
@@ -628,7 +625,6 @@
 				3B3967161E833CAA004F5970 /* AppFrameworkInfo.plist in Resources */,
 				97C146FE1CF9000F007C117D /* Assets.xcassets in Resources */,
 				97C146FC1CF9000F007C117D /* Main.storyboard in Resources */,
-				2144F4C18CEFD25703A4CD7F /* GoogleService-Info.plist in Resources */,
 				9FA605747AA2E8BC0CAD5D08 /* PrivacyInfo.xcprivacy in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

@@ -1,9 +1,5 @@
 import 'dart:async';
 
-import 'package:firebase_analytics/firebase_analytics.dart';
-import 'package:firebase_core/firebase_core.dart';
-import 'package:firebase_crashlytics/firebase_crashlytics.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -23,24 +19,17 @@ Future<void> main() async {
   await runZonedGuarded<Future<void>>(() async {
     WidgetsFlutterBinding.ensureInitialized();
 
-    // Firebase Core — must initialize before Crashlytics or Analytics.
-    await Firebase.initializeApp();
-
-    // Crashlytics: legitimate interest (app stability). Disabled in debug to
-    // avoid polluting production crash dashboards with developer runs.
-    await FirebaseCrashlytics.instance
-        .setCrashlyticsCollectionEnabled(!kDebugMode);
-    FlutterError.onError = FirebaseCrashlytics.instance.recordFlutterFatalError;
-    PlatformDispatcher.instance.onError = (error, stack) {
-      FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
-      return true;
+    // No analytics, no Firebase, no third-party SDKs. Crash reports come
+    // through Apple's App Store Connect dashboard (user opt-in via
+    // Settings > Privacy > Analytics & Improvements > Share with App
+    // Developers), so we don't need to ship a parallel pipeline.
+    //
+    // FlutterError still gets logged to the iOS console for TestFlight
+    // sessionizing — local-only, never leaves the device unless the
+    // user explicitly shares diagnostic data with Apple.
+    FlutterError.onError = (details) {
+      FlutterError.presentError(details);
     };
-
-    // Analytics disabled by default. PDFPrivio ships without third-party
-    // advertising or tracking SDKs, so there's no consent prompt that
-    // would flip this on. Crashlytics handles stability; Analytics
-    // would need an explicit user opt-in path before re-enabling.
-    await FirebaseAnalytics.instance.setAnalyticsCollectionEnabled(false);
 
     // Hive — backs the audit log + recent files entries.
     await Hive.initFlutter();
@@ -76,6 +65,8 @@ Future<void> main() async {
       ),
     );
   }, (error, stack) {
-    FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
+    // Same posture as FlutterError.onError above — console logging only.
+    // Apple's crash pipeline handles aggregation server-side.
+    debugPrint('Uncaught zone error: $error\n$stack');
   });
 }

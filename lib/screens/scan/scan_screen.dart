@@ -6,7 +6,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/utils/cancellation_token.dart';
 import '../../core/utils/result.dart';
+import '../../data/models/receipt.dart';
 import '../../data/services/document_scanner_service.dart';
+import '../../data/services/expense_ledger_service.dart';
 import '../../data/services/haptics_service.dart';
 import '../../data/services/image_to_pdf_service.dart';
 import '../../widgets/progress_overlay.dart';
@@ -136,8 +138,31 @@ class _ScanScreenState extends ConsumerState<ScanScreen> {
 
     if (!mounted) return;
     if (addToLedger == true) {
-      // TODO(@scanner): wire ExpenseLedgerService.instance.add(...)
-      // when the receipt-side schema lands.
+      // Persist to the on-device ledger. Total stored as string to
+      // dodge floating-point rounding. Currency falls back to USD if
+      // the receipt parser couldn't pin it down.
+      final receipt = Receipt(
+        id: ExpenseLedgerService.instance.nextId(),
+        capturedAt: DateTime.now(),
+        date: meta.extractedDate,
+        vendor: meta.extractedMerchant,
+        total: amount?.toStringAsFixed(2),
+        currency: meta.extractedCurrency ?? 'USD',
+        sourcePath: outcome.pdfFile!.path,
+        rawText: meta.ocrText ?? '',
+      );
+      await ExpenseLedgerService.instance.save(receipt);
+
+      if (mounted) {
+        HapticsService.instance.success();
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Added to Expense Ledger'),
+            behavior: SnackBarBehavior.floating,
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
     }
 
     await _pushResult(
