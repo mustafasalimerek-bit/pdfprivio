@@ -6,14 +6,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/theme/colors.dart';
 import '../../core/utils/cancellation_token.dart';
+import '../../core/utils/format_bytes.dart';
 import '../../core/utils/result.dart';
 import '../../data/models/pdf_document.dart';
 import '../../data/services/haptics_service.dart';
 import '../../data/services/pdf_merge_service.dart';
 import '../../data/services/share_intent_service.dart';
 import '../../providers/merge_providers.dart';
-import '../../widgets/pdf_doc_tile.dart';
-import '../../widgets/privacy_badge.dart';
 import '../../widgets/progress_overlay.dart';
 import 'merge_pages_screen.dart';
 import 'merge_result_screen.dart';
@@ -185,6 +184,7 @@ class _MergeScreenState extends ConsumerState<MergeScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Merge PDFs'),
+        centerTitle: true,
         actions: [
           if (docs.isNotEmpty)
             TextButton(
@@ -200,19 +200,12 @@ class _MergeScreenState extends ConsumerState<MergeScreen> {
       body: Stack(
         children: [
           SafeArea(
-            child: Column(
-              children: [
-                const Padding(
-                  padding: EdgeInsets.fromLTRB(16, 8, 16, 8),
-                  child: Align(
-                    alignment: Alignment.centerLeft,
-                    child: PrivacyBadge(),
-                  ),
-                ),
-                Expanded(
-                  child: docs.isEmpty
-                      ? _EmptyState(onAdd: _pickFiles)
-                      : _DocList(
+            child: docs.isEmpty
+                ? _EmptyState(onAdd: _pickFiles)
+                : Column(
+                    children: [
+                      Expanded(
+                        child: _DocList(
                           docs: docs,
                           totalPages: totalPages,
                           customPageCount: hasCustom ? pageRefs.length : null,
@@ -220,15 +213,16 @@ class _MergeScreenState extends ConsumerState<MergeScreen> {
                           onCustomize:
                               docs.length >= 2 ? _customizePages : null,
                         ),
-                ),
-                if (canMerge)
-                  _MergeButton(
-                    count: docs.length,
-                    customPageCount: hasCustom ? pageRefs.length : null,
-                    onTap: _merge,
+                      ),
+                      if (canMerge)
+                        _MergeButton(
+                          count: docs.length,
+                          customPageCount:
+                              hasCustom ? pageRefs.length : null,
+                          onTap: _merge,
+                        ),
+                    ],
                   ),
-              ],
-            ),
           ),
           if (progress != null)
             ProgressOverlay(
@@ -247,57 +241,270 @@ class _MergeScreenState extends ConsumerState<MergeScreen> {
   }
 }
 
+/// First-open state for a tool screen. Hero illustration above the
+/// fold, big primary "Add files" CTA, three alt-source chips
+/// (Photos / Recent / Scan) for the most common pick origins, and
+/// the "Stays on your iPhone" footer pinned to the bottom as a
+/// quiet privacy promise. Pattern is shared with every tool's empty
+/// state going forward — see [_EmptyState] usage elsewhere.
 class _EmptyState extends StatelessWidget {
   final VoidCallback onAdd;
   const _EmptyState({required this.onAdd});
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(32),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 96,
-              height: 96,
-              decoration: BoxDecoration(
-                color: AppColors.primary.withValues(alpha: 0.08),
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(
-                Icons.library_books_outlined,
-                size: 44,
-                color: AppColors.primary,
-              ),
-            ),
-            const SizedBox(height: 20),
-            const Text(
-              'Combine PDFs into one',
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
-            ),
-            const SizedBox(height: 8),
-            const Text(
-              'Add two or more PDFs. Drag to reorder, '
-              'or customize page-by-page before merging.',
-              textAlign: TextAlign.center,
-              style: TextStyle(color: AppColors.textSecondary),
-            ),
-            const SizedBox(height: 24),
-            FilledButton.icon(
+    return Column(
+      children: [
+        const SizedBox(height: 28),
+        const Spacer(),
+        const _MergeHeroIllustration(),
+        const SizedBox(height: 24),
+        const Text(
+          'Combine PDFs into one',
+          style: TextStyle(
+            fontSize: 22,
+            fontWeight: FontWeight.w800,
+            color: AppColors.textPrimary,
+          ),
+        ),
+        const SizedBox(height: 8),
+        const Text(
+          'Add 2 or more files to begin',
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            fontSize: 14,
+            color: AppColors.textSecondary,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        const SizedBox(height: 28),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24),
+          child: SizedBox(
+            width: double.infinity,
+            child: FilledButton.icon(
               onPressed: onAdd,
-              icon: const Icon(Icons.add),
-              label: const Text('Add PDFs'),
+              icon: const Icon(Icons.add, size: 20),
+              label: const Text(
+                'Add files',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
               style: FilledButton.styleFrom(
                 backgroundColor: AppColors.primary,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 24,
-                  vertical: 14,
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(99),
                 ),
               ),
             ),
+          ),
+        ),
+        const SizedBox(height: 18),
+        const Text(
+          'Or pick from',
+          style: TextStyle(
+            fontSize: 12,
+            color: AppColors.textTertiary,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        const SizedBox(height: 10),
+        // Alt source chips — Photos / Recent / Scan. For v1 they
+        // all open the same file picker (PDFs only). v1.1 will
+        // route each to its dedicated source (photo library, recent
+        // files, VisionKit scanner) and convert as needed.
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            _AltSourceChip(
+              icon: Icons.image_outlined,
+              label: 'Photos',
+              onTap: onAdd,
+            ),
+            const SizedBox(width: 8),
+            _AltSourceChip(
+              icon: Icons.history,
+              label: 'Recent',
+              onTap: onAdd,
+            ),
+            const SizedBox(width: 8),
+            _AltSourceChip(
+              icon: Icons.camera_alt_outlined,
+              label: 'Scan',
+              onTap: onAdd,
+            ),
           ],
+        ),
+        const Spacer(),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(24, 12, 24, 18),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                width: 7,
+                height: 7,
+                decoration: const BoxDecoration(
+                  color: AppColors.success,
+                  shape: BoxShape.circle,
+                ),
+              ),
+              const SizedBox(width: 8),
+              const Text(
+                'Stays on your iPhone',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: AppColors.success,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _MergeHeroIllustration extends StatelessWidget {
+  const _MergeHeroIllustration();
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 220,
+      height: 100,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          // Two overlapping paper sheets — visual "source documents".
+          SizedBox(
+            width: 84,
+            height: 100,
+            child: Stack(
+              children: [
+                Positioned(
+                  left: 8,
+                  top: 8,
+                  child: _PaperGlyph(opacity: 0.55),
+                ),
+                Positioned(
+                  left: 22,
+                  top: 0,
+                  child: _PaperGlyph(opacity: 1),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 12),
+          const Icon(
+            Icons.arrow_forward,
+            color: AppColors.primary,
+            size: 22,
+          ),
+          const SizedBox(width: 12),
+          // Single merged document — solid teal as the "output" glyph.
+          Container(
+            width: 56,
+            height: 70,
+            decoration: BoxDecoration(
+              color: AppColors.primary,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: const Icon(
+              Icons.content_copy_outlined,
+              color: Colors.white,
+              size: 26,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _PaperGlyph extends StatelessWidget {
+  final double opacity;
+  const _PaperGlyph({required this.opacity});
+
+  @override
+  Widget build(BuildContext context) {
+    return Opacity(
+      opacity: opacity,
+      child: Container(
+        width: 56,
+        height: 70,
+        padding: const EdgeInsets.fromLTRB(7, 12, 7, 0),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: AppColors.border, width: 1.2),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            for (final w in [42.0, 36.0, 30.0])
+              Padding(
+                padding: const EdgeInsets.only(bottom: 5),
+                child: Container(
+                  width: w,
+                  height: 3,
+                  decoration: BoxDecoration(
+                    color: AppColors.iconTint,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _AltSourceChip extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+  const _AltSourceChip({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: AppColors.surface,
+      borderRadius: BorderRadius.circular(99),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(99),
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+          decoration: BoxDecoration(
+            border: Border.all(color: AppColors.border),
+            borderRadius: BorderRadius.circular(99),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, size: 14, color: AppColors.primary),
+              const SizedBox(width: 6),
+              Text(
+                label,
+                style: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -319,105 +526,247 @@ class _DocList extends ConsumerWidget {
     required this.onCustomize,
   });
 
+  String _bytesSummary() {
+    final total = docs.fold<int>(0, (a, d) => a + d.sizeBytes);
+    return formatBytes(total);
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return Column(
       children: [
         Padding(
-          padding: const EdgeInsets.fromLTRB(16, 4, 16, 4),
-          child: Row(
-            children: [
-              Expanded(
-                child: Text(
-                  customPageCount != null
-                      ? '$customPageCount pages chosen from ${docs.length} PDFs'
-                      : '${docs.length} PDFs · $totalPages page${totalPages == 1 ? '' : 's'} total',
-                  style: const TextStyle(
-                    fontSize: 13,
-                    color: AppColors.textSecondary,
-                  ),
-                ),
-              ),
-              TextButton.icon(
-                onPressed: onAdd,
-                icon: const Icon(Icons.add, size: 18),
-                label: const Text('Add more'),
-              ),
-            ],
-          ),
-        ),
-        if (onCustomize != null)
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-            child: SizedBox(
-              width: double.infinity,
-              child: OutlinedButton.icon(
-                onPressed: onCustomize,
-                icon: Icon(
-                  customPageCount != null
-                      ? Icons.check_circle
-                      : Icons.grid_view_outlined,
-                  size: 18,
-                ),
-                label: Text(
-                  customPageCount != null
-                      ? 'Edit page selection'
-                      : 'Customize pages',
-                ),
-                style: OutlinedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                  side: BorderSide(
-                    color: customPageCount != null
-                        ? AppColors.primary
-                        : AppColors.border,
-                  ),
-                  foregroundColor: AppColors.primary,
-                ),
+          padding: const EdgeInsets.fromLTRB(16, 4, 16, 14),
+          child: Center(
+            child: Text(
+              customPageCount != null
+                  ? '$customPageCount pages chosen from ${docs.length} files'
+                  : '${docs.length} file${docs.length == 1 ? '' : 's'} · $totalPages page${totalPages == 1 ? '' : 's'} · ~${_bytesSummary()}',
+              style: const TextStyle(
+                fontSize: 13,
+                color: AppColors.textSecondary,
+                fontWeight: FontWeight.w500,
               ),
             ),
           ),
+        ),
         Expanded(
-          child: ReorderableListView.builder(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-            itemCount: docs.length,
-            buildDefaultDragHandles: false,
-            onReorder: (oldIndex, newIndex) {
-              HapticsService.instance.drop();
-              ref
-                  .read(mergeWorkspaceProvider.notifier)
-                  .reorder(oldIndex, newIndex);
-              // Reordering docs invalidates page-level customization.
-              if (ref.read(hasPageCustomizationProvider)) {
-                ref.read(mergePageRefsProvider.notifier).reset();
-              }
-            },
-            itemBuilder: (context, index) {
-              final doc = docs[index];
-              return PdfDocTile(
-                key: ValueKey(doc.path),
-                document: doc,
-                onRemove: () {
-                  HapticsService.instance.select();
-                  ref.read(mergeWorkspaceProvider.notifier).removeAt(index);
-                  if (ref.read(hasPageCustomizationProvider)) {
-                    ref.read(mergePageRefsProvider.notifier).reset();
-                  }
-                },
-                reorderHandle: ReorderableDragStartListener(
-                  index: index,
-                  child: const Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 4),
-                    child: Icon(
-                      Icons.drag_handle,
-                      color: AppColors.textTertiary,
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+            child: Column(
+              children: [
+                Container(
+                  decoration: BoxDecoration(
+                    color: AppColors.surface,
+                    borderRadius: BorderRadius.circular(18),
+                    border: Border.all(color: AppColors.border),
+                  ),
+                  child: ReorderableListView.builder(
+                    physics: const NeverScrollableScrollPhysics(),
+                    shrinkWrap: true,
+                    padding: EdgeInsets.zero,
+                    itemCount: docs.length,
+                    buildDefaultDragHandles: false,
+                    proxyDecorator: (child, _, _) => Material(
+                      color: Colors.transparent,
+                      child: child,
                     ),
+                    onReorder: (oldIndex, newIndex) {
+                      HapticsService.instance.drop();
+                      ref
+                          .read(mergeWorkspaceProvider.notifier)
+                          .reorder(oldIndex, newIndex);
+                      if (ref.read(hasPageCustomizationProvider)) {
+                        ref.read(mergePageRefsProvider.notifier).reset();
+                      }
+                    },
+                    itemBuilder: (context, index) {
+                      final doc = docs[index];
+                      final isLast = index == docs.length - 1;
+                      return Column(
+                        key: ValueKey(doc.path),
+                        children: [
+                          _MergeFileRow(
+                            document: doc,
+                            index: index,
+                            onRemove: () {
+                              HapticsService.instance.select();
+                              ref
+                                  .read(mergeWorkspaceProvider.notifier)
+                                  .removeAt(index);
+                              if (ref.read(hasPageCustomizationProvider)) {
+                                ref
+                                    .read(mergePageRefsProvider.notifier)
+                                    .reset();
+                              }
+                            },
+                          ),
+                          if (!isLast)
+                            Padding(
+                              padding: const EdgeInsets
+                                  .symmetric(horizontal: 16),
+                              child: Divider(
+                                height: 1,
+                                thickness: 1,
+                                color: AppColors.border
+                                    .withValues(alpha: 0.6),
+                              ),
+                            ),
+                        ],
+                      );
+                    },
                   ),
                 ),
-              );
-            },
+                const SizedBox(height: 14),
+                TextButton.icon(
+                  onPressed: onAdd,
+                  icon: const Icon(Icons.add, size: 18),
+                  label: const Text(
+                    'Add another file',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  style: TextButton.styleFrom(
+                    foregroundColor: AppColors.primary,
+                  ),
+                ),
+                if (onCustomize != null) ...[
+                  const SizedBox(height: 4),
+                  TextButton.icon(
+                    onPressed: onCustomize,
+                    icon: Icon(
+                      customPageCount != null
+                          ? Icons.check_circle
+                          : Icons.grid_view_outlined,
+                      size: 16,
+                    ),
+                    label: Text(
+                      customPageCount != null
+                          ? 'Edit page selection'
+                          : 'Customize page-by-page',
+                      style: const TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    style: TextButton.styleFrom(
+                      foregroundColor: AppColors.textSecondary,
+                    ),
+                  ),
+                ],
+              ],
+            ),
           ),
         ),
       ],
+    );
+  }
+}
+
+/// Single row inside the file-list card. Document glyph on the
+/// left, filename + "X pages · Y KB" on the right, drag handle on
+/// the far right. No remove button visible — the older "X to
+/// remove" affordance moves into a row long-press / swipe (TODO).
+class _MergeFileRow extends StatelessWidget {
+  final PdfDocument document;
+  final int index;
+  final VoidCallback onRemove;
+
+  const _MergeFileRow({
+    required this.document,
+    required this.index,
+    required this.onRemove,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Dismissible(
+      key: ValueKey('dismiss_${document.path}'),
+      direction: DismissDirection.endToStart,
+      background: Container(
+        alignment: Alignment.centerRight,
+        padding: const EdgeInsets.symmetric(horizontal: 20),
+        color: AppColors.error.withValues(alpha: 0.1),
+        child: const Icon(Icons.delete_outline, color: AppColors.error),
+      ),
+      onDismissed: (_) => onRemove(),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(14, 12, 8, 12),
+        child: Row(
+          children: [
+            // Mini paper glyph — lines on a card.
+            Container(
+              width: 38,
+              height: 46,
+              padding: const EdgeInsets.fromLTRB(6, 9, 6, 0),
+              decoration: BoxDecoration(
+                color: AppColors.background,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: AppColors.border, width: 1),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  for (final w in [22.0, 18.0, 14.0])
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 3),
+                      child: Container(
+                        width: w,
+                        height: 2,
+                        decoration: BoxDecoration(
+                          color: AppColors.iconTint,
+                          borderRadius: BorderRadius.circular(1),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    document.displayName,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.textPrimary,
+                      height: 1.15,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    '${document.pageCount} page${document.pageCount == 1 ? '' : 's'} · ${formatBytes(document.sizeBytes)}',
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: AppColors.textSecondary,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            ReorderableDragStartListener(
+              index: index,
+              child: const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 6, vertical: 6),
+                child: Icon(
+                  Icons.drag_handle,
+                  color: AppColors.textTertiary,
+                  size: 22,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
@@ -437,25 +786,26 @@ class _MergeButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final label = customPageCount != null
         ? 'Merge $customPageCount pages'
-        : 'Merge $count PDFs';
+        : 'Merge $count files';
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
       child: SizedBox(
         width: double.infinity,
-        child: FilledButton(
+        child: FilledButton.icon(
           onPressed: onTap,
+          icon: const Icon(Icons.content_copy_outlined, size: 18),
+          label: Text(
+            label,
+            style: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
           style: FilledButton.styleFrom(
             backgroundColor: AppColors.primary,
             padding: const EdgeInsets.symmetric(vertical: 16),
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(14),
-            ),
-          ),
-          child: Text(
-            label,
-            style: const TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w700,
+              borderRadius: BorderRadius.circular(99),
             ),
           ),
         ),
