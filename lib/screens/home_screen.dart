@@ -558,16 +558,68 @@ class _CompactToolTileState extends State<_CompactToolTile> {
 
   @override
   Widget build(BuildContext context) {
-    final showProBadge = _isProOnly && !_hasPro;
+    return _TileShell(
+      icon: widget.spec.icon,
+      label: widget.spec.displayGridLabel,
+      onTap: _onTap,
+      showProBadge: _isProOnly && !_hasPro,
+      semanticsLabel: '${widget.spec.title}. ${widget.spec.subtitle}.',
+    );
+  }
+}
+
+/// 8th cell of the home grid — opens the bottom sheet with every
+/// tool not already in the hero set. Renders through the exact same
+/// shell as every other tile so the visual is guaranteed identical.
+class _MoreTile extends StatelessWidget {
+  final VoidCallback onTap;
+  const _MoreTile({required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return _TileShell(
+      icon: Icons.apps_outlined,
+      label: 'More',
+      onTap: onTap,
+      semanticsLabel: 'More tools — opens the full list',
+    );
+  }
+}
+
+/// One shared shell so every grid cell renders identically — same
+/// 64×64 iconTint container, same icon size, same gap, same label
+/// text style, same InkWell radius, same Stack-clip-none for the
+/// optional corner PRO badge. Drives _CompactToolTile and _MoreTile.
+/// If they diverged in any per-widget detail (Stack vs raw Column,
+/// material vs no material), the More cell would visually break
+/// rank with the rest. This forces parity.
+class _TileShell extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+  final bool showProBadge;
+  final String semanticsLabel;
+
+  const _TileShell({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+    required this.semanticsLabel,
+    this.showProBadge = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
     return Semantics(
       button: true,
-      label: '${widget.spec.title}. ${widget.spec.subtitle}.',
+      label: semanticsLabel,
       excludeSemantics: true,
       child: InkWell(
         borderRadius: BorderRadius.circular(20),
-        onTap: _onTap,
+        onTap: onTap,
         child: Stack(
           clipBehavior: Clip.none,
+          alignment: Alignment.topCenter,
           children: [
             Column(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -576,21 +628,18 @@ class _CompactToolTileState extends State<_CompactToolTile> {
                   width: 64,
                   height: 64,
                   decoration: BoxDecoration(
-                    // Soft teal-tinted neutral matches the editorial-
-                    // utility aesthetic (Bear, Things, Mona) the
-                    // mockup is borrowing.
                     color: AppColors.iconTint,
                     borderRadius: BorderRadius.circular(18),
                   ),
                   child: Icon(
-                    widget.spec.icon,
+                    icon,
                     color: AppColors.primary,
                     size: 28,
                   ),
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  widget.spec.displayGridLabel,
+                  label,
                   style: const TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w700,
@@ -626,59 +675,6 @@ class _CompactToolTileState extends State<_CompactToolTile> {
                   ),
                 ),
               ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-/// 8th cell of the home grid — opens the bottom sheet with every
-/// tool not already in the hero set.
-class _MoreTile extends StatelessWidget {
-  final VoidCallback onTap;
-  const _MoreTile({required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    return Semantics(
-      button: true,
-      label: 'More tools — opens the full list',
-      excludeSemantics: true,
-      child: InkWell(
-        borderRadius: BorderRadius.circular(20),
-        onTap: onTap,
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              width: 64,
-              height: 64,
-              decoration: BoxDecoration(
-                // Same iconTint as every other grid cell so More
-                // sits in the same visual family.
-                color: AppColors.iconTint,
-                borderRadius: BorderRadius.circular(18),
-              ),
-              // Icons.apps fills the container with a 3×3 grid of
-              // dots — same visual weight as Sign / Compress / Merge.
-              // more_horiz (3 little dots) made the cell look empty
-              // next to the dense glyphs in the rest of the grid.
-              child: const Icon(
-                Icons.apps_outlined,
-                color: AppColors.primary,
-                size: 28,
-              ),
-            ),
-            const SizedBox(height: 8),
-            const Text(
-              'More',
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w700,
-                height: 1.15,
-              ),
-            ),
           ],
         ),
       ),
