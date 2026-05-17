@@ -1,16 +1,19 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:package_info_plus/package_info_plus.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../core/theme/colors.dart';
 import '../../core/theme/layout.dart';
 import '../../core/utils/responsive.dart';
 import '../../data/services/audit_service.dart';
-import '../../data/services/consent_service.dart';
 import '../../data/services/display_name_service.dart';
+import '../../data/services/document_scanner_service.dart';
 import '../../data/services/haptics_service.dart';
 import '../../data/services/promo_code_service.dart';
 import '../../data/services/purchase_service.dart';
@@ -36,6 +39,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   bool _widgetShowsNames = true;
   String? _displayName;
   int _auditCount = 0;
+  bool _useAppleScanner = false;
+  bool _hasPro = false;
+  StreamSubscription<void>? _auditChangesSub;
 
   @override
   void initState() {
@@ -45,6 +51,47 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     _loadWidgetPref();
     _loadDisplayName();
     _loadAuditCount();
+    _loadScannerPref();
+    // Cache hasPro locally so _ProTopCard sees a stable parameter
+    // across unrelated setState() calls — without this, every
+    // setState (display name change, audit count refresh, etc.)
+    // rebuilds the hero card and resets its Material ripple state
+    // mid-tap.
+    _hasPro = PurchaseService.instance.hasPro;
+    // Keep the Audit log subtitle ("$n events · export or clear") in
+    // sync if the user runs a tool from another tab while Settings is
+    // still mounted. AuditService already broadcasts a void event on
+    // every record / clear — we just re-fetch the count.
+    _auditChangesSub = AuditService.instance.changes.listen((_) {
+      _loadAuditCount();
+    });
+  }
+
+  @override
+  void dispose() {
+    _auditChangesSub?.cancel();
+    super.dispose();
+  }
+
+  Future<void> _loadScannerPref() async {
+    final prefs = await SharedPreferences.getInstance();
+    if (!mounted) return;
+    setState(() {
+      _useAppleScanner =
+          prefs.getBool(DocumentScannerService.prefsUseAppleScanner) ?? false;
+    });
+  }
+
+  Future<void> _toggleAppleScanner() async {
+    HapticsService.instance.tap();
+    final next = !_useAppleScanner;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(
+      DocumentScannerService.prefsUseAppleScanner,
+      next,
+    );
+    if (!mounted) return;
+    setState(() => _useAppleScanner = next);
   }
 
   Future<void> _loadAuditCount() async {
@@ -75,7 +122,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   }
 
   String _proPlanLabel() {
-    if (!PurchaseService.instance.hasPro) return 'Free tier';
+    if (!_hasPro) return 'Free tier';
     final sku = PurchaseService.instance.activeSku;
     switch (sku) {
       case ProSku.monthly:
@@ -90,7 +137,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   }
 
   String _proPlanSubtitle() {
-    if (!PurchaseService.instance.hasPro) {
+    if (!_hasPro) {
       return 'Tap to see pricing and unlock everything';
     }
     final sku = PurchaseService.instance.activeSku;
@@ -122,7 +169,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             const SizedBox(height: 12),
             TextField(
               controller: controller,
-              autofocus: true,
               maxLength: 24,
               decoration: const InputDecoration(
                 hintText: 'Your name',
@@ -214,7 +260,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     await Navigator.of(context).push(
       MaterialPageRoute(builder: (_) => const ProScreen()),
     );
-    if (mounted) setState(() {});
+    if (mounted) {
+      setState(() => _hasPro = PurchaseService.instance.hasPro);
+    }
   }
 
   Future<void> _openSubscriptions() async {
@@ -317,30 +365,15 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     );
   }
 
-  Future<void> _resurfaceConsent() async {
-    HapticsService.instance.tap();
-    await ConsentService.instance.resurfaceConsentForm();
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text(
-          'Consent preferences refreshed. If a form was needed, it '
-          "just showed; otherwise you're already in sync.",
-        ),
-        behavior: SnackBarBehavior.floating,
-        duration: Duration(seconds: 4),
-      ),
-    );
-  }
-
   Future<void> _restorePurchases() async {
     HapticsService.instance.tap();
     await PurchaseService.instance.restorePurchases();
     if (!mounted) return;
+    setState(() => _hasPro = PurchaseService.instance.hasPro);
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
-          PurchaseService.instance.hasPro
+          _hasPro
               ? 'Purchases restored — Pro is active.'
               : 'No previous purchase found for this Apple ID.',
         ),
@@ -353,7 +386,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     HapticsService.instance.tap();
     await RedeemPromoDialog.show(context);
     await _loadPromoState();
-    if (mounted) setState(() {});
+    if (mounted) {
+      setState(() => _hasPro = PurchaseService.instance.hasPro);
+    }
   }
 
   @override
@@ -369,6 +404,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 _ProTopCard(
+                  hasPro: _hasPro,
                   onOpenPro: _openProScreen,
                   onManageSubscription: _openSubscriptions,
                 ),
@@ -399,7 +435,10 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 AppCard(children: _aboutRows()),
                 const SizedBox(height: 18),
 
-                // Disclaimer + version footer
+                // Disclaimer + version footer. Bumped to textSecondary
+                // (#64748B → 5.7:1 contrast vs cream) so this passes
+                // WCAG AA on small text — textTertiary was 2.95:1, which
+                // looks elegant but fails accessibility.
                 const Padding(
                   padding: EdgeInsets.symmetric(horizontal: 4),
                   child: Text(
@@ -407,8 +446,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     'or tax advice. Outputs are aids — not substitutes for '
                     'human review.',
                     style: TextStyle(
-                      fontSize: 11,
-                      color: AppColors.textTertiary,
+                      fontSize: 12,
+                      color: AppColors.textSecondary,
+                      fontWeight: FontWeight.w400,
                       height: 1.5,
                     ),
                   ),
@@ -446,7 +486,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
   List<Widget> _accountRows() {
     final rows = <_RowSpec>[];
-    if (PurchaseService.instance.hasPro) {
+    if (_hasPro) {
       rows.add(_RowSpec(
         icon: Icons.auto_awesome,
         title: _proPlanLabel(),
@@ -465,17 +505,29 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     if (kDebugMode) {
       rows.add(_RowSpec(
         icon: Icons.bug_report_outlined,
-        title: PurchaseService.instance.hasPro
-            ? 'DEBUG: turn Pro OFF'
-            : 'DEBUG: turn Pro ON',
+        title: _hasPro ? 'DEBUG: turn Pro OFF' : 'DEBUG: turn Pro ON',
         subtitle: 'Debug builds only — bypasses StoreKit',
         onTap: () async {
           HapticsService.instance.tap();
-          await PurchaseService.instance.setProForTesting(
-            !PurchaseService.instance.hasPro,
-          );
-          if (mounted) setState(() {});
+          await PurchaseService.instance.setProForTesting(!_hasPro);
+          if (mounted) {
+            setState(() => _hasPro = PurchaseService.instance.hasPro);
+          }
         },
+      ));
+      rows.add(_RowSpec(
+        icon: Icons.document_scanner_outlined,
+        title: 'DEBUG: Use Apple scanner',
+        subtitle: _useAppleScanner
+            ? 'VisionKit — Apple\'s built-in flow'
+            : 'Custom PDFPrivio scanner (default)',
+        trailing: Switch.adaptive(
+          value: _useAppleScanner,
+          onChanged: (_) => _toggleAppleScanner(),
+          activeThumbColor: AppColors.primary,
+        ),
+        // No row-level onTap: the Switch's hit area covers the whole row
+        // visually but the row's InkWell would double-fire the toggle.
       ));
     }
     if (kDebugMode &&
@@ -524,7 +576,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             onChanged: (_) => _toggleWidgetNames(),
             activeThumbColor: AppColors.primary,
           ),
-          onTap: _toggleWidgetNames,
+          // No row-level onTap — the Switch is the source of truth.
+          // Pairing onTap with onChanged double-toggles and snaps back.
         ),
       ]);
 
@@ -558,12 +611,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               ),
             );
           },
-        ),
-        _RowSpec(
-          icon: Icons.shield_outlined,
-          title: 'Data preferences',
-          subtitle: 'Analytics, ads, California opt-out',
-          onTap: _resurfaceConsent,
         ),
         _RowSpec(
           icon: Icons.description_outlined,
@@ -738,16 +785,17 @@ class _RowSpec {
 /// upsell for free users and surfaces "Manage subscription" for
 /// active Pro users.
 class _ProTopCard extends StatelessWidget {
+  final bool hasPro;
   final VoidCallback onOpenPro;
   final VoidCallback onManageSubscription;
   const _ProTopCard({
+    required this.hasPro,
     required this.onOpenPro,
     required this.onManageSubscription,
   });
 
   @override
   Widget build(BuildContext context) {
-    final hasPro = PurchaseService.instance.hasPro;
     return Material(
       color: AppColors.primary,
       borderRadius: BorderRadius.circular(Layout.heroCornerRadius),

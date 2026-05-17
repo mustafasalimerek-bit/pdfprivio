@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -7,7 +6,6 @@ import 'package:share_plus/share_plus.dart';
 
 import '../../core/theme/colors.dart';
 import '../../core/utils/format_bytes.dart';
-import '../../data/services/ads_service.dart';
 import '../../data/services/haptics_service.dart';
 import '../../data/services/recent_files_service.dart';
 import '../../data/services/usage_limits_service.dart';
@@ -73,7 +71,6 @@ class _SplitResultScreenState extends State<SplitResultScreen> {
           tooltip: 'Close',
           onPressed: () {
             Navigator.of(context).pop();
-            unawaited(AdsService.instance.maybeShowInterstitial());
           },
         ),
         title: const Text('Done'),
@@ -144,7 +141,6 @@ class _SplitResultScreenState extends State<SplitResultScreen> {
                 child: TextButton(
                   onPressed: () {
                     Navigator.of(context).pop();
-                    unawaited(AdsService.instance.maybeShowInterstitial());
                   },
                   child: const Text('Done'),
                 ),

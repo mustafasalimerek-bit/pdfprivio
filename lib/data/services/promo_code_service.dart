@@ -31,8 +31,8 @@ enum PromoRedeemResult {
 ///
 /// - **Per-device**: Keychain (iOS) / EncryptedSharedPreferences
 ///   (Android) survives app uninstall on iOS. Android still wipes on
-///   "Clear app data" — acceptable asymmetry since the paid tier lives
-///   on iOS and Android revenue is mostly AdMob.
+///   "Clear app data" — acceptable asymmetry, the paid tier lives on
+///   iOS and Android is a free-tier surface.
 /// - **Per-Apple-ID**: iCloud Keychain syncs the flag across the user's
 ///   devices on the same Apple ID. iPhone redeems → iPad sees the flag
 ///   within seconds. No entitlement or container config required —

@@ -10,7 +10,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 
 import 'app.dart';
-import 'data/services/ads_service.dart';
 import 'data/services/app_intent_service.dart';
 import 'data/services/audit_service.dart';
 import 'data/services/expense_ledger_service.dart';
@@ -37,11 +36,10 @@ Future<void> main() async {
       return true;
     };
 
-    // Analytics off until consent flow says otherwise. Consent gathering
-    // (UMP + ATT) runs inside the UI's _BootGate after onboarding so the
-    // user sees a welcome explanation BEFORE being asked to accept ads
-    // or tracking — Apple's recommended UX and a better conversion rate
-    // than launching straight into prompts.
+    // Analytics disabled by default. PDFPrivio ships without third-party
+    // advertising or tracking SDKs, so there's no consent prompt that
+    // would flip this on. Crashlytics handles stability; Analytics
+    // would need an explicit user opt-in path before re-enabling.
     await FirebaseAnalytics.instance.setAnalyticsCollectionEnabled(false);
 
     // Hive — backs the audit log + recent files entries.
@@ -67,11 +65,6 @@ Future<void> main() async {
     // PDFPrivio"). Cold-launch route comes through on init; warm
     // resumes re-poll from RootScaffold's lifecycle listener.
     await AppIntentService.instance.init();
-    // AdsService.init() pre-loads the first interstitial and wires the
-    // Pro-purchase listener that drops cached ads when users upgrade.
-    // Safe to call before consent — internal calls are silent no-ops
-    // until MobileAds.initialize() succeeds inside ConsentService.gather().
-    await AdsService.instance.init();
 
     await SystemChrome.setPreferredOrientations([
       DeviceOrientation.portraitUp,

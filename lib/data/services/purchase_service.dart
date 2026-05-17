@@ -265,8 +265,8 @@ class PurchaseService {
 
   /// Bridge for PromoCodeService — when a promo is redeemed (or cleared
   /// in debug builds) the entitlement OR-gate flips without StoreKit
-  /// firing. Re-emit `tier` so listeners (BannerAdWidget, Paywall, tile
-  /// lock states) refresh on the same channel they already subscribe to.
+  /// firing. Re-emit `tier` so listeners (Paywall, tile lock states)
+  /// refresh on the same channel they already subscribe to.
   void notifyExternalEntitlementChange() {
     _controller.add(tier);
   }

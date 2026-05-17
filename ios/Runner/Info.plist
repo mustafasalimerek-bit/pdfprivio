@@ -141,20 +141,6 @@
 		<string>PDFPrivio reads photos only when you pick images to turn into a PDF. Files never leave your device.</string>
 		<key>NSCameraUsageDescription</key>
 		<string>PDFPrivio uses the camera when you scan a document or capture an image for a PDF. Captures stay on this device.</string>
-		<key>NSUserTrackingUsageDescription</key>
-		<string>PDFPrivio uses this only to show ads that are more relevant to you. Your PDF content is never shared — we just ask AdMob to count an anonymous device ID for ad measurement. You can decline and PDFPrivio still works the same.</string>
-		<!-- Real PDFPrivio iOS AdMob App ID (publisher pub-7294127185571156).
-		     Registered 2026-05-16 for bundle com.erekstudio.pdfprivio.
-		     Unit IDs in lib/core/ads/ad_unit_ids.dart. -->
-		<key>GADApplicationIdentifier</key>
-		<string>ca-app-pub-7294127185571156~2630343438</string>
-		<key>SKAdNetworkItems</key>
-		<array>
-			<dict>
-				<key>SKAdNetworkIdentifier</key>
-				<string>cstr6suwn9.skadnetwork</string>
-			</dict>
-		</array>
 		<key>UIStatusBarHidden</key>
 		<false/>
 	</dict>

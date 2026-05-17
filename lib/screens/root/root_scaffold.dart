@@ -9,7 +9,6 @@ import '../../data/services/app_intent_service.dart';
 import '../../data/services/haptics_service.dart';
 import '../../data/services/share_intent_service.dart';
 import '../../data/state/nav_provider.dart';
-import '../../widgets/banner_ad_widget.dart';
 import '../../widgets/shared_file_action_sheet.dart';
 import '../home_screen.dart';
 import '../pro/pro_screen.dart';
@@ -126,15 +125,7 @@ class _RootScaffoldState extends ConsumerState<RootScaffold>
   Widget build(BuildContext context) {
     final index = ref.watch(selectedTabProvider);
     return Scaffold(
-      body: Column(
-        children: [
-          Expanded(child: IndexedStack(index: index, children: _tabs)),
-          // Sticky banner above the nav bar. Renders empty for Pro users
-          // and on AdMob no-fill — collapses to zero height in both cases
-          // so the IndexedStack reclaims the space automatically.
-          const BannerAdWidget(),
-        ],
-      ),
+      body: IndexedStack(index: index, children: _tabs),
       bottomNavigationBar: NavigationBar(
         selectedIndex: index,
         onDestinationSelected: _select,

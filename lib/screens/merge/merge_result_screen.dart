@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -7,7 +6,6 @@ import 'package:share_plus/share_plus.dart';
 
 import '../../core/theme/colors.dart';
 import '../../core/utils/format_bytes.dart';
-import '../../data/services/ads_service.dart';
 import '../../data/services/haptics_service.dart';
 import '../../data/services/recent_files_service.dart';
 import '../../data/services/usage_limits_service.dart';
@@ -80,13 +78,8 @@ class _MergeResultScreenState extends State<MergeResultScreen> {
     await OpenFilex.open(widget.outputFile.path);
   }
 
-  /// Pop the result screen, then fire-and-forget interstitial. Standard
-  /// google_mobile_ads pattern: the ad overlays whatever destination the
-  /// pop lands on, so the user gets back to home immediately and the ad
-  /// shows over it. Pro users + cooldown'd users get no-op silently.
   void _closeWithAd() {
     Navigator.of(context).pop();
-    unawaited(AdsService.instance.maybeShowInterstitial());
   }
 
   @override

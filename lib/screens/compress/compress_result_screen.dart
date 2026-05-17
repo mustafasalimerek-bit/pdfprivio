@@ -1,4 +1,3 @@
-import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -7,7 +6,6 @@ import 'package:share_plus/share_plus.dart';
 
 import '../../core/theme/colors.dart';
 import '../../core/utils/format_bytes.dart';
-import '../../data/services/ads_service.dart';
 import '../../data/services/haptics_service.dart';
 import '../../data/services/recent_files_service.dart';
 import '../../data/services/usage_limits_service.dart';
@@ -76,7 +74,6 @@ class _CompressResultScreenState extends ConsumerState<CompressResultScreen> {
           tooltip: 'Close',
           onPressed: () {
             Navigator.of(context).pop();
-            unawaited(AdsService.instance.maybeShowInterstitial());
           },
         ),
         title: const Text('Done'),
@@ -152,9 +149,8 @@ class _CompressResultScreenState extends ConsumerState<CompressResultScreen> {
               const SizedBox(height: 10),
               TextButton(
                 onPressed: () {
-            Navigator.of(context).pop();
-            unawaited(AdsService.instance.maybeShowInterstitial());
-          },
+                  Navigator.of(context).pop();
+                },
                 child: const Text('Done'),
               ),
             ],

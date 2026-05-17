@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 
 import 'core/theme/colors.dart';
 import 'core/theme/theme.dart';
-import 'data/services/consent_service.dart';
 import 'data/services/onboarding_service.dart';
 import 'screens/image_to_pdf/image_to_pdf_screen.dart';
 import 'screens/merge/merge_screen.dart';
@@ -44,11 +43,10 @@ class PdfPrivioApp extends StatelessWidget {
 
 /// Sequences the cold-boot UI:
 ///   1) first-launch onboarding (3-page welcome) if not yet seen
-///   2) ConsentService.gather() — UMP + ATT prompts
-///   3) HomeScreen
+///   2) HomeScreen
 ///
-/// Each stage gates the next, so the user always sees a coherent flow
-/// rather than a stack of prompts piled on top of an interactive UI.
+/// No consent / tracking step — PDFPrivio ships without third-party ads
+/// or analytics SDKs, so there's nothing to ask permission for.
 class _BootGate extends StatefulWidget {
   const _BootGate();
 
@@ -56,7 +54,7 @@ class _BootGate extends StatefulWidget {
   State<_BootGate> createState() => _BootGateState();
 }
 
-enum _BootStage { checking, onboarding, gatheringConsent, ready }
+enum _BootStage { checking, onboarding, ready }
 
 class _BootGateState extends State<_BootGate> {
   _BootStage _stage = _BootStage.checking;
@@ -70,17 +68,10 @@ class _BootGateState extends State<_BootGate> {
   Future<void> _start() async {
     final seen = await OnboardingService.instance.hasSeenWelcome();
     if (!mounted) return;
-    if (!seen) {
-      setState(() => _stage = _BootStage.onboarding);
-      return;
-    }
-    await _afterOnboarding();
+    setState(() => _stage = seen ? _BootStage.ready : _BootStage.onboarding);
   }
 
-  Future<void> _afterOnboarding() async {
-    if (!mounted) return;
-    setState(() => _stage = _BootStage.gatheringConsent);
-    await ConsentService.instance.gather();
+  void _afterOnboarding() {
     if (!mounted) return;
     setState(() => _stage = _BootStage.ready);
   }
@@ -89,7 +80,6 @@ class _BootGateState extends State<_BootGate> {
   Widget build(BuildContext context) {
     switch (_stage) {
       case _BootStage.checking:
-      case _BootStage.gatheringConsent:
         return const _BootSplash();
       case _BootStage.onboarding:
         return OnboardingScreen(onDone: _afterOnboarding);
