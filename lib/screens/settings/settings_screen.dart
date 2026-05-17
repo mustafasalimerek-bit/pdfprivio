@@ -7,6 +7,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../core/theme/colors.dart';
 import '../../core/utils/responsive.dart';
 import '../../data/services/consent_service.dart';
+import '../../data/services/display_name_service.dart';
 import '../../data/services/haptics_service.dart';
 import '../../data/services/promo_code_service.dart';
 import '../../data/services/purchase_service.dart';
@@ -26,6 +27,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   PackageInfo? _info;
   bool _promoUsed = false;
   bool _widgetShowsNames = true;
+  String? _displayName;
 
   @override
   void initState() {
@@ -33,6 +35,69 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     _loadInfo();
     _loadPromoState();
     _loadWidgetPref();
+    _loadDisplayName();
+  }
+
+  Future<void> _loadDisplayName() async {
+    final name = await DisplayNameService.instance.get();
+    if (mounted) setState(() => _displayName = name);
+  }
+
+  Future<void> _editDisplayName() async {
+    HapticsService.instance.tap();
+    final controller = TextEditingController(text: _displayName ?? '');
+    final result = await showDialog<String?>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Display name'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Used only to personalise the home-screen greeting. '
+              'Stays on this device, never uploaded, never logged.',
+              style: TextStyle(fontSize: 12),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: controller,
+              autofocus: true,
+              maxLength: 24,
+              decoration: const InputDecoration(
+                hintText: 'e.g. Mustafa',
+                border: OutlineInputBorder(),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(null),
+            child: const Text('Cancel'),
+          ),
+          if (_displayName != null && _displayName!.isNotEmpty)
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(''),
+              child: const Text(
+                'Clear',
+                style: TextStyle(color: AppColors.error),
+              ),
+            ),
+          FilledButton(
+            onPressed: () => Navigator.of(ctx).pop(controller.text),
+            child: const Text('Save'),
+          ),
+        ],
+      ),
+    );
+    if (result == null) return; // cancelled
+    final trimmed = result.trim();
+    await DisplayNameService.instance
+        .set(trimmed.isEmpty ? null : trimmed);
+    if (mounted) {
+      setState(() => _displayName = trimmed.isEmpty ? null : trimmed);
+    }
   }
 
   Future<void> _loadInfo() async {
@@ -192,6 +257,17 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   if (mounted) setState(() {});
                 },
               ),
+            const SizedBox(height: 18),
+            _SectionHeader(title: 'Personalization'),
+            _SettingsTile(
+              icon: Icons.badge_outlined,
+              title: _displayName == null || _displayName!.isEmpty
+                  ? 'Display name · not set'
+                  : 'Display name · $_displayName',
+              subtitle: 'Greets you on the home screen. Stays on this '
+                  'device, never uploaded.',
+              onTap: _editDisplayName,
+            ),
             const SizedBox(height: 18),
             _SectionHeader(title: 'Privacy'),
             _SettingsTile(

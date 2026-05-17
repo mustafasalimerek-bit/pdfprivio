@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../core/theme/colors.dart';
 import '../core/utils/responsive.dart';
+import '../data/services/display_name_service.dart';
 import '../data/services/haptics_service.dart';
 import '../data/services/purchase_service.dart';
 import '../data/services/usage_limits_service.dart';
@@ -685,15 +686,54 @@ class _TileShell extends StatelessWidget {
 /// Time-of-day greeting + small day-of-week subtitle. Replaces the
 /// "giant PDFPrivio" title that ate the top of the screen. Brand
 /// stays on the launcher icon; this surface belongs to the user.
-class _HomeHeader extends StatelessWidget {
+///
+/// Time bands (per design spec):
+///   * 5-11  → Good morning
+///   * 12-17 → Good afternoon
+///   * 18-21 → Good evening
+///   * 22-4  → Burning the midnight oil
+///
+/// If the user has set a display name (Settings → Personalization),
+/// the morning/afternoon/evening greetings append ", \<Name\>". The
+/// midnight-oil line is an idiom and stays unpersonalised — adding
+/// a name to it reads awkward.
+class _HomeHeader extends StatefulWidget {
   const _HomeHeader();
 
-  String _greeting(int hour) {
-    if (hour < 5) return 'Late night, ready when you are';
-    if (hour < 12) return 'Good morning';
-    if (hour < 18) return 'Good afternoon';
-    if (hour < 23) return 'Good evening';
-    return 'Late night, ready when you are';
+  @override
+  State<_HomeHeader> createState() => _HomeHeaderState();
+}
+
+class _HomeHeaderState extends State<_HomeHeader> {
+  String? _name;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadName();
+    DisplayNameService.instance.changes.listen((_) => _loadName());
+  }
+
+  Future<void> _loadName() async {
+    final name = await DisplayNameService.instance.get();
+    if (!mounted) return;
+    setState(() => _name = name);
+  }
+
+  String _greeting(int hour, String? name) {
+    String base;
+    if (hour >= 5 && hour < 12) {
+      base = 'Good morning';
+    } else if (hour >= 12 && hour < 18) {
+      base = 'Good afternoon';
+    } else if (hour >= 18 && hour < 22) {
+      base = 'Good evening';
+    } else {
+      // Idiomatic — doesn't take a comma-name appendage.
+      return 'Burning the midnight oil';
+    }
+    if (name == null || name.isEmpty) return base;
+    return '$base, $name';
   }
 
   @override
@@ -721,7 +761,7 @@ class _HomeHeader extends StatelessWidget {
         ),
         const SizedBox(height: 4),
         Text(
-          _greeting(hour),
+          _greeting(hour, _name),
           style: const TextStyle(
             fontSize: 26,
             fontWeight: FontWeight.w800,
