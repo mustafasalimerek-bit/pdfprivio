@@ -2433,39 +2433,93 @@ class DocumentScannerBridge: NSObject, FlutterPlugin,
     let mode = pendingVisionKitMode ?? .doc
     pendingVisionKitMode = nil
 
-    // VisionKit gives us plain UIImages without quad / blur metadata,
-    // so wrap them as ScannedPages with default-enhancement set to the
-    // mode's default and route through the mode-aware assembler so
-    // receipt / card layouts come out the same as the custom path.
-    let scannedPages: [ScannedPage] = images.map { img in
-      ScannedPage(
-        originalImage: img,
-        correctedImage: img,
-        enhancedImage: img,
-        quad: [],
-        enhancementMode: mode.defaultEnhancement,
-        blurScore: 1.0
-      )
-    }
-
     controller.dismiss(animated: true)
     presentedHost = nil
 
-    if let data = PDFAssembler.assemble(pages: scannedPages, mode: mode) {
-      do {
-        let path = try PDFAssembler.writeToTemp(data: data)
-        pendingResult?(["pdfPath": path])
-      } catch {
-        pendingResult?(FlutterError(code: "pdf_failed",
-                                    message: error.localizedDescription,
-                                    details: nil))
+    // Mode-aware post-processing runs on the images VisionKit already
+    // cropped + deskewed. Receipt extracts metadata so the Expense
+    // Ledger prompt has values to pre-fill; ID detects sensitive
+    // regions (SSN, card, DOB, license) and bakes black rectangles
+    // into the images before they hit the PDF assembler.
+    Task { [weak self] in
+      guard let self = self else { return }
+
+      let processedImages: [UIImage]
+      let metadata: ScanMetadata?
+
+      switch mode {
+      case .doc, .card:
+        processedImages = images
+        metadata = nil
+
+      case .receipt:
+        if let first = images.first {
+          let text = await OCRProcessor.recognizeText(in: first)
+          metadata = ReceiptParser.parse(text)
+        } else {
+          metadata = nil
+        }
+        processedImages = images
+
+      case .id:
+        var redacted: [UIImage] = []
+        var redactedFields: Set<String> = []
+        for image in images {
+          let regions = await OCRProcessor.detectTextRegions(in: image)
+          let sensitive = IDRedactor.findSensitiveRegions(in: regions)
+          if sensitive.isEmpty {
+            redacted.append(image)
+          } else {
+            redacted.append(IDRedactor.redact(image: image, regions: sensitive))
+            sensitive.forEach { redactedFields.insert($0.field.rawValue) }
+          }
+        }
+        processedImages = redacted
+        if redactedFields.isEmpty {
+          metadata = nil
+        } else {
+          var m = ScanMetadata()
+          m.redactedFields = Array(redactedFields).sorted()
+          metadata = m
+        }
       }
-    } else {
-      pendingResult?(FlutterError(code: "pdf_failed",
-                                  message: "Could not assemble PDF.",
-                                  details: nil))
+
+      let scannedPages: [ScannedPage] = processedImages.map { img in
+        ScannedPage(
+          originalImage: img,
+          correctedImage: img,
+          enhancedImage: img,
+          quad: [],
+          enhancementMode: mode.defaultEnhancement,
+          blurScore: 1.0
+        )
+      }
+
+      await MainActor.run {
+        guard let data = PDFAssembler.assemble(
+          pages: scannedPages, mode: mode
+        ) else {
+          self.pendingResult?(FlutterError(
+            code: "pdf_failed",
+            message: "Could not assemble PDF.",
+            details: nil
+          ))
+          self.pendingResult = nil
+          return
+        }
+        do {
+          let path = try PDFAssembler.writeToTemp(data: data)
+          self.finishSuccess(pdfPath: path, metadata: metadata)
+        } catch {
+          self.pendingResult?(FlutterError(
+            code: "pdf_failed",
+            message: error.localizedDescription,
+            details: nil
+          ))
+          self.pendingResult = nil
+        }
+      }
     }
-    pendingResult = nil
   }
 
   func documentCameraViewControllerDidCancel(

@@ -83,12 +83,14 @@ class ScanOutcome {
 /// Bridges to the native PDFPrivio scanner via MethodChannel.
 ///
 /// Two scanner backends are available:
-///   * **Custom** (default) — full AVCaptureSession + Vision rectangle
-///     detection + stability tracking + auto-capture + 5 enhancement
-///     modes + review screen. iPhone-class UX.
-///   * **Apple VisionKit** (debug toggle) — kept as a fallback inside
-///     `Settings → DEBUG → Use Apple scanner` so we can isolate bugs
-///     between Apple's framework and ours.
+///   * **Apple VisionKit** (default) — `VNDocumentCameraViewController`,
+///     the same widget Apple Notes uses. ML-backed edge detection,
+///     perspective correction, multi-page, enhancement — all native.
+///     Mode-specific post-processing (Receipt OCR + parse, ID redaction)
+///     runs on the captured UIImages.
+///   * **Custom AVFoundation** (debug toggle) — our own capture pipeline,
+///     kept behind `Settings → DEBUG → Use custom scanner` for A/B
+///     comparison while we phase it out.
 class DocumentScannerService {
   DocumentScannerService._();
   static final DocumentScannerService instance = DocumentScannerService._();
@@ -97,8 +99,15 @@ class DocumentScannerService {
       MethodChannel('com.erekstudio.pdfprivio/scanner');
 
   /// Pref key for the hidden debug toggle. Treated as `false` when
-  /// missing — production users never see the toggle.
-  static const String prefsUseAppleScanner =
+  /// missing — production users get the VisionKit scanner. When set to
+  /// true the legacy custom pipeline opens instead (dev-only).
+  static const String prefsUseCustomScanner =
+      'pdfprivio.debug.use_custom_scanner';
+
+  /// Legacy key name kept for migration — older builds wrote
+  /// `use_apple_scanner` with the opposite polarity. Read once at
+  /// boot and converted into [prefsUseCustomScanner].
+  static const String prefsLegacyUseAppleScanner =
       'pdfprivio.debug.use_apple_scanner';
 
   /// True on iPhone/iPad with a rear camera. Always false on the
@@ -134,7 +143,9 @@ class DocumentScannerService {
     }
 
     final prefs = await SharedPreferences.getInstance();
-    final useAppleVisionKit = prefs.getBool(prefsUseAppleScanner) ?? false;
+    // Default: Apple VisionKit. Debug toggle inverts to custom pipeline.
+    final useCustom = prefs.getBool(prefsUseCustomScanner) ?? false;
+    final useAppleVisionKit = !useCustom;
 
     // Receipt and ID always need OCR for their core feature; other
     // modes ride on the caller's enableOCR flag.

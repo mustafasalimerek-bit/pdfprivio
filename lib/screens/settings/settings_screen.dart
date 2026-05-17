@@ -39,7 +39,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   bool _widgetShowsNames = true;
   String? _displayName;
   int _auditCount = 0;
-  bool _useAppleScanner = false;
+  bool _useCustomScanner = false;
   bool _hasPro = false;
   StreamSubscription<void>? _auditChangesSub;
 
@@ -77,21 +77,21 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     final prefs = await SharedPreferences.getInstance();
     if (!mounted) return;
     setState(() {
-      _useAppleScanner =
-          prefs.getBool(DocumentScannerService.prefsUseAppleScanner) ?? false;
+      _useCustomScanner =
+          prefs.getBool(DocumentScannerService.prefsUseCustomScanner) ?? false;
     });
   }
 
-  Future<void> _toggleAppleScanner() async {
+  Future<void> _toggleCustomScanner() async {
     HapticsService.instance.tap();
-    final next = !_useAppleScanner;
+    final next = !_useCustomScanner;
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool(
-      DocumentScannerService.prefsUseAppleScanner,
+      DocumentScannerService.prefsUseCustomScanner,
       next,
     );
     if (!mounted) return;
-    setState(() => _useAppleScanner = next);
+    setState(() => _useCustomScanner = next);
   }
 
   Future<void> _loadAuditCount() async {
@@ -517,13 +517,13 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       ));
       rows.add(_RowSpec(
         icon: Icons.document_scanner_outlined,
-        title: 'DEBUG: Use Apple scanner',
-        subtitle: _useAppleScanner
-            ? 'VisionKit — Apple\'s built-in flow'
-            : 'Custom PDFPrivio scanner (default)',
+        title: 'DEBUG: Use custom scanner',
+        subtitle: _useCustomScanner
+            ? 'Custom AVFoundation pipeline (legacy)'
+            : 'Apple VisionKit — production default',
         trailing: Switch.adaptive(
-          value: _useAppleScanner,
-          onChanged: (_) => _toggleAppleScanner(),
+          value: _useCustomScanner,
+          onChanged: (_) => _toggleCustomScanner(),
           activeThumbColor: AppColors.primary,
         ),
         // No row-level onTap: the Switch's hit area covers the whole row
