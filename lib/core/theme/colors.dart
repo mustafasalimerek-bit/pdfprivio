@@ -20,6 +20,12 @@ class AppColors {
   static const Color surface = Colors.white;
   static const Color border = Color(0xFFE7E0D2);
 
+  // One-shade darker cream used as the home-screen header card
+  // background. Reads as a "drop-down sheet" against the regular
+  // cream body, gives the greeting + offline pill its own canvas
+  // without needing harsh borders.
+  static const Color headerCard = Color(0xFFECE6DA);
+
   // Soft teal-tinted neutral used for the icon containers on grid
   // tiles — pulls the eye to the icon without the harsh contrast of
   // pure white-on-cream.

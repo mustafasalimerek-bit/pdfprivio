@@ -16,11 +16,23 @@ class AppTheme {
         error: AppColors.error,
       ),
       scaffoldBackgroundColor: AppColors.background,
+      // AppBar background matches scaffold cream so tool screens
+      // don't get a harsh white strip above the body. Title kept
+      // medium-weight (700, not 800) and one notch smaller to read
+      // less aggressive than the iOS large-title default.
       appBarTheme: const AppBarTheme(
-        backgroundColor: AppColors.surface,
+        backgroundColor: AppColors.background,
         foregroundColor: AppColors.textPrimary,
+        surfaceTintColor: AppColors.background,
+        scrolledUnderElevation: 0,
         elevation: 0,
         centerTitle: false,
+        titleTextStyle: TextStyle(
+          fontSize: 18,
+          fontWeight: FontWeight.w700,
+          color: AppColors.textPrimary,
+          letterSpacing: -0.2,
+        ),
       ),
       cardTheme: CardThemeData(
         color: AppColors.surface,
