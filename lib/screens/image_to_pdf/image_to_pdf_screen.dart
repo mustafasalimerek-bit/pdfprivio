@@ -10,8 +10,8 @@ import '../../core/utils/result.dart';
 import '../../data/services/haptics_service.dart';
 import '../../data/services/image_to_pdf_service.dart';
 import '../../data/services/share_intent_service.dart';
-import '../../widgets/privacy_badge.dart';
 import '../../widgets/progress_overlay.dart';
+import '../../widgets/tool_chrome.dart';
 import '../merge/merge_result_screen.dart';
 
 class ImageToPdfScreen extends ConsumerStatefulWidget {
@@ -124,6 +124,7 @@ class _ImageToPdfScreenState extends ConsumerState<ImageToPdfScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Image to PDF'),
+        centerTitle: true,
         actions: [
           if (_images.isNotEmpty)
             TextButton(
@@ -138,19 +139,12 @@ class _ImageToPdfScreenState extends ConsumerState<ImageToPdfScreen> {
       body: Stack(
         children: [
           SafeArea(
-            child: Column(
-              children: [
-                const Padding(
-                  padding: EdgeInsets.fromLTRB(16, 8, 16, 8),
-                  child: Align(
-                    alignment: Alignment.centerLeft,
-                    child: PrivacyBadge(),
-                  ),
-                ),
-                Expanded(
-                  child: _images.isEmpty
-                      ? _EmptyState(onPick: _pickImages)
-                      : _Picker(
+            child: _images.isEmpty
+                ? _EmptyState(onPick: _pickImages)
+                : Column(
+                    children: [
+                      Expanded(
+                        child: _Picker(
                           images: _images,
                           paperSize: _paperSize,
                           onPaperSize: (s) {
@@ -161,15 +155,15 @@ class _ImageToPdfScreenState extends ConsumerState<ImageToPdfScreen> {
                           onReorder: _reorder,
                           onRemove: _remove,
                         ),
-                ),
-                if (_images.isNotEmpty && _progress == null)
-                  _Button(
-                    label: 'Build PDF from ${_images.length} '
-                        'image${_images.length == 1 ? '' : 's'}',
-                    onTap: _convert,
+                      ),
+                      if (_progress == null)
+                        _Button(
+                          label: 'Build PDF from ${_images.length} '
+                              'image${_images.length == 1 ? '' : 's'}',
+                          onTap: _convert,
+                        ),
+                    ],
                   ),
-              ],
-            ),
           ),
           if (_progress != null)
             ProgressOverlay(
@@ -190,53 +184,20 @@ class _EmptyState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(32),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 96,
-              height: 96,
-              decoration: BoxDecoration(
-                color: AppColors.primary.withValues(alpha: 0.08),
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(
-                Icons.image_outlined,
-                size: 44,
-                color: AppColors.primary,
-              ),
-            ),
-            const SizedBox(height: 20),
-            const Text(
-              'Turn images into a PDF',
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
-            ),
-            const SizedBox(height: 8),
-            const Text(
-              'Pick photos, receipts, or screenshots. '
-              'Drag to reorder before exporting.',
-              textAlign: TextAlign.center,
-              style: TextStyle(color: AppColors.textSecondary),
-            ),
-            const SizedBox(height: 24),
-            FilledButton.icon(
-              onPressed: onPick,
-              icon: const Icon(Icons.add_photo_alternate_outlined),
-              label: const Text('Pick images'),
-              style: FilledButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 24,
-                  vertical: 14,
-                ),
-              ),
-            ),
-          ],
+    return ToolEmptyState(
+      heroIcon: Icons.image_outlined,
+      title: 'Images to PDF',
+      subtitle: 'Photos, receipts, screenshots — one PDF',
+      primaryLabel: 'Pick images',
+      primaryIcon: Icons.add_photo_alternate_outlined,
+      onPrimary: onPick,
+      altSources: [
+        ToolAltSource(
+          icon: Icons.camera_alt_outlined,
+          label: 'Camera',
+          onTap: onPick,
         ),
-      ),
+      ],
     );
   }
 }
@@ -404,25 +365,10 @@ class _Button extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-      child: SizedBox(
-        width: double.infinity,
-        child: FilledButton(
-          onPressed: onTap,
-          style: FilledButton.styleFrom(
-            backgroundColor: AppColors.primary,
-            padding: const EdgeInsets.symmetric(vertical: 16),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(14),
-            ),
-          ),
-          child: Text(
-            label,
-            style: const TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-        ),
+      child: ToolPrimaryButton(
+        label: label,
+        icon: Icons.picture_as_pdf,
+        onTap: onTap,
       ),
     );
   }

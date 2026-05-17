@@ -13,8 +13,8 @@ import '../../data/services/haptics_service.dart';
 import '../../data/services/pdf_delete_pages_service.dart';
 import '../../data/services/pdf_metadata_service.dart';
 import '../../data/services/pdf_thumbnail_service.dart';
-import '../../widgets/privacy_badge.dart';
 import '../../widgets/progress_overlay.dart';
+import '../../widgets/tool_chrome.dart';
 import '../merge/merge_result_screen.dart';
 
 /// Single-PDF page grid with multi-select. The selected pages are the ones
@@ -130,6 +130,7 @@ class _DeletePagesScreenState extends ConsumerState<DeletePagesScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Delete pages'),
+        centerTitle: true,
         actions: [
           if (doc != null)
             TextButton(
@@ -147,19 +148,12 @@ class _DeletePagesScreenState extends ConsumerState<DeletePagesScreen> {
       body: Stack(
         children: [
           SafeArea(
-            child: Column(
-              children: [
-                const Padding(
-                  padding: EdgeInsets.fromLTRB(16, 8, 16, 8),
-                  child: Align(
-                    alignment: Alignment.centerLeft,
-                    child: PrivacyBadge(),
-                  ),
-                ),
-                Expanded(
-                  child: doc == null
-                      ? _EmptyState(onPick: _pick)
-                      : _Picker(
+            child: doc == null
+                ? _EmptyState(onPick: _pick)
+                : Column(
+                    children: [
+                      Expanded(
+                        child: _Picker(
                           doc: doc,
                           selected: _selected,
                           onToggle: (index) {
@@ -187,37 +181,42 @@ class _DeletePagesScreenState extends ConsumerState<DeletePagesScreen> {
                             });
                           },
                         ),
-                ),
-                if (doc != null && _progress == null && _selected.isNotEmpty)
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-                    child: SizedBox(
-                      width: double.infinity,
-                      child: FilledButton(
-                        onPressed:
-                            _selected.length >= doc.pageCount ? null : _delete,
-                        style: FilledButton.styleFrom(
-                          backgroundColor: AppColors.error,
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(14),
-                          ),
-                        ),
-                        child: Text(
-                          _selected.length >= doc.pageCount
-                              ? "Can't delete every page"
-                              : 'Delete ${_selected.length} '
-                                  'page${_selected.length == 1 ? '' : 's'}',
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
                       ),
-                    ),
+                      if (_progress == null && _selected.isNotEmpty)
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+                          child: SizedBox(
+                            width: double.infinity,
+                            child: FilledButton.icon(
+                              onPressed: _selected.length >= doc.pageCount
+                                  ? null
+                                  : _delete,
+                              icon: const Icon(Icons.delete_sweep, size: 20),
+                              label: Text(
+                                _selected.length >= doc.pageCount
+                                    ? "Can't delete every page"
+                                    : 'Delete ${_selected.length} '
+                                        'page${_selected.length == 1 ? '' : 's'}',
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w800,
+                                ),
+                              ),
+                              style: FilledButton.styleFrom(
+                                backgroundColor: AppColors.error,
+                                disabledBackgroundColor:
+                                    AppColors.error.withValues(alpha: 0.35),
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 16),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(99),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                    ],
                   ),
-              ],
-            ),
           ),
           if (_progress != null)
             ProgressOverlay(
@@ -238,53 +237,15 @@ class _EmptyState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(32),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 96,
-              height: 96,
-              decoration: BoxDecoration(
-                color: AppColors.error.withValues(alpha: 0.08),
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(
-                Icons.delete_sweep_outlined,
-                size: 44,
-                color: AppColors.error,
-              ),
-            ),
-            const SizedBox(height: 20),
-            const Text(
-              'Remove specific pages',
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
-            ),
-            const SizedBox(height: 8),
-            const Text(
-              'Drop blank pages, ads, or anything else. '
-              'Your original PDF is never modified.',
-              textAlign: TextAlign.center,
-              style: TextStyle(color: AppColors.textSecondary),
-            ),
-            const SizedBox(height: 24),
-            FilledButton.icon(
-              onPressed: onPick,
-              icon: const Icon(Icons.add),
-              label: const Text('Pick a PDF'),
-              style: FilledButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 24,
-                  vertical: 14,
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
+    return ToolEmptyState(
+      heroIcon: Icons.delete_sweep_outlined,
+      title: 'Delete pages',
+      subtitle: 'Pick the pages to drop, keep the rest',
+      primaryLabel: 'Pick a PDF',
+      onPrimary: onPick,
+      altSources: [
+        ToolAltSource(icon: Icons.history, label: 'Recent', onTap: onPick),
+      ],
     );
   }
 }

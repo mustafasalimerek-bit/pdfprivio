@@ -14,8 +14,8 @@ import '../../data/services/pdf_compare_service.dart';
 import '../../data/services/pdf_metadata_service.dart';
 import '../../data/services/usage_limits_service.dart';
 import '../../widgets/disclaimer_banner.dart';
-import '../../widgets/privacy_badge.dart';
 import '../../widgets/progress_overlay.dart';
+import '../../widgets/tool_chrome.dart';
 import 'compare_result_screen.dart';
 
 class CompareScreen extends ConsumerStatefulWidget {
@@ -144,9 +144,11 @@ class _CompareScreenState extends ConsumerState<CompareScreen> {
   @override
   Widget build(BuildContext context) {
     final canRun = _left != null && _right != null && _progress == null;
+    final bothEmpty = _left == null && _right == null;
     return Scaffold(
       appBar: AppBar(
         title: const Text('Compare PDFs'),
+        centerTitle: true,
         actions: [
           if (_left != null || _right != null)
             TextButton(
@@ -164,92 +166,77 @@ class _CompareScreenState extends ConsumerState<CompareScreen> {
       body: Stack(
         children: [
           SafeArea(
-            child: Column(
-              children: [
-                const Padding(
-                  padding: EdgeInsets.fromLTRB(16, 8, 16, 8),
-                  child: Align(
-                    alignment: Alignment.centerLeft,
-                    child: PrivacyBadge(),
-                  ),
-                ),
-                Expanded(
-                  child: ListView(
-                    padding: const EdgeInsets.fromLTRB(16, 4, 16, 4),
+            child: bothEmpty
+                ? ToolEmptyState(
+                    heroIcon: Icons.compare_arrows,
+                    title: 'Compare two PDFs',
+                    subtitle: 'Redline added & removed text',
+                    primaryLabel: 'Pick first PDF',
+                    onPrimary: () => _pick(true),
+                  )
+                : Column(
                     children: [
-                      const DisclaimerBanner(
-                        message: 'Compares text content only. Image '
-                            'differences, visual layout changes, font '
-                            "swaps, and annotations aren't detected. "
-                            'Use as a starting point — verify visually '
-                            'for decisions that depend on appearance.',
-                      ),
-                      const SizedBox(height: 12),
-                      _Slot(
-                        label: 'Left (original)',
-                        doc: _left,
-                        onPick: () => _pick(true),
-                        onClear: () =>
-                            setState(() => _left = null),
-                      ),
-                      const SizedBox(height: 10),
-                      Center(
-                        child: TextButton.icon(
-                          onPressed: _left != null && _right != null
-                              ? _swap
-                              : null,
-                          icon: const Icon(Icons.swap_vert, size: 16),
-                          label: const Text('Swap'),
+                      Expanded(
+                        child: ListView(
+                          padding: const EdgeInsets.fromLTRB(16, 4, 16, 4),
+                          children: [
+                            const DisclaimerBanner(
+                              message: 'Compares text content only. Image '
+                                  'differences, visual layout changes, font '
+                                  "swaps, and annotations aren't detected. "
+                                  'Use as a starting point — verify visually '
+                                  'for decisions that depend on appearance.',
+                            ),
+                            const SizedBox(height: 12),
+                            _Slot(
+                              label: 'Left (original)',
+                              doc: _left,
+                              onPick: () => _pick(true),
+                              onClear: () =>
+                                  setState(() => _left = null),
+                            ),
+                            const SizedBox(height: 10),
+                            Center(
+                              child: TextButton.icon(
+                                onPressed: _left != null && _right != null
+                                    ? _swap
+                                    : null,
+                                icon: const Icon(Icons.swap_vert, size: 16),
+                                label: const Text('Swap'),
+                              ),
+                            ),
+                            const SizedBox(height: 10),
+                            _Slot(
+                              label: 'Right (compared to)',
+                              doc: _right,
+                              onPick: () => _pick(false),
+                              onClear: () =>
+                                  setState(() => _right = null),
+                            ),
+                            if (_left != null && _right != null) ...[
+                              const SizedBox(height: 16),
+                              _Hint(
+                                left: _left!,
+                                right: _right!,
+                              ),
+                            ],
+                          ],
                         ),
                       ),
-                      const SizedBox(height: 10),
-                      _Slot(
-                        label: 'Right (compared to)',
-                        doc: _right,
-                        onPick: () => _pick(false),
-                        onClear: () =>
-                            setState(() => _right = null),
-                      ),
-                      if (_left != null && _right != null) ...[
-                        const SizedBox(height: 16),
-                        _Hint(
-                          left: _left!,
-                          right: _right!,
+                      if (_progress == null)
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+                          child: ToolPrimaryButton(
+                            label: canRun
+                                ? 'Compare text'
+                                : 'Pick the other PDF',
+                            icon: Icons.compare_arrows,
+                            enabled: canRun,
+                            onTap: _run,
+                          ),
                         ),
-                      ],
                     ],
                   ),
-                ),
-                if (_progress == null)
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-                    child: SizedBox(
-                      width: double.infinity,
-                      child: FilledButton(
-                        onPressed: canRun ? _run : null,
-                        style: FilledButton.styleFrom(
-                          backgroundColor: AppColors.primary,
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(14),
-                          ),
-                        ),
-                        child: Text(
-                          canRun
-                              ? 'Compare text'
-                              : _left == null && _right == null
-                                  ? 'Pick two PDFs to start'
-                                  : 'Pick the other PDF',
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-              ],
-            ),
           ),
           if (_progress != null)
             ProgressOverlay(

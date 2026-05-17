@@ -13,8 +13,8 @@ import '../../data/services/haptics_service.dart';
 import '../../data/services/pdf_metadata_service.dart';
 import '../../data/services/pdf_split_service.dart';
 import '../../providers/split_providers.dart';
-import '../../widgets/privacy_badge.dart';
 import '../../widgets/progress_overlay.dart';
+import '../../widgets/tool_chrome.dart';
 import 'split_result_screen.dart';
 
 class SplitScreen extends ConsumerStatefulWidget {
@@ -152,6 +152,7 @@ class _SplitScreenState extends ConsumerState<SplitScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Split PDF'),
+        centerTitle: true,
         actions: [
           if (doc != null)
             TextButton(
@@ -166,24 +167,15 @@ class _SplitScreenState extends ConsumerState<SplitScreen> {
       body: Stack(
         children: [
           SafeArea(
-            child: Column(
-              children: [
-                const Padding(
-                  padding: EdgeInsets.fromLTRB(16, 8, 16, 8),
-                  child: Align(
-                    alignment: Alignment.centerLeft,
-                    child: PrivacyBadge(),
+            child: doc == null
+                ? _EmptyState(onPick: _pickFile)
+                : Column(
+                    children: [
+                      Expanded(child: _Picker(doc: doc, mode: mode)),
+                      if (progress == null)
+                        _SplitButton(mode: mode, onTap: _split),
+                    ],
                   ),
-                ),
-                Expanded(
-                  child: doc == null
-                      ? _EmptyState(onPick: _pickFile)
-                      : _Picker(doc: doc, mode: mode),
-                ),
-                if (doc != null && progress == null)
-                  _SplitButton(mode: mode, onTap: _split),
-              ],
-            ),
           ),
           if (progress != null)
             ProgressOverlay(
@@ -204,53 +196,15 @@ class _EmptyState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(32),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 96,
-              height: 96,
-              decoration: BoxDecoration(
-                color: AppColors.primary.withValues(alpha: 0.08),
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(
-                Icons.content_cut_outlined,
-                size: 44,
-                color: AppColors.primary,
-              ),
-            ),
-            const SizedBox(height: 20),
-            const Text(
-              'Split a PDF',
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
-            ),
-            const SizedBox(height: 8),
-            const Text(
-              'Extract a page range, split every N pages, '
-              'or divide into equal parts.',
-              textAlign: TextAlign.center,
-              style: TextStyle(color: AppColors.textSecondary),
-            ),
-            const SizedBox(height: 24),
-            FilledButton.icon(
-              onPressed: onPick,
-              icon: const Icon(Icons.add),
-              label: const Text('Pick a PDF'),
-              style: FilledButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 24,
-                  vertical: 14,
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
+    return ToolEmptyState(
+      heroIcon: Icons.content_cut,
+      title: 'Split a PDF',
+      subtitle: 'Extract a page range, every N, or N parts',
+      primaryLabel: 'Pick a PDF',
+      onPrimary: onPick,
+      altSources: [
+        ToolAltSource(icon: Icons.history, label: 'Recent', onTap: onPick),
+      ],
     );
   }
 }
@@ -711,25 +665,10 @@ class _SplitButton extends ConsumerWidget {
     }
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-      child: SizedBox(
-        width: double.infinity,
-        child: FilledButton(
-          onPressed: onTap,
-          style: FilledButton.styleFrom(
-            backgroundColor: AppColors.primary,
-            padding: const EdgeInsets.symmetric(vertical: 16),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(14),
-            ),
-          ),
-          child: Text(
-            label,
-            style: const TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-        ),
+      child: ToolPrimaryButton(
+        label: label,
+        icon: Icons.content_cut,
+        onTap: onTap,
       ),
     );
   }

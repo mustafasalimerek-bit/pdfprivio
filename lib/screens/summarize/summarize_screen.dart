@@ -12,7 +12,7 @@ import '../../data/services/audit_service.dart';
 import '../../data/services/haptics_service.dart';
 import '../../data/services/share_intent_service.dart';
 import '../../data/services/summarization_service.dart';
-import '../../widgets/privacy_badge.dart';
+import '../../widgets/tool_chrome.dart';
 
 /// Summarise a PDF using Apple Intelligence on-device.
 ///
@@ -184,6 +184,7 @@ class _SummarizeScreenState extends ConsumerState<SummarizeScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Summarize PDF'),
+        centerTitle: true,
         actions: [
           if (_file != null)
             IconButton(
@@ -197,9 +198,6 @@ class _SummarizeScreenState extends ConsumerState<SummarizeScreen> {
         child: MaxWidthBody(
           child: Column(
             children: [
-              const SizedBox(height: 8),
-              const Center(child: PrivacyBadge()),
-              const SizedBox(height: 8),
               if (!_availability.isReady && !_checkingAvailability)
                 _AvailabilityBanner(availability: _availability),
               Expanded(child: _body()),
@@ -283,49 +281,15 @@ class _EmptyState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            Icons.auto_awesome,
-            size: 64,
-            color: AppColors.primary.withValues(alpha: 0.5),
-          ),
-          const SizedBox(height: 14),
-          const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 24),
-            child: Text(
-              'On-device PDF summary',
-              textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700),
-            ),
-          ),
-          const SizedBox(height: 6),
-          const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 32),
-            child: Text(
-              "Pick a PDF and Apple Intelligence will summarise it "
-              "without sending a single byte to the cloud. Works best "
-              "on contracts, court motions, audit reports — anything "
-              "with structured prose.",
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 12,
-                color: AppColors.textSecondary,
-                height: 1.45,
-              ),
-            ),
-          ),
-          const SizedBox(height: 18),
-          FilledButton.icon(
-            onPressed: onPick,
-            icon: const Icon(Icons.add),
-            label: const Text('Pick a PDF'),
-            style: FilledButton.styleFrom(backgroundColor: AppColors.primary),
-          ),
-        ],
-      ),
+    return ToolEmptyState(
+      heroIcon: Icons.auto_awesome,
+      title: 'Summarize a PDF',
+      subtitle: 'On-device Apple Intelligence',
+      primaryLabel: 'Pick a PDF',
+      onPrimary: onPick,
+      altSources: [
+        ToolAltSource(icon: Icons.history, label: 'Recent', onTap: onPick),
+      ],
     );
   }
 }

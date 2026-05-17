@@ -13,8 +13,8 @@ import '../../data/models/pdf_document.dart';
 import '../../data/services/haptics_service.dart';
 import '../../data/services/pdf_metadata_service.dart';
 import '../../data/services/pdf_page_number_service.dart';
-import '../../widgets/privacy_badge.dart';
 import '../../widgets/progress_overlay.dart';
+import '../../widgets/tool_chrome.dart';
 import '../merge/merge_result_screen.dart';
 
 class PageNumbersScreen extends ConsumerStatefulWidget {
@@ -148,6 +148,7 @@ class _PageNumbersScreenState extends ConsumerState<PageNumbersScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Page numbers'),
+        centerTitle: true,
         actions: [
           if (doc != null)
             TextButton(
@@ -162,19 +163,12 @@ class _PageNumbersScreenState extends ConsumerState<PageNumbersScreen> {
       body: Stack(
         children: [
           SafeArea(
-            child: Column(
-              children: [
-                const Padding(
-                  padding: EdgeInsets.fromLTRB(16, 8, 16, 8),
-                  child: Align(
-                    alignment: Alignment.centerLeft,
-                    child: PrivacyBadge(),
-                  ),
-                ),
-                Expanded(
-                  child: doc == null
-                      ? _EmptyState(onPick: _pick)
-                      : ListView(
+            child: doc == null
+                ? _EmptyState(onPick: _pick)
+                : Column(
+                    children: [
+                      Expanded(
+                        child: ListView(
                           padding: const EdgeInsets.fromLTRB(16, 4, 16, 4),
                           children: [
                             _DocSummary(doc: doc),
@@ -318,34 +312,20 @@ class _PageNumbersScreenState extends ConsumerState<PageNumbersScreen> {
                             ),
                           ],
                         ),
-                ),
-                if (doc != null && _progress == null)
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-                    child: SizedBox(
-                      width: double.infinity,
-                      child: FilledButton(
-                        onPressed: totalNumbered > 0 ? _stamp : null,
-                        style: FilledButton.styleFrom(
-                          backgroundColor: AppColors.primary,
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(14),
-                          ),
-                        ),
-                        child: Text(
-                          'Number $totalNumbered '
-                          'page${totalNumbered == 1 ? '' : 's'}',
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
                       ),
-                    ),
+                      if (_progress == null)
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+                          child: ToolPrimaryButton(
+                            label: 'Number $totalNumbered '
+                                'page${totalNumbered == 1 ? '' : 's'}',
+                            icon: Icons.format_list_numbered,
+                            enabled: totalNumbered > 0,
+                            onTap: _stamp,
+                          ),
+                        ),
+                    ],
                   ),
-              ],
-            ),
           ),
           if (_progress != null)
             ProgressOverlay(
@@ -366,53 +346,15 @@ class _EmptyState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(32),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 96,
-              height: 96,
-              decoration: BoxDecoration(
-                color: AppColors.primary.withValues(alpha: 0.08),
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(
-                Icons.format_list_numbered,
-                size: 44,
-                color: AppColors.primary,
-              ),
-            ),
-            const SizedBox(height: 20),
-            const Text(
-              'Add page numbers',
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
-            ),
-            const SizedBox(height: 8),
-            const Text(
-              'Stamp every page with its number — "Page 1 of 20", "1/20", '
-              "or just the digit. Skip the cover page if you'd like.",
-              textAlign: TextAlign.center,
-              style: TextStyle(color: AppColors.textSecondary),
-            ),
-            const SizedBox(height: 24),
-            FilledButton.icon(
-              onPressed: onPick,
-              icon: const Icon(Icons.add),
-              label: const Text('Pick a PDF'),
-              style: FilledButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 24,
-                  vertical: 14,
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
+    return ToolEmptyState(
+      heroIcon: Icons.format_list_numbered,
+      title: 'Add page numbers',
+      subtitle: 'Four formats, five positions',
+      primaryLabel: 'Pick a PDF',
+      onPrimary: onPick,
+      altSources: [
+        ToolAltSource(icon: Icons.history, label: 'Recent', onTap: onPick),
+      ],
     );
   }
 }

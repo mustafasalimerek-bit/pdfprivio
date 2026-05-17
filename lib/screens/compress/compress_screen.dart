@@ -13,8 +13,8 @@ import '../../data/services/haptics_service.dart';
 import '../../data/services/pdf_compression_service.dart';
 import '../../data/services/pdf_metadata_service.dart';
 import '../../providers/compress_providers.dart';
-import '../../widgets/privacy_badge.dart';
 import '../../widgets/progress_overlay.dart';
+import '../../widgets/tool_chrome.dart';
 import 'compress_result_screen.dart';
 
 class CompressScreen extends ConsumerStatefulWidget {
@@ -127,6 +127,7 @@ class _CompressScreenState extends ConsumerState<CompressScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Compress PDF'),
+        centerTitle: true,
         actions: [
           if (doc != null)
             TextButton(
@@ -141,19 +142,12 @@ class _CompressScreenState extends ConsumerState<CompressScreen> {
       body: Stack(
         children: [
           SafeArea(
-            child: Column(
-              children: [
-                const Padding(
-                  padding: EdgeInsets.fromLTRB(16, 8, 16, 8),
-                  child: Align(
-                    alignment: Alignment.centerLeft,
-                    child: PrivacyBadge(),
-                  ),
-                ),
-                Expanded(
-                  child: doc == null
-                      ? _EmptyState(onPick: _pickFile)
-                      : _Picker(
+            child: doc == null
+                ? _EmptyState(onPick: _pickFile)
+                : Column(
+                    children: [
+                      Expanded(
+                        child: _Picker(
                           doc: doc,
                           selectedLevel: level,
                           onSelect: (lvl) {
@@ -162,15 +156,15 @@ class _CompressScreenState extends ConsumerState<CompressScreen> {
                                 lvl;
                           },
                         ),
-                ),
-                if (doc != null && progress == null)
-                  _CompressButton(
-                    estimatedBytes:
-                        (doc.sizeBytes * level.heuristicRatio).round(),
-                    onTap: _compress,
+                      ),
+                      if (progress == null)
+                        _CompressButton(
+                          estimatedBytes:
+                              (doc.sizeBytes * level.heuristicRatio).round(),
+                          onTap: _compress,
+                        ),
+                    ],
                   ),
-              ],
-            ),
           ),
           if (progress != null)
             ProgressOverlay(
@@ -191,53 +185,15 @@ class _EmptyState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(32),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 96,
-              height: 96,
-              decoration: BoxDecoration(
-                color: AppColors.primary.withValues(alpha: 0.08),
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(
-                Icons.compress_outlined,
-                size: 44,
-                color: AppColors.primary,
-              ),
-            ),
-            const SizedBox(height: 20),
-            const Text(
-              'Compress a PDF',
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
-            ),
-            const SizedBox(height: 8),
-            const Text(
-              'Shrink large PDFs for email and sharing. '
-              'We pick the lightest method that preserves quality.',
-              textAlign: TextAlign.center,
-              style: TextStyle(color: AppColors.textSecondary),
-            ),
-            const SizedBox(height: 24),
-            FilledButton.icon(
-              onPressed: onPick,
-              icon: const Icon(Icons.add),
-              label: const Text('Pick a PDF'),
-              style: FilledButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 24,
-                  vertical: 14,
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
+    return ToolEmptyState(
+      heroIcon: Icons.compress,
+      title: 'Compress a PDF',
+      subtitle: 'Shrink for email — quality kept',
+      primaryLabel: 'Pick a PDF',
+      onPrimary: onPick,
+      altSources: [
+        ToolAltSource(icon: Icons.history, label: 'Recent', onTap: onPick),
+      ],
     );
   }
 }
@@ -480,25 +436,10 @@ class _CompressButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-      child: SizedBox(
-        width: double.infinity,
-        child: FilledButton(
-          onPressed: onTap,
-          style: FilledButton.styleFrom(
-            backgroundColor: AppColors.primary,
-            padding: const EdgeInsets.symmetric(vertical: 16),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(14),
-            ),
-          ),
-          child: Text(
-            'Compress to ~${formatBytes(estimatedBytes)}',
-            style: const TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-        ),
+      child: ToolPrimaryButton(
+        label: 'Compress to ~${formatBytes(estimatedBytes)}',
+        icon: Icons.compress,
+        onTap: onTap,
       ),
     );
   }

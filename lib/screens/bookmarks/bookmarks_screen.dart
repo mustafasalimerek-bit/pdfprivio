@@ -10,7 +10,7 @@ import '../../core/utils/responsive.dart';
 import '../../data/services/haptics_service.dart';
 import '../../data/services/pdf_outline_service.dart';
 import '../../data/services/share_intent_service.dart';
-import '../../widgets/privacy_badge.dart';
+import '../../widgets/tool_chrome.dart';
 
 /// Bookmarks / Table of Contents viewer.
 ///
@@ -90,6 +90,7 @@ class _BookmarksScreenState extends ConsumerState<BookmarksScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Bookmarks / TOC'),
+        centerTitle: true,
         actions: [
           if (_file != null)
             IconButton(
@@ -100,16 +101,7 @@ class _BookmarksScreenState extends ConsumerState<BookmarksScreen> {
         ],
       ),
       body: SafeArea(
-        child: MaxWidthBody(
-          child: Column(
-            children: [
-              const SizedBox(height: 8),
-              const Center(child: PrivacyBadge()),
-              const SizedBox(height: 8),
-              Expanded(child: _body()),
-            ],
-          ),
-        ),
+        child: MaxWidthBody(child: _body()),
       ),
     );
   }
@@ -199,46 +191,15 @@ class _EmptyState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(Icons.menu_book_outlined,
-              size: 64, color: AppColors.primary.withValues(alpha: 0.5)),
-          const SizedBox(height: 16),
-          const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 24),
-            child: Text(
-              'Browse a PDF by its built-in outline',
-              textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-            ),
-          ),
-          const SizedBox(height: 6),
-          const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 32),
-            child: Text(
-              'Legal briefs, depositions, audit reports — jump to a '
-              'chapter in one tap instead of scrolling 200 pages.',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 12,
-                color: AppColors.textSecondary,
-                height: 1.45,
-              ),
-            ),
-          ),
-          const SizedBox(height: 18),
-          FilledButton.icon(
-            onPressed: onPick,
-            icon: const Icon(Icons.add),
-            label: const Text('Pick a PDF'),
-            style: FilledButton.styleFrom(
-              backgroundColor: AppColors.primary,
-            ),
-          ),
-        ],
-      ),
+    return ToolEmptyState(
+      heroIcon: Icons.menu_book_outlined,
+      title: 'Browse bookmarks',
+      subtitle: 'Jump to chapters in long PDFs',
+      primaryLabel: 'Pick a PDF',
+      onPrimary: onPick,
+      altSources: [
+        ToolAltSource(icon: Icons.history, label: 'Recent', onTap: onPick),
+      ],
     );
   }
 }

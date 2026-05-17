@@ -11,8 +11,8 @@ import '../../data/models/pdf_document.dart';
 import '../../data/services/haptics_service.dart';
 import '../../data/services/pdf_metadata_service.dart';
 import '../../data/services/pdf_password_service.dart';
-import '../../widgets/privacy_badge.dart';
 import '../../widgets/progress_overlay.dart';
+import '../../widgets/tool_chrome.dart';
 import '../merge/merge_result_screen.dart';
 
 enum _PasswordMode { add, remove }
@@ -173,6 +173,7 @@ class _PasswordScreenState extends ConsumerState<PasswordScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Password'),
+        centerTitle: true,
         actions: [
           if (doc != null)
             TextButton(
@@ -191,19 +192,12 @@ class _PasswordScreenState extends ConsumerState<PasswordScreen> {
       body: Stack(
         children: [
           SafeArea(
-            child: Column(
-              children: [
-                const Padding(
-                  padding: EdgeInsets.fromLTRB(16, 8, 16, 8),
-                  child: Align(
-                    alignment: Alignment.centerLeft,
-                    child: PrivacyBadge(),
-                  ),
-                ),
-                Expanded(
-                  child: doc == null
-                      ? _EmptyState(onPick: _pick)
-                      : ListView(
+            child: doc == null
+                ? _EmptyState(onPick: _pick)
+                : Column(
+                    children: [
+                      Expanded(
+                        child: ListView(
                           padding:
                               const EdgeInsets.fromLTRB(16, 4, 16, 4),
                           children: [
@@ -271,35 +265,22 @@ class _PasswordScreenState extends ConsumerState<PasswordScreen> {
                             ],
                           ],
                         ),
-                ),
-                if (doc != null && !_busy)
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-                    child: SizedBox(
-                      width: double.infinity,
-                      child: FilledButton(
-                        onPressed: _run,
-                        style: FilledButton.styleFrom(
-                          backgroundColor: AppColors.primary,
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(14),
-                          ),
-                        ),
-                        child: Text(
-                          _mode == _PasswordMode.add
-                              ? 'Protect PDF'
-                              : 'Remove password',
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
                       ),
-                    ),
+                      if (!_busy)
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+                          child: ToolPrimaryButton(
+                            label: _mode == _PasswordMode.add
+                                ? 'Protect PDF'
+                                : 'Remove password',
+                            icon: _mode == _PasswordMode.add
+                                ? Icons.lock
+                                : Icons.lock_open,
+                            onTap: _run,
+                          ),
+                        ),
+                    ],
                   ),
-              ],
-            ),
           ),
           if (_busy)
             ProgressOverlay(
@@ -321,53 +302,15 @@ class _EmptyState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(32),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 96,
-              height: 96,
-              decoration: BoxDecoration(
-                color: AppColors.primary.withValues(alpha: 0.08),
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(
-                Icons.lock_outline,
-                size: 44,
-                color: AppColors.primary,
-              ),
-            ),
-            const SizedBox(height: 20),
-            const Text(
-              'Password protect or unlock',
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
-            ),
-            const SizedBox(height: 8),
-            const Text(
-              'AES-256 encryption. Encrypted PDFs you pick switch the tool '
-              'into remove-password mode automatically.',
-              textAlign: TextAlign.center,
-              style: TextStyle(color: AppColors.textSecondary),
-            ),
-            const SizedBox(height: 24),
-            FilledButton.icon(
-              onPressed: onPick,
-              icon: const Icon(Icons.add),
-              label: const Text('Pick a PDF'),
-              style: FilledButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 24,
-                  vertical: 14,
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
+    return ToolEmptyState(
+      heroIcon: Icons.lock_outline,
+      title: 'Password protect',
+      subtitle: 'AES-256 encrypt or unlock',
+      primaryLabel: 'Pick a PDF',
+      onPrimary: onPick,
+      altSources: [
+        ToolAltSource(icon: Icons.history, label: 'Recent', onTap: onPick),
+      ],
     );
   }
 }

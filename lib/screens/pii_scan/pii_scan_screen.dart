@@ -15,8 +15,8 @@ import '../../data/services/pdf_pii_scan_service.dart';
 import '../../data/services/sample_pdf_service.dart';
 import '../../data/services/usage_limits_service.dart';
 import '../../widgets/disclaimer_banner.dart';
-import '../../widgets/privacy_badge.dart';
 import '../../widgets/progress_overlay.dart';
+import '../../widgets/tool_chrome.dart';
 import 'pii_scan_result_screen.dart';
 
 class PiiScanScreen extends ConsumerStatefulWidget {
@@ -149,6 +149,7 @@ class _PiiScanScreenState extends ConsumerState<PiiScanScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Find sensitive data'),
+        centerTitle: true,
         actions: [
           if (doc != null)
             TextButton(
@@ -163,47 +164,23 @@ class _PiiScanScreenState extends ConsumerState<PiiScanScreen> {
       body: Stack(
         children: [
           SafeArea(
-            child: Column(
-              children: [
-                const Padding(
-                  padding: EdgeInsets.fromLTRB(16, 8, 16, 8),
-                  child: Align(
-                    alignment: Alignment.centerLeft,
-                    child: PrivacyBadge(),
-                  ),
-                ),
-                Expanded(
-                  child: doc == null
-                      ? _EmptyState(onPick: _pick, onTrySample: _trySample)
-                      : _DocReady(doc: doc),
-                ),
-                if (doc != null && _progress == null)
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-                    child: SizedBox(
-                      width: double.infinity,
-                      child: FilledButton(
-                        onPressed: _run,
-                        style: FilledButton.styleFrom(
-                          backgroundColor: AppColors.primary,
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(14),
+            child: doc == null
+                ? _EmptyState(onPick: _pick, onTrySample: _trySample)
+                : Column(
+                    children: [
+                      Expanded(child: _DocReady(doc: doc)),
+                      if (_progress == null)
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+                          child: ToolPrimaryButton(
+                            label: 'Scan ${doc.pageCount} '
+                                'page${doc.pageCount == 1 ? '' : 's'} for PII',
+                            icon: Icons.shield_outlined,
+                            onTap: _run,
                           ),
                         ),
-                        child: Text(
-                          'Scan ${doc.pageCount} '
-                          'page${doc.pageCount == 1 ? '' : 's'} for PII',
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                      ),
-                    ),
+                    ],
                   ),
-              ],
-            ),
           ),
           if (_progress != null)
             ProgressOverlay(
@@ -225,67 +202,19 @@ class _EmptyState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(32),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 96,
-              height: 96,
-              decoration: BoxDecoration(
-                color: AppColors.primary.withValues(alpha: 0.08),
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(
-                Icons.shield_outlined,
-                size: 44,
-                color: AppColors.primary,
-              ),
-            ),
-            const SizedBox(height: 20),
-            const Text(
-              'Find PII before you send',
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
-            ),
-            const SizedBox(height: 8),
-            const Text(
-              'Scans every page for SSNs, EINs, credit cards, IBANs, '
-              'emails, and phone numbers — so you know what is in your '
-              'document before it goes out.',
-              textAlign: TextAlign.center,
-              style: TextStyle(color: AppColors.textSecondary),
-            ),
-            const SizedBox(height: 24),
-            FilledButton.icon(
-              onPressed: onPick,
-              icon: const Icon(Icons.add),
-              label: const Text('Pick a PDF'),
-              style: FilledButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 24,
-                  vertical: 14,
-                ),
-              ),
-            ),
-            const SizedBox(height: 10),
-            TextButton.icon(
-              onPressed: onTrySample,
-              icon: const Icon(Icons.science_outlined, size: 18),
-              label: const Text('Try with a sample document'),
-              style: TextButton.styleFrom(
-                foregroundColor: AppColors.primary,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 10,
-                ),
-              ),
-            ),
-          ],
+    return ToolEmptyState(
+      heroIcon: Icons.shield_outlined,
+      title: 'Find sensitive data',
+      subtitle: 'SSN, EIN, cards, IBANs, emails, phones',
+      primaryLabel: 'Pick a PDF',
+      onPrimary: onPick,
+      altSources: [
+        ToolAltSource(
+          icon: Icons.science_outlined,
+          label: 'Try sample',
+          onTap: onTrySample,
         ),
-      ),
+      ],
     );
   }
 }
