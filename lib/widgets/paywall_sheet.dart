@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:in_app_purchase/in_app_purchase.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../core/constants/price_fallbacks.dart';
 import '../core/theme/colors.dart';
 import '../data/services/haptics_service.dart';
 import '../data/services/purchase_service.dart';
@@ -136,7 +137,7 @@ class _PaywallSheetState extends State<PaywallSheet> {
                   sku: ProSku.yearly,
                   title: 'Yearly',
                   product: yearly,
-                  fallbackPrice: '\$39.99',
+                  fallbackPrice: PriceFallbacks.yearly,
                   cadence: 'per year',
                   badge: 'BEST VALUE',
                   splitMonthly: true,
@@ -148,7 +149,7 @@ class _PaywallSheetState extends State<PaywallSheet> {
                   sku: ProSku.monthly,
                   title: 'Monthly',
                   product: monthly,
-                  fallbackPrice: '\$4.99',
+                  fallbackPrice: PriceFallbacks.monthly,
                   cadence: 'per month',
                   selected: _selected == ProSku.monthly,
                   onSelect: () => setState(() => _selected = ProSku.monthly),
@@ -158,7 +159,7 @@ class _PaywallSheetState extends State<PaywallSheet> {
                   sku: ProSku.lifetime,
                   title: 'Lifetime',
                   product: lifetime,
-                  fallbackPrice: '\$79.99',
+                  fallbackPrice: PriceFallbacks.lifetime,
                   cadence: 'one-time · no renewal',
                   selected: _selected == ProSku.lifetime,
                   onSelect: () => setState(() => _selected = ProSku.lifetime),
@@ -274,13 +275,13 @@ class _PaywallSheetState extends State<PaywallSheet> {
   ) {
     switch (sku) {
       case ProSku.monthly:
-        final p = monthly?.price ?? '\$4.99';
+        final p = monthly?.price ?? PriceFallbacks.monthly;
         return '$p / month · Cancel anytime in Apple ID settings';
       case ProSku.yearly:
-        final p = yearly?.price ?? '\$39.99';
+        final p = yearly?.price ?? PriceFallbacks.yearly;
         return '$p / year · Cancel anytime in Apple ID settings';
       case ProSku.lifetime:
-        final p = lifetime?.price ?? '\$79.99';
+        final p = lifetime?.price ?? PriceFallbacks.lifetime;
         return '$p one-time · No subscription, no renewal';
     }
   }

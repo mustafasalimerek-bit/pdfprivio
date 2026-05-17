@@ -8,6 +8,7 @@ import '../../core/theme/colors.dart';
 import '../../data/services/app_intent_service.dart';
 import '../../data/services/haptics_service.dart';
 import '../../data/services/share_intent_service.dart';
+import '../../data/state/nav_provider.dart';
 import '../../widgets/banner_ad_widget.dart';
 import '../../widgets/shared_file_action_sheet.dart';
 import '../home_screen.dart';
@@ -38,7 +39,9 @@ class RootScaffold extends ConsumerStatefulWidget {
 
 class _RootScaffoldState extends ConsumerState<RootScaffold>
     with WidgetsBindingObserver {
-  int _index = 0;
+  // Selected tab is owned by `selectedTabProvider` so descendants can
+  // programmatically switch tabs (e.g. the home "See all" link). Local
+  // state is read-only and derived from the provider in build().
   StreamSubscription<List<SharedMediaFile>>? _shareSub;
   StreamSubscription<String>? _intentSub;
 
@@ -92,11 +95,12 @@ class _RootScaffoldState extends ConsumerState<RootScaffold>
     // "tab:<name>" switches the bottom-nav tab; everything else
     // is treated as a navigator route.
     if (route.startsWith('tab:')) {
+      final notifier = ref.read(selectedTabProvider.notifier);
       switch (route.substring(4)) {
         case 'recent':
-          setState(() => _index = 1);
+          notifier.state = 1;
         case 'settings':
-          setState(() => _index = 2);
+          notifier.state = 2;
         case 'pro':
           // Pro is no longer a tab; push it as a fullscreen route so
           // Shortcuts / Siri intents still land somewhere meaningful.
@@ -105,7 +109,7 @@ class _RootScaffoldState extends ConsumerState<RootScaffold>
           );
         case 'tools':
         default:
-          setState(() => _index = 0);
+          notifier.state = 0;
       }
       return;
     }
@@ -113,17 +117,18 @@ class _RootScaffoldState extends ConsumerState<RootScaffold>
   }
 
   void _select(int i) {
-    if (i == _index) return;
+    if (i == ref.read(selectedTabProvider)) return;
     HapticsService.instance.select();
-    setState(() => _index = i);
+    ref.read(selectedTabProvider.notifier).state = i;
   }
 
   @override
   Widget build(BuildContext context) {
+    final index = ref.watch(selectedTabProvider);
     return Scaffold(
       body: Column(
         children: [
-          Expanded(child: IndexedStack(index: _index, children: _tabs)),
+          Expanded(child: IndexedStack(index: index, children: _tabs)),
           // Sticky banner above the nav bar. Renders empty for Pro users
           // and on AdMob no-fill — collapses to zero height in both cases
           // so the IndexedStack reclaims the space automatically.
@@ -131,7 +136,7 @@ class _RootScaffoldState extends ConsumerState<RootScaffold>
         ],
       ),
       bottomNavigationBar: NavigationBar(
-        selectedIndex: _index,
+        selectedIndex: index,
         onDestinationSelected: _select,
         height: 64,
         backgroundColor: AppColors.surface,

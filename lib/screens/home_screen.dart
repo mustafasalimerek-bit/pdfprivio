@@ -9,6 +9,7 @@ import '../data/services/display_name_service.dart';
 import '../data/services/haptics_service.dart';
 import '../data/services/purchase_service.dart';
 import '../data/services/usage_limits_service.dart';
+import '../data/state/nav_provider.dart';
 import '../widgets/paywall_sheet.dart';
 import '../widgets/recent_files_carousel.dart';
 import 'bates/bates_screen.dart';
@@ -67,7 +68,10 @@ class HomeScreen extends ConsumerWidget {
               // is wider than a single grid cell. This keeps the
               // home column-aligned edge-to-edge instead of leaving
               // a hole above the 4th grid cell.
-              const horizontalPadding = 16.0;
+              // Aligned with Layout.screenHorizontalPadding so the
+              // Tools tab reads with the same body margins as Recent
+              // and Settings.
+              const horizontalPadding = 18.0;
               const gridSpacing = 12.0;
               const recentCardCount = 3;
               final available =
@@ -88,6 +92,12 @@ class HomeScreen extends ConsumerWidget {
                   RecentFilesCarousel(
                     cardWidth: recentCardWidth,
                     cardSpacing: gridSpacing,
+                    onSeeAll: () {
+                      // Switch the bottom-nav to the Recent tab; the
+                      // dedicated RecentScreen list lives there.
+                      ref.read(selectedTabProvider.notifier).state = 1;
+                    },
+                    onScanShortcut: () => _openScan(context),
                   ),
                   const _SectionLabel('All tools'),
                   const SizedBox(height: 10),

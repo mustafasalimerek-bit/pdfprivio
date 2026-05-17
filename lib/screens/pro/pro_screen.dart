@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
+import '../../core/constants/price_fallbacks.dart';
 import '../../core/theme/colors.dart';
 import '../../core/utils/responsive.dart';
 import '../../data/services/haptics_service.dart';
@@ -82,7 +83,7 @@ class _ProScreenState extends State<ProScreen> {
               _PricingCard(
                 sku: ProSku.monthly,
                 title: 'Monthly',
-                fallbackPrice: '\$4.99',
+                fallbackPrice: PriceFallbacks.monthly,
                 cadence: 'per month',
                 description: 'Start small — cancel any time in Apple ID settings.',
                 onTap: _openPaywall,
@@ -91,7 +92,7 @@ class _ProScreenState extends State<ProScreen> {
               _PricingCard(
                 sku: ProSku.yearly,
                 title: 'Yearly',
-                fallbackPrice: '\$39.99',
+                fallbackPrice: PriceFallbacks.yearly,
                 cadence: 'per year',
                 description: 'Save ~33% vs monthly. Anchor option for most users.',
                 badge: 'BEST VALUE',
@@ -101,7 +102,7 @@ class _ProScreenState extends State<ProScreen> {
               _PricingCard(
                 sku: ProSku.lifetime,
                 title: 'Lifetime',
-                fallbackPrice: '\$79.99',
+                fallbackPrice: PriceFallbacks.lifetime,
                 cadence: 'one-time · never renews',
                 description: 'Pay once, use forever. No subscription email reminders.',
                 onTap: _openPaywall,

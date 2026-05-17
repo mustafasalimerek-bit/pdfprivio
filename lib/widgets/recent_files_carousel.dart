@@ -22,8 +22,19 @@ class RecentFilesCarousel extends StatefulWidget {
   final double cardWidth;
   final double cardSpacing;
 
+  /// Tapping the "See all" link routes here. Host typically switches
+  /// to the Recent tab in [RootScaffold] via `selectedTabProvider`.
+  final VoidCallback onSeeAll;
+
+  /// Tapping a "Scan / Sign / Edit Empty" placeholder routes here.
+  /// Host typically pushes the Scan flow so the first card actually
+  /// shows up in the carousel.
+  final VoidCallback onScanShortcut;
+
   const RecentFilesCarousel({
     super.key,
+    required this.onSeeAll,
+    required this.onScanShortcut,
     this.cardWidth = 102,
     this.cardSpacing = 10,
   });
@@ -128,15 +139,9 @@ class _RecentFilesCarouselState extends State<RecentFilesCarousel> {
     );
   }
 
-  void _seeAll(BuildContext context) {
+  void _seeAll() {
     HapticsService.instance.tap();
-    // Recent files have a dedicated tab in the root scaffold —
-    // jump to it instead of opening yet another list screen.
-    // The tab index 1 corresponds to RecentScreen in root_scaffold.dart.
-    DefaultTabController.maybeOf(context)?.animateTo(1);
-    // Fallback for when the home screen sits inside the IndexedStack
-    // of RootScaffold (not a DefaultTabController). Push the Recent
-    // screen as a fallback so the link always does something useful.
+    widget.onSeeAll();
   }
 
   @override
@@ -163,7 +168,7 @@ class _RecentFilesCarouselState extends State<RecentFilesCarousel> {
               const Spacer(),
               if (!isEmpty)
                 GestureDetector(
-                  onTap: () => _seeAll(context),
+                  onTap: _seeAll,
                   child: const Text(
                     'See all',
                     style: TextStyle(
@@ -180,7 +185,7 @@ class _RecentFilesCarouselState extends State<RecentFilesCarousel> {
           height: 116,
           child: isEmpty
               ? _PlaceholderRow(
-                  onScan: () => _routeToScan(context),
+                  onScan: _routeToScan,
                   cardWidth: widget.cardWidth,
                   cardSpacing: widget.cardSpacing,
                 )
@@ -205,13 +210,9 @@ class _RecentFilesCarouselState extends State<RecentFilesCarousel> {
     );
   }
 
-  void _routeToScan(BuildContext context) {
+  void _routeToScan() {
     HapticsService.instance.tap();
-    // Best-effort: any tap on the empty-state row routes the user
-    // to the Scan flow so the first card actually shows up. The
-    // home screen's hero scan card does the same — this is the
-    // fallback for users who didn't notice it.
-    DefaultTabController.maybeOf(context)?.animateTo(0);
+    widget.onScanShortcut();
   }
 }
 
