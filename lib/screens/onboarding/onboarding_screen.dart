@@ -1,4 +1,3 @@
-import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -7,14 +6,15 @@ import '../../data/services/haptics_service.dart';
 import '../../data/services/onboarding_service.dart';
 import '../../data/services/purchase_service.dart';
 
-/// Three-page welcome flow shown once per install before any consent
-/// prompts. Sequence is fixed:
+/// Three-page welcome flow shown once per install.
 ///   1. Privacy promise — shield hero + 3 checkmark rows
 ///   2. Features — 4 tool highlights
-///   3. Pro trial paywall — plan picker + "Start 7-day free trial"
+///   3. Pro trial paywall — plan picker + free-trial CTA
 ///
-/// Only Page 3 carries an X dismiss (Apple App Review compliance);
-/// Page 1 + 2 require the user to tap Continue or swipe forward.
+/// Vertical rhythm rule (all three pages): exactly one flexible
+/// `Spacer()` sits between the content stack and the bottom dots-
+/// button-footer group. Every other gap is a fixed `SizedBox` —
+/// without that, the content drifts and dwarfs the CTA.
 class OnboardingScreen extends StatefulWidget {
   final VoidCallback onDone;
   const OnboardingScreen({super.key, required this.onDone});
@@ -29,9 +29,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   ProSku _selectedSku = ProSku.yearly;
   bool _buying = false;
 
-  // Onboarding-local design tokens. Kept local on purpose: the rest
-  // of the app already has its own palette, and the spec calls for
-  // pixel-specific values that should not leak into every screen.
+  // Onboarding-local design tokens; kept off AppColors on purpose
+  // so the spec values don't leak into the rest of the app.
   static const _bgCream = Color(0xFFF5F4EF);
   static const _tealBg = Color(0xFFE1F5EE);
   static const _teal = Color(0xFF0F6E56);
@@ -71,6 +70,24 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     await _finish();
   }
 
+  Future<void> _openTerms() async {
+    HapticsService.instance.tap();
+    final uri = Uri.parse(
+        'https://mustafasalimerek-bit.github.io/pdfprivio/terms/');
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    }
+  }
+
+  Future<void> _openPrivacy() async {
+    HapticsService.instance.tap();
+    final uri = Uri.parse(
+        'https://mustafasalimerek-bit.github.io/pdfprivio/privacy/');
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -98,6 +115,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               },
               onStartTrial: _startTrial,
               onSkip: _finish,
+              onRestore: PurchaseService.instance.restorePurchases,
+              onTerms: _openTerms,
+              onPrivacy: _openPrivacy,
             ),
           ],
         ),
@@ -106,8 +126,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   }
 }
 
-/// Page 1 — privacy promise. Shield hero + 3 leading-aligned check
-/// rows, then dots + Continue at the bottom.
 class PrivacyPromiseView extends StatelessWidget {
   final int currentPage;
   final VoidCallback onContinue;
@@ -122,7 +140,7 @@ class PrivacyPromiseView extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        const SizedBox(height: 40),
+        const SizedBox(height: 28),
         Container(
           width: 72,
           height: 72,
@@ -130,9 +148,6 @@ class PrivacyPromiseView extends StatelessWidget {
             color: _OnboardingScreenState._tealBg,
             borderRadius: BorderRadius.circular(22),
           ),
-          // checkmark.shield.fill equivalent — Material doesn't ship the
-          // exact SF Symbol but Icons.security gives the same "shield
-          // with check inside" silhouette in filled style.
           child: const Icon(
             Icons.security,
             size: 38,
@@ -140,43 +155,41 @@ class PrivacyPromiseView extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 22),
-        const Padding(
-          padding: EdgeInsets.symmetric(horizontal: 28),
-          child: Text(
-            'Your documents stay private',
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 17,
-              fontWeight: FontWeight.w500,
-              color: _OnboardingScreenState._textPrimary,
-              height: 1.25,
-            ),
+        const Text(
+          'Your documents stay private',
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            fontSize: 22,
+            fontWeight: FontWeight.w600,
+            color: _OnboardingScreenState._textPrimary,
+            height: 1.2,
+            letterSpacing: -0.3,
           ),
         ),
         const SizedBox(height: 8),
         const Padding(
-          padding: EdgeInsets.symmetric(horizontal: 60),
+          padding: EdgeInsets.symmetric(horizontal: 32),
           child: Text(
-            'Everything happens on your iPhone. Nothing goes to the cloud.',
+            'Everything happens on your iPhone.\nNothing goes to the cloud.',
             textAlign: TextAlign.center,
             style: TextStyle(
-              fontSize: 12,
+              fontSize: 14,
               fontWeight: FontWeight.w400,
               color: _OnboardingScreenState._textSecondary,
-              height: 1.5,
+              height: 1.45,
             ),
           ),
         ),
-        const SizedBox(height: 26),
+        const SizedBox(height: 28),
         const Padding(
-          padding: EdgeInsets.symmetric(horizontal: 36),
+          padding: EdgeInsets.symmetric(horizontal: 60),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _CheckRow('No cloud uploads'),
-              SizedBox(height: 12),
+              SizedBox(height: 14),
               _CheckRow('No tracking, ever'),
-              SizedBox(height: 12),
+              SizedBox(height: 14),
               _CheckRow('On-device AI only'),
             ],
           ),
@@ -184,14 +197,13 @@ class PrivacyPromiseView extends StatelessWidget {
         const Spacer(),
         _PageDots(current: currentPage, total: 3),
         const SizedBox(height: 14),
-        _ContinueButton(label: 'Continue', onPressed: onContinue),
-        const SizedBox(height: 16),
+        _PrimaryButton(label: 'Continue', onPressed: onContinue),
+        const SizedBox(height: 8),
       ],
     );
   }
 }
 
-/// Page 2 — feature showcase. 4 icon-tile rows centered vertically.
 class FeaturesShowcaseView extends StatelessWidget {
   final int currentPage;
   final VoidCallback onContinue;
@@ -234,30 +246,31 @@ class FeaturesShowcaseView extends StatelessWidget {
           'Everything PDF, offline',
           textAlign: TextAlign.center,
           style: TextStyle(
-            fontSize: 17,
-            fontWeight: FontWeight.w500,
+            fontSize: 22,
+            fontWeight: FontWeight.w600,
             color: _OnboardingScreenState._textPrimary,
-            height: 1.25,
+            height: 1.2,
+            letterSpacing: -0.3,
           ),
         ),
-        const SizedBox(height: 4),
+        const SizedBox(height: 6),
         const Text(
           '10+ pro tools in your pocket',
           textAlign: TextAlign.center,
           style: TextStyle(
-            fontSize: 12,
+            fontSize: 14,
             fontWeight: FontWeight.w400,
             color: _OnboardingScreenState._textSecondary,
           ),
         ),
-        const SizedBox(height: 24),
+        const SizedBox(height: 32),
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 22),
+          padding: const EdgeInsets.symmetric(horizontal: 24),
           child: Column(
             children: [
               for (var i = 0; i < _features.length; i++) ...[
                 _FeatureRow(feature: _features[i]),
-                if (i != _features.length - 1) const SizedBox(height: 14),
+                if (i != _features.length - 1) const SizedBox(height: 18),
               ],
             ],
           ),
@@ -265,16 +278,13 @@ class FeaturesShowcaseView extends StatelessWidget {
         const Spacer(),
         _PageDots(current: currentPage, total: 3),
         const SizedBox(height: 14),
-        _ContinueButton(label: 'Continue', onPressed: onContinue),
-        const SizedBox(height: 16),
+        _PrimaryButton(label: 'Continue', onPressed: onContinue),
+        const SizedBox(height: 8),
       ],
     );
   }
 }
 
-/// Page 3 — Pro trial paywall. Sparkles hero, plan picker, "Start
-/// 7-day free trial" CTA, and an X in the top-right so the user
-/// can dismiss without buying (Apple App Review compliance).
 class TrialPaywallView extends StatelessWidget {
   final int currentPage;
   final ProSku selectedSku;
@@ -282,6 +292,9 @@ class TrialPaywallView extends StatelessWidget {
   final bool busy;
   final VoidCallback onStartTrial;
   final VoidCallback onSkip;
+  final VoidCallback onRestore;
+  final VoidCallback onTerms;
+  final VoidCallback onPrivacy;
 
   const TrialPaywallView({
     super.key,
@@ -291,6 +304,9 @@ class TrialPaywallView extends StatelessWidget {
     required this.busy,
     required this.onStartTrial,
     required this.onSkip,
+    required this.onRestore,
+    required this.onTerms,
+    required this.onPrivacy,
   });
 
   String _yearlyPerMonth() {
@@ -342,50 +358,74 @@ class TrialPaywallView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Stack(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            const SizedBox(height: 36),
-            Container(
-              width: 72,
-              height: 72,
-              decoration: BoxDecoration(
-                color: _OnboardingScreenState._tealBg,
-                borderRadius: BorderRadius.circular(22),
+        // X close button — Apple App Review compliance.
+        SizedBox(
+          height: 44,
+          child: Row(
+            children: [
+              const Spacer(),
+              IconButton(
+                icon: const Icon(
+                  Icons.close,
+                  size: 18,
+                  color: _OnboardingScreenState._textTertiary,
+                ),
+                tooltip: 'Skip',
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(
+                  minWidth: 36,
+                  minHeight: 36,
+                ),
+                onPressed: onSkip,
               ),
-              child: const Icon(
-                Icons.auto_awesome,
-                size: 38,
-                color: _OnboardingScreenState._teal,
-              ),
-            ),
-            const SizedBox(height: 18),
-            const Text(
-              'Try Pro free for 7 days',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 17,
-                fontWeight: FontWeight.w500,
-                color: _OnboardingScreenState._textPrimary,
-                height: 1.25,
-              ),
-            ),
-            const SizedBox(height: 6),
-            const Text(
-              'Unlock everything. Cancel anytime.',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w400,
-                color: _OnboardingScreenState._textSecondary,
-              ),
-            ),
-            const SizedBox(height: 22),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 22),
-              child: _PriceCard(
+              const SizedBox(width: 12),
+            ],
+          ),
+        ),
+        Container(
+          width: 72,
+          height: 72,
+          decoration: BoxDecoration(
+            color: _OnboardingScreenState._tealBg,
+            borderRadius: BorderRadius.circular(22),
+          ),
+          child: const Icon(
+            Icons.auto_awesome,
+            size: 36,
+            color: _OnboardingScreenState._teal,
+          ),
+        ),
+        const SizedBox(height: 18),
+        const Text(
+          'Try Pro free for 7 days',
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            fontSize: 22,
+            fontWeight: FontWeight.w600,
+            color: _OnboardingScreenState._textPrimary,
+            height: 1.2,
+            letterSpacing: -0.3,
+          ),
+        ),
+        const SizedBox(height: 6),
+        const Text(
+          'Unlock everything. Cancel anytime.',
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w400,
+            color: _OnboardingScreenState._textSecondary,
+          ),
+        ),
+        const SizedBox(height: 24),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 18),
+          child: Column(
+            children: [
+              _PriceCard(
                 label: 'Yearly',
                 badge: 'SAVE 33%',
                 priceLine: '${_yearlyPerMonth()}/mo',
@@ -393,95 +433,57 @@ class TrialPaywallView extends StatelessWidget {
                 selected: selectedSku == ProSku.yearly,
                 onTap: () => onSelectSku(ProSku.yearly),
               ),
-            ),
-            const SizedBox(height: 8),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 22),
-              child: _PriceCard(
+              const SizedBox(height: 10),
+              _PriceCard(
                 label: 'Monthly',
                 priceLine: '${_monthlyPrice()}/mo',
                 secondaryLine: 'Cancel anytime',
                 selected: selectedSku == ProSku.monthly,
                 onTap: () => onSelectSku(ProSku.monthly),
               ),
-            ),
-            const SizedBox(height: 8),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 22),
-              child: _PriceCard(
+              const SizedBox(height: 10),
+              _PriceCard(
                 label: 'Lifetime',
                 priceLine: _lifetimePrice(),
                 secondaryLine: 'One-time · no renewal',
                 selected: selectedSku == ProSku.lifetime,
                 onTap: () => onSelectSku(ProSku.lifetime),
               ),
-            ),
-            const Spacer(),
-            _PageDots(current: currentPage, total: 3),
-            const SizedBox(height: 14),
-            _ContinueButton(
-              label: busy ? '' : _ctaLabel(),
-              onPressed: busy ? null : onStartTrial,
-              child: busy
-                  ? const SizedBox(
-                      width: 18,
-                      height: 18,
-                      child: CircularProgressIndicator(
-                        color: Colors.white,
-                        strokeWidth: 2.2,
-                      ),
-                    )
-                  : null,
-            ),
-            const SizedBox(height: 8),
-            Text(
-              _footerLine(),
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-                fontSize: 11,
-                color: _OnboardingScreenState._textTertiary,
-                fontWeight: FontWeight.w400,
-              ),
-            ),
-            const SizedBox(height: 4),
-            TextButton(
-              onPressed: PurchaseService.instance.restorePurchases,
-              style: TextButton.styleFrom(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 4,
-                ),
-                minimumSize: Size.zero,
-              ),
-              child: const Text(
-                'Restore purchase',
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                  color: _OnboardingScreenState._teal,
-                ),
-              ),
-            ),
-            const SizedBox(height: 6),
-            const _LegalAcceptance(),
-            const SizedBox(height: 8),
-          ],
-        ),
-        // X dismiss in the top-right — Apple App Review requires
-        // paywall screens to be skippable. Only present on Page 3.
-        Positioned(
-          top: 4,
-          right: 4,
-          child: IconButton(
-            icon: const Icon(
-              Icons.close,
-              size: 22,
-              color: _OnboardingScreenState._textSecondary,
-            ),
-            tooltip: 'Skip',
-            onPressed: onSkip,
+            ],
           ),
         ),
+        const Spacer(),
+        _PageDots(current: currentPage, total: 3),
+        const SizedBox(height: 14),
+        _PrimaryButton(
+          label: _ctaLabel(),
+          onPressed: busy ? null : onStartTrial,
+          busy: busy,
+        ),
+        const SizedBox(height: 8),
+        Text(
+          _footerLine(),
+          textAlign: TextAlign.center,
+          style: const TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w400,
+            color: _OnboardingScreenState._textTertiary,
+          ),
+        ),
+        const SizedBox(height: 10),
+        // Restore · Terms · Privacy on one line.
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _InlineLink('Restore', onRestore),
+            const _InlineDot(),
+            _InlineLink('Terms', onTerms),
+            const _InlineDot(),
+            _InlineLink('Privacy', onPrivacy),
+          ],
+        ),
+        const SizedBox(height: 14),
       ],
     );
   }
@@ -500,11 +502,11 @@ class _CheckRow extends StatelessWidget {
           size: 14,
           color: _OnboardingScreenState._teal,
         ),
-        const SizedBox(width: 10),
+        const SizedBox(width: 12),
         Text(
           label,
           style: const TextStyle(
-            fontSize: 12,
+            fontSize: 14,
             fontWeight: FontWeight.w400,
             color: _OnboardingScreenState._textPrimary,
           ),
@@ -535,19 +537,19 @@ class _FeatureRow extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         Container(
-          width: 40,
-          height: 40,
+          width: 48,
+          height: 48,
           decoration: BoxDecoration(
             color: _OnboardingScreenState._tealBg,
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(14),
           ),
           child: Icon(
             feature.icon,
-            size: 20,
+            size: 22,
             color: _OnboardingScreenState._teal,
           ),
         ),
-        const SizedBox(width: 12),
+        const SizedBox(width: 14),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -556,19 +558,19 @@ class _FeatureRow extends StatelessWidget {
               Text(
                 feature.title,
                 style: const TextStyle(
-                  fontSize: 13,
+                  fontSize: 15,
                   fontWeight: FontWeight.w500,
                   color: _OnboardingScreenState._textPrimary,
                   height: 1.2,
                 ),
               ),
-              const SizedBox(height: 1),
+              const SizedBox(height: 2),
               Text(
                 feature.subtitle,
                 style: const TextStyle(
-                  fontSize: 11,
+                  fontSize: 13,
                   fontWeight: FontWeight.w400,
-                  color: _OnboardingScreenState._textTertiary,
+                  color: _OnboardingScreenState._textSecondary,
                   height: 1.3,
                 ),
               ),
@@ -580,9 +582,6 @@ class _FeatureRow extends StatelessWidget {
   }
 }
 
-/// Page indicator — 3 dots, 6×6pt, 5pt spacing. Active brandTeal,
-/// inactive brandBorder-ish neutral cream. iOS PageView's built-in
-/// indicator can't be styled to the spec colors so this is custom.
 class _PageDots extends StatelessWidget {
   final int current;
   final int total;
@@ -612,16 +611,14 @@ class _PageDots extends StatelessWidget {
   }
 }
 
-/// Continue / primary CTA — rounded rectangle (14pt radius), not a
-/// capsule. Matches the spec exactly.
-class _ContinueButton extends StatelessWidget {
+class _PrimaryButton extends StatelessWidget {
   final String label;
   final VoidCallback? onPressed;
-  final Widget? child;
-  const _ContinueButton({
+  final bool busy;
+  const _PrimaryButton({
     required this.label,
     required this.onPressed,
-    this.child,
+    this.busy = false,
   });
 
   @override
@@ -641,15 +638,23 @@ class _ContinueButton extends StatelessWidget {
               borderRadius: BorderRadius.circular(14),
             ),
           ),
-          child: child ??
-              Text(
-                label,
-                style: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
-                  color: Colors.white,
+          child: busy
+              ? const SizedBox(
+                  width: 18,
+                  height: 18,
+                  child: CircularProgressIndicator(
+                    color: Colors.white,
+                    strokeWidth: 2.2,
+                  ),
+                )
+              : Text(
+                  label,
+                  style: const TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.white,
+                  ),
                 ),
-              ),
         ),
       ),
     );
@@ -706,7 +711,7 @@ class _PriceCard extends StatelessWidget {
                         Text(
                           label,
                           style: const TextStyle(
-                            fontSize: 12,
+                            fontSize: 13,
                             fontWeight: FontWeight.w600,
                             color: _OnboardingScreenState._textSecondary,
                           ),
@@ -735,11 +740,11 @@ class _PriceCard extends StatelessWidget {
                         ],
                       ],
                     ),
-                    const SizedBox(height: 2),
+                    const SizedBox(height: 3),
                     Text(
                       priceLine,
                       style: const TextStyle(
-                        fontSize: 17,
+                        fontSize: 18,
                         fontWeight: FontWeight.w700,
                         color: _OnboardingScreenState._textPrimary,
                         letterSpacing: -0.2,
@@ -760,8 +765,8 @@ class _PriceCard extends StatelessWidget {
                 ),
               ),
               Container(
-                width: 20,
-                height: 20,
+                width: 22,
+                height: 22,
                 decoration: BoxDecoration(
                   color: selected
                       ? _OnboardingScreenState._teal
@@ -775,7 +780,7 @@ class _PriceCard extends StatelessWidget {
                   shape: BoxShape.circle,
                 ),
                 child: selected
-                    ? const Icon(Icons.check, color: Colors.white, size: 12)
+                    ? const Icon(Icons.check, color: Colors.white, size: 13)
                     : null,
               ),
             ],
@@ -786,54 +791,44 @@ class _PriceCard extends StatelessWidget {
   }
 }
 
-class _LegalAcceptance extends StatelessWidget {
-  const _LegalAcceptance();
-
-  Future<void> _open(String url) async {
-    final uri = Uri.parse(url);
-    if (await canLaunchUrl(uri)) {
-      await launchUrl(uri, mode: LaunchMode.externalApplication);
-    }
-  }
+class _InlineLink extends StatelessWidget {
+  final String label;
+  final VoidCallback onTap;
+  const _InlineLink(this.label, this.onTap);
 
   @override
   Widget build(BuildContext context) {
-    const baseStyle = TextStyle(
-      fontSize: 10,
-      color: _OnboardingScreenState._textTertiary,
-      height: 1.4,
-      fontWeight: FontWeight.w400,
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+        child: Text(
+          label,
+          style: const TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+            color: _OnboardingScreenState._teal,
+          ),
+        ),
+      ),
     );
-    final linkStyle = baseStyle.copyWith(
-      color: _OnboardingScreenState._teal,
-      fontWeight: FontWeight.w600,
-      decoration: TextDecoration.underline,
-    );
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 32),
-      child: RichText(
-        textAlign: TextAlign.center,
-        text: TextSpan(
-          style: baseStyle,
-          children: [
-            const TextSpan(text: 'By continuing you agree to our '),
-            TextSpan(
-              text: 'Terms',
-              style: linkStyle,
-              recognizer: TapGestureRecognizer()
-                ..onTap = () => _open(
-                    'https://mustafasalimerek-bit.github.io/pdfprivio/terms/'),
-            ),
-            const TextSpan(text: ' and '),
-            TextSpan(
-              text: 'Privacy Policy',
-              style: linkStyle,
-              recognizer: TapGestureRecognizer()
-                ..onTap = () => _open(
-                    'https://mustafasalimerek-bit.github.io/pdfprivio/privacy/'),
-            ),
-            const TextSpan(text: '.'),
-          ],
+  }
+}
+
+class _InlineDot extends StatelessWidget {
+  const _InlineDot();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Padding(
+      padding: EdgeInsets.symmetric(horizontal: 5),
+      child: Text(
+        '·',
+        style: TextStyle(
+          fontSize: 12,
+          fontWeight: FontWeight.w600,
+          color: AppColors.border,
         ),
       ),
     );
