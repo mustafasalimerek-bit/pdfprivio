@@ -8,6 +8,43 @@ import '../core/theme/colors.dart';
 /// plate so each tool screen only writes its own copy + hero +
 /// per-tool content.
 
+/// Large screen title used at the top of tab roots (Recent, Settings).
+/// Single source of truth so the type ramp can't drift between
+/// screens — the size of "Recent" must equal the size of "Settings"
+/// pixel-for-pixel. Caller controls outer padding so this widget is
+/// neutral about its position in a list or column.
+class PageTitle extends StatelessWidget {
+  final String text;
+  final Widget? trailing;
+
+  const PageTitle(this.text, {super.key, this.trailing});
+
+  @override
+  Widget build(BuildContext context) {
+    const titleStyle = TextStyle(
+      fontSize: 32,
+      fontWeight: FontWeight.w800,
+      color: AppColors.textPrimary,
+      letterSpacing: -0.5,
+      height: 1.1,
+    );
+    final title = Text(text, style: titleStyle);
+    if (trailing == null) {
+      return Align(alignment: Alignment.centerLeft, child: title);
+    }
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.end,
+      children: [
+        Expanded(child: title),
+        Padding(
+          padding: const EdgeInsets.only(bottom: 6),
+          child: trailing!,
+        ),
+      ],
+    );
+  }
+}
+
 /// Empty state — hero glyph + title + subtitle + primary pill CTA
 /// + optional alt-source chips + "Stays on your iPhone" footer.
 class ToolEmptyState extends StatelessWidget {

@@ -15,6 +15,7 @@ import '../../data/services/promo_code_service.dart';
 import '../../data/services/purchase_service.dart';
 import '../../data/services/widget_data_service.dart';
 import '../../widgets/redeem_promo_dialog.dart';
+import '../../widgets/tool_chrome.dart';
 import '../audit_log/audit_log_screen.dart';
 import '../pro/pro_screen.dart';
 import '../receipts/expense_ledger_screen.dart';
@@ -372,20 +373,10 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       body: SafeArea(
         child: MaxWidthBody(
           child: ListView(
-            padding: const EdgeInsets.fromLTRB(20, 8, 20, 28),
+            padding: const EdgeInsets.fromLTRB(20, 14, 20, 28),
             children: [
-              const Padding(
-                padding: EdgeInsets.fromLTRB(0, 8, 0, 18),
-                child: Text(
-                  'Settings',
-                  style: TextStyle(
-                    fontSize: 32,
-                    fontWeight: FontWeight.w800,
-                    color: AppColors.textPrimary,
-                    letterSpacing: -0.5,
-                  ),
-                ),
-              ),
+              const PageTitle('Settings'),
+              const SizedBox(height: 18),
               _ProTopCard(
                 onOpenPro: _openProScreen,
                 onManageSubscription: _openSubscriptions,

@@ -12,6 +12,7 @@ import '../../data/models/recent_file.dart';
 import '../../data/services/haptics_service.dart';
 import '../../data/services/quick_look_service.dart';
 import '../../data/services/recent_files_service.dart';
+import '../../widgets/tool_chrome.dart';
 import '../scan/scan_screen.dart';
 
 /// Full-screen list of recent tool outputs. Editorial design: large
@@ -271,15 +272,7 @@ class _RecentHeader extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Recent',
-            style: TextStyle(
-              fontSize: 32,
-              fontWeight: FontWeight.w800,
-              color: AppColors.textPrimary,
-              letterSpacing: -0.5,
-            ),
-          ),
+          const PageTitle('Recent'),
           const SizedBox(height: 10),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
@@ -429,35 +422,19 @@ class _Populated extends StatelessWidget {
       children: [
         Padding(
           padding: const EdgeInsets.fromLTRB(20, 14, 20, 8),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              const Expanded(
-                child: Text(
-                  'Recent',
-                  style: TextStyle(
-                    fontSize: 32,
-                    fontWeight: FontWeight.w800,
-                    color: AppColors.textPrimary,
-                    letterSpacing: -0.5,
-                  ),
+          child: PageTitle(
+            'Recent',
+            trailing: GestureDetector(
+              onTap: onClearAll,
+              child: Text(
+                '$totalCount ${totalCount == 1 ? 'file' : 'files'}',
+                style: const TextStyle(
+                  fontSize: 13,
+                  color: AppColors.textSecondary,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
-              Padding(
-                padding: const EdgeInsets.only(bottom: 8),
-                child: GestureDetector(
-                  onTap: onClearAll,
-                  child: Text(
-                    '$totalCount ${totalCount == 1 ? 'file' : 'files'}',
-                    style: const TextStyle(
-                      fontSize: 13,
-                      color: AppColors.textSecondary,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-              ),
-            ],
+            ),
           ),
         ),
         Padding(
