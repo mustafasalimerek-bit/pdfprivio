@@ -11,6 +11,7 @@ import '../../core/utils/result.dart';
 import '../../data/models/pdf_document.dart';
 import '../../data/services/haptics_service.dart';
 import '../../data/services/pdf_merge_service.dart';
+import '../../data/services/scan_pickup_service.dart';
 import '../../data/services/share_intent_service.dart';
 import '../../providers/merge_providers.dart';
 import '../../widgets/progress_overlay.dart';
@@ -91,6 +92,35 @@ class _MergeScreenState extends ConsumerState<MergeScreen> {
         behavior: SnackBarBehavior.floating,
       ),
     );
+  }
+
+  Future<void> _scanPdf() async {
+    HapticsService.instance.tap();
+    final res = await ScanPickupService.instance.scanToPdf();
+    if (!mounted) return;
+    switch (res) {
+      case Ok(:final value):
+        if (ref.read(hasPageCustomizationProvider)) {
+          ref.read(mergePageRefsProvider.notifier).reset();
+        }
+        final failed =
+            await ref.read(mergeWorkspaceProvider.notifier).add([value]);
+        if (failed.isNotEmpty && mounted) {
+          _showAddFailureSnack(failed);
+        } else if (failed.isEmpty) {
+          HapticsService.instance.select();
+        }
+      case Err(:final kind, :final message):
+        if (kind != FailureKind.cancelled) {
+          HapticsService.instance.error();
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(message),
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
+    }
   }
 
   Future<void> _customizePages() async {
@@ -202,7 +232,7 @@ class _MergeScreenState extends ConsumerState<MergeScreen> {
         children: [
           SafeArea(
             child: docs.isEmpty
-                ? _EmptyState(onAdd: _pickFiles)
+                ? _EmptyState(onAdd: _pickFiles, onScan: _scanPdf)
                 : Column(
                     children: [
                       Expanded(
@@ -244,7 +274,8 @@ class _MergeScreenState extends ConsumerState<MergeScreen> {
 
 class _EmptyState extends StatelessWidget {
   final VoidCallback onAdd;
-  const _EmptyState({required this.onAdd});
+  final VoidCallback onScan;
+  const _EmptyState({required this.onAdd, required this.onScan});
 
   @override
   Widget build(BuildContext context) {
@@ -256,7 +287,11 @@ class _EmptyState extends StatelessWidget {
       primaryIcon: Icons.add,
       onPrimary: onAdd,
       altSources: [
-        ToolAltSource(icon: Icons.camera_alt_outlined, label: 'Scan', onTap: onAdd),
+        ToolAltSource(
+          icon: Icons.camera_alt_outlined,
+          label: 'Scan',
+          onTap: onScan,
+        ),
       ],
     );
   }

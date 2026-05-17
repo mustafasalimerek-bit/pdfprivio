@@ -8,8 +8,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/theme/colors.dart';
 import '../../core/utils/format_bytes.dart';
 import '../../core/utils/responsive.dart';
+import '../../core/utils/result.dart';
 import '../../data/services/audit_service.dart';
 import '../../data/services/haptics_service.dart';
+import '../../data/services/scan_pickup_service.dart';
 import '../../data/services/share_intent_service.dart';
 import '../../data/services/summarization_service.dart';
 import '../../widgets/tool_chrome.dart';
@@ -66,6 +68,26 @@ class _SummarizeScreenState extends ConsumerState<SummarizeScreen> {
     final path = res?.paths.firstOrNull;
     if (path == null) return;
     await _loadFromFile(File(path));
+  }
+
+  Future<void> _scanPdf() async {
+    HapticsService.instance.tap();
+    final res = await ScanPickupService.instance.scanToPdf();
+    if (!mounted) return;
+    switch (res) {
+      case Ok(:final value):
+        await _loadFromFile(value);
+      case Err(:final kind, :final message):
+        if (kind != FailureKind.cancelled) {
+          HapticsService.instance.error();
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(message),
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
+    }
   }
 
   Future<void> _loadFromFile(File file) async {
@@ -216,6 +238,7 @@ class _SummarizeScreenState extends ConsumerState<SummarizeScreen> {
       return _EmptyState(
         availability: _availability,
         onPick: _pickPdf,
+        onScan: _scanPdf,
       );
     }
     if (_busy) {
@@ -277,7 +300,12 @@ class _AvailabilityBanner extends StatelessWidget {
 class _EmptyState extends StatelessWidget {
   final SummarizationAvailability availability;
   final VoidCallback onPick;
-  const _EmptyState({required this.availability, required this.onPick});
+  final VoidCallback onScan;
+  const _EmptyState({
+    required this.availability,
+    required this.onPick,
+    required this.onScan,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -288,7 +316,11 @@ class _EmptyState extends StatelessWidget {
       primaryLabel: 'Pick a PDF',
       onPrimary: onPick,
       altSources: [
-        ToolAltSource(icon: Icons.camera_alt_outlined, label: 'Scan', onTap: onPick),
+        ToolAltSource(
+          icon: Icons.camera_alt_outlined,
+          label: 'Scan',
+          onTap: onScan,
+        ),
       ],
     );
   }

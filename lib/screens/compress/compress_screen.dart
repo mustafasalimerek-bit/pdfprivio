@@ -12,6 +12,7 @@ import '../../data/models/compression_settings.dart';
 import '../../data/services/haptics_service.dart';
 import '../../data/services/pdf_compression_service.dart';
 import '../../data/services/pdf_metadata_service.dart';
+import '../../data/services/scan_pickup_service.dart';
 import '../../providers/compress_providers.dart';
 import '../../widgets/progress_overlay.dart';
 import '../../widgets/tool_chrome.dart';
@@ -33,11 +34,33 @@ class _CompressScreenState extends ConsumerState<CompressScreen> {
       type: FileType.custom,
       allowedExtensions: ['pdf'],
     );
-    if (res == null) return;
-    final path = res.paths.firstOrNull;
+    final path = res?.paths.firstOrNull;
     if (path == null) return;
+    await _loadFile(File(path));
+  }
 
-    final outcome = await PdfMetadataService.instance.inspect(File(path));
+  Future<void> _scanPdf() async {
+    HapticsService.instance.tap();
+    final res = await ScanPickupService.instance.scanToPdf();
+    if (!mounted) return;
+    switch (res) {
+      case Ok(:final value):
+        await _loadFile(value);
+      case Err(:final kind, :final message):
+        if (kind != FailureKind.cancelled) {
+          HapticsService.instance.error();
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(message),
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
+    }
+  }
+
+  Future<void> _loadFile(File file) async {
+    final outcome = await PdfMetadataService.instance.inspect(file);
     if (!mounted) return;
     switch (outcome) {
       case Ok(:final value):
@@ -143,7 +166,7 @@ class _CompressScreenState extends ConsumerState<CompressScreen> {
         children: [
           SafeArea(
             child: doc == null
-                ? _EmptyState(onPick: _pickFile)
+                ? _EmptyState(onPick: _pickFile, onScan: _scanPdf)
                 : Column(
                     children: [
                       Expanded(
@@ -181,7 +204,8 @@ class _CompressScreenState extends ConsumerState<CompressScreen> {
 
 class _EmptyState extends StatelessWidget {
   final VoidCallback onPick;
-  const _EmptyState({required this.onPick});
+  final VoidCallback onScan;
+  const _EmptyState({required this.onPick, required this.onScan});
 
   @override
   Widget build(BuildContext context) {
@@ -192,7 +216,11 @@ class _EmptyState extends StatelessWidget {
       primaryLabel: 'Pick a PDF',
       onPrimary: onPick,
       altSources: [
-        ToolAltSource(icon: Icons.camera_alt_outlined, label: 'Scan', onTap: onPick),
+        ToolAltSource(
+          icon: Icons.camera_alt_outlined,
+          label: 'Scan',
+          onTap: onScan,
+        ),
       ],
     );
   }
