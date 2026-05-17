@@ -120,17 +120,16 @@ class _PrivacyPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        const SizedBox(height: 32),
-        const Spacer(),
+        const Spacer(flex: 2),
         const _HeroIcon(icon: Icons.verified_user_outlined),
-        const SizedBox(height: 28),
+        const SizedBox(height: 26),
         const Padding(
-          padding: EdgeInsets.symmetric(horizontal: 32),
+          padding: EdgeInsets.symmetric(horizontal: 28),
           child: Text(
             'Your documents stay private',
             textAlign: TextAlign.center,
             style: TextStyle(
-              fontSize: 24,
+              fontSize: 26,
               fontWeight: FontWeight.w800,
               color: AppColors.textPrimary,
               height: 1.2,
@@ -140,23 +139,23 @@ class _PrivacyPage extends StatelessWidget {
         ),
         const SizedBox(height: 12),
         const Padding(
-          padding: EdgeInsets.symmetric(horizontal: 40),
+          padding: EdgeInsets.symmetric(horizontal: 36),
           child: Text(
             'Everything happens on your iPhone. Nothing goes to the cloud.',
             textAlign: TextAlign.center,
             style: TextStyle(
-              fontSize: 14,
+              fontSize: 15,
               color: AppColors.textSecondary,
               fontWeight: FontWeight.w500,
               height: 1.45,
             ),
           ),
         ),
-        const SizedBox(height: 32),
+        const SizedBox(height: 30),
         const _CheckRow('No cloud uploads'),
         const _CheckRow('No tracking, ever'),
         const _CheckRow('On-device AI only'),
-        const Spacer(flex: 2),
+        const Spacer(flex: 3),
         _OnboardingFooter(
           page: page,
           totalPages: totalPages,
@@ -206,14 +205,14 @@ class _FeaturesPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        const SizedBox(height: 64),
+        const SizedBox(height: 48),
         const Padding(
-          padding: EdgeInsets.symmetric(horizontal: 32),
+          padding: EdgeInsets.symmetric(horizontal: 28),
           child: Text(
             'Everything PDF, offline',
             textAlign: TextAlign.center,
             style: TextStyle(
-              fontSize: 24,
+              fontSize: 26,
               fontWeight: FontWeight.w800,
               color: AppColors.textPrimary,
               height: 1.2,
@@ -221,31 +220,29 @@ class _FeaturesPage extends StatelessWidget {
             ),
           ),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 10),
         const Text(
           '10+ pro tools in your pocket',
           textAlign: TextAlign.center,
           style: TextStyle(
-            fontSize: 14,
+            fontSize: 15,
             color: AppColors.textSecondary,
             fontWeight: FontWeight.w500,
           ),
         ),
-        const SizedBox(height: 32),
-        Expanded(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                for (final f in _features) ...[
-                  _FeatureRow(feature: f),
-                  const SizedBox(height: 18),
-                ],
+        const Spacer(),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 28),
+          child: Column(
+            children: [
+              for (var i = 0; i < _features.length; i++) ...[
+                _FeatureRow(feature: _features[i]),
+                if (i != _features.length - 1) const SizedBox(height: 20),
               ],
-            ),
+            ],
           ),
         ),
+        const Spacer(),
         _OnboardingFooter(
           page: page,
           totalPages: totalPages,
@@ -326,16 +323,16 @@ class _TrialPage extends StatelessWidget {
       children: [
         Column(
           children: [
-            const SizedBox(height: 48),
+            const SizedBox(height: 40),
             const _HeroIcon(icon: Icons.auto_awesome),
-            const SizedBox(height: 18),
+            const SizedBox(height: 20),
             const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 32),
+              padding: EdgeInsets.symmetric(horizontal: 28),
               child: Text(
                 'Try Pro free for 7 days',
                 textAlign: TextAlign.center,
                 style: TextStyle(
-                  fontSize: 24,
+                  fontSize: 26,
                   fontWeight: FontWeight.w800,
                   color: AppColors.textPrimary,
                   height: 1.2,
@@ -343,12 +340,12 @@ class _TrialPage extends StatelessWidget {
                 ),
               ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 10),
             const Text(
               'Unlock everything. Cancel anytime.',
               textAlign: TextAlign.center,
               style: TextStyle(
-                fontSize: 14,
+                fontSize: 15,
                 color: AppColors.textSecondary,
                 fontWeight: FontWeight.w500,
               ),
@@ -472,13 +469,13 @@ class _HeroIcon extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 84,
-      height: 84,
+      width: 108,
+      height: 108,
       decoration: BoxDecoration(
         color: AppColors.iconTint,
-        borderRadius: BorderRadius.circular(22),
+        borderRadius: BorderRadius.circular(28),
       ),
-      child: Icon(icon, size: 40, color: AppColors.primary),
+      child: Icon(icon, size: 52, color: AppColors.primary),
     );
   }
 }
@@ -529,15 +526,15 @@ class _FeatureRow extends StatelessWidget {
     return Row(
       children: [
         Container(
-          width: 44,
-          height: 44,
+          width: 56,
+          height: 56,
           decoration: BoxDecoration(
             color: AppColors.iconTint,
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(14),
           ),
-          child: Icon(feature.icon, color: AppColors.primary, size: 22),
+          child: Icon(feature.icon, color: AppColors.primary, size: 26),
         ),
-        const SizedBox(width: 14),
+        const SizedBox(width: 16),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -546,16 +543,17 @@ class _FeatureRow extends StatelessWidget {
               Text(
                 feature.title,
                 style: const TextStyle(
-                  fontSize: 15,
+                  fontSize: 17,
                   fontWeight: FontWeight.w800,
                   color: AppColors.textPrimary,
+                  letterSpacing: -0.2,
                 ),
               ),
-              const SizedBox(height: 2),
+              const SizedBox(height: 3),
               Text(
                 feature.subtitle,
                 style: const TextStyle(
-                  fontSize: 13,
+                  fontSize: 14,
                   color: AppColors.textSecondary,
                   fontWeight: FontWeight.w500,
                 ),
