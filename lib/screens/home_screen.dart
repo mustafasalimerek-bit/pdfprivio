@@ -59,16 +59,21 @@ class HomeScreen extends ConsumerWidget {
                   : w >= Breakpoints.iPadCompact
                       ? 5
                       : 4;
-              // Recent cards align with the grid columns: same width,
-              // same inter-card spacing, so column edges line up
-              // vertically with the All-tools grid below.
+              // Recent row spans the full row width — same left edge
+              // as grid cell 1, same right edge as the last grid
+              // cell. With 3 cards (Scan / Sign / Edit slots) and
+              // the same inter-card spacing as the grid, each card
+              // is wider than a single grid cell. This keeps the
+              // home column-aligned edge-to-edge instead of leaving
+              // a hole above the 4th grid cell.
               const horizontalPadding = 16.0;
               const gridSpacing = 12.0;
+              const recentCardCount = 3;
               final available =
                   (w - horizontalPadding * 2).clamp(0, double.infinity);
-              final gridColumnWidth = (available -
-                      gridSpacing * (gridColumns - 1)) /
-                  gridColumns;
+              final recentCardWidth = (available -
+                      gridSpacing * (recentCardCount - 1)) /
+                  recentCardCount;
               return ListView(
                 padding: const EdgeInsets.fromLTRB(
                     horizontalPadding, 8, horizontalPadding, 24),
@@ -80,7 +85,7 @@ class HomeScreen extends ConsumerWidget {
                   _HeroScanCard(onTap: () => _openScan(context)),
                   const SizedBox(height: 18),
                   RecentFilesCarousel(
-                    cardWidth: gridColumnWidth,
+                    cardWidth: recentCardWidth,
                     cardSpacing: gridSpacing,
                   ),
                   const _SectionLabel('All tools'),
