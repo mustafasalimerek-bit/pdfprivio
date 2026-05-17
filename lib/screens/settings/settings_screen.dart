@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -119,7 +120,19 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     HapticsService.instance.tap();
     final next = !_widgetShowsNames;
     await WidgetDataService.instance.setShowFileNames(next);
-    if (mounted) setState(() => _widgetShowsNames = next);
+    if (!mounted) return;
+    setState(() => _widgetShowsNames = next);
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          next
+              ? 'Home Screen widget will show file names.'
+              : 'Home Screen widget will hide file names. '
+                  'Tool labels still show.',
+        ),
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
   }
 
   Future<void> _open(String url) async {
@@ -137,9 +150,130 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     }
   }
 
+  /// Subscription management deep link. iOS opens the App Store
+  /// directly when this resolves; on simulator / signed-out devices
+  /// it doesn't, so fall back to a dialog with the URL the user can
+  /// copy + open manually.
+  Future<void> _openSubscriptions() async {
+    HapticsService.instance.tap();
+    const url = 'https://apps.apple.com/account/subscriptions';
+    final uri = Uri.parse(url);
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+      return;
+    }
+    if (!mounted) return;
+    await showDialog<void>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Manage subscription'),
+        content: const Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Open Settings → Apple ID → Subscriptions on your '
+              'iPhone, or visit:',
+              style: TextStyle(fontSize: 13),
+            ),
+            SizedBox(height: 10),
+            SelectableText(
+              'apps.apple.com/account/subscriptions',
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w800,
+                color: AppColors.primary,
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text('Done'),
+          ),
+          FilledButton(
+            onPressed: () async {
+              await Clipboard.setData(const ClipboardData(text: url));
+              if (ctx.mounted) Navigator.of(ctx).pop();
+            },
+            child: const Text('Copy link'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Email-the-developer link. iOS Mail / Outlook handle mailto if
+  /// configured; if not, fall back to a copyable address dialog so
+  /// the user can still get in touch.
+  Future<void> _emailSupport() async {
+    HapticsService.instance.tap();
+    const email = 'mustafasalimerek@gmail.com';
+    final uri = Uri.parse('mailto:$email');
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri);
+      return;
+    }
+    if (!mounted) return;
+    await showDialog<void>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Contact support'),
+        content: const Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              "No mail app set up. Copy the address and send a "
+              'message from your usual email:',
+              style: TextStyle(fontSize: 13),
+            ),
+            SizedBox(height: 10),
+            SelectableText(
+              email,
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w800,
+                color: AppColors.primary,
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text('Done'),
+          ),
+          FilledButton(
+            onPressed: () async {
+              await Clipboard.setData(const ClipboardData(text: email));
+              if (ctx.mounted) Navigator.of(ctx).pop();
+            },
+            child: const Text('Copy address'),
+          ),
+        ],
+      ),
+    );
+  }
+
   Future<void> _resurfaceConsent() async {
     HapticsService.instance.tap();
     await ConsentService.instance.resurfaceConsentForm();
+    // The UMP SDK is silent if the consent form isn't required for the
+    // current region / state — the user taps and sees nothing. Always
+    // surface a follow-up so the tap doesn't feel broken.
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text(
+          'Consent preferences refreshed. If a form was needed, it '
+          "just showed; otherwise you're already in sync.",
+        ),
+        behavior: SnackBarBehavior.floating,
+        duration: Duration(seconds: 4),
+      ),
+    );
   }
 
   Future<void> _restorePurchases() async {
@@ -214,9 +348,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               subtitle: PurchaseService.instance.hasPro
                   ? 'Tap to view your plan and manage in App Store settings'
                   : 'Tap to see pricing and unlock everything',
-              onTap: () => _open(
-                'https://apps.apple.com/account/subscriptions',
-              ),
+              onTap: _openSubscriptions,
             ),
             _SettingsTile(
               icon: Icons.restart_alt_outlined,
@@ -428,7 +560,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               icon: Icons.mail_outline,
               title: 'Contact support',
               subtitle: 'Questions, bugs, feature requests',
-              onTap: () => _open('mailto:mustafasalimerek@gmail.com'),
+              onTap: _emailSupport,
             ),
             const SizedBox(height: 18),
             Container(
