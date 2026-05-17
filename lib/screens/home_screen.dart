@@ -656,13 +656,16 @@ class _MoreTile extends StatelessWidget {
               height: 64,
               decoration: BoxDecoration(
                 // Same iconTint as every other grid cell so More
-                // sits in the same visual family — earlier muted
-                // grey made it read as "different / leftover".
+                // sits in the same visual family.
                 color: AppColors.iconTint,
                 borderRadius: BorderRadius.circular(18),
               ),
+              // Icons.apps fills the container with a 3×3 grid of
+              // dots — same visual weight as Sign / Compress / Merge.
+              // more_horiz (3 little dots) made the cell look empty
+              // next to the dense glyphs in the rest of the grid.
               child: const Icon(
-                Icons.more_horiz,
+                Icons.apps_outlined,
                 color: AppColors.primary,
                 size: 28,
               ),
