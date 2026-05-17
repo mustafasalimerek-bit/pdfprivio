@@ -257,7 +257,7 @@ class _FeaturesPage extends StatelessWidget {
   }
 }
 
-/// Page 3: Pro trial offer with two price cards + X to skip.
+/// Page 3: Pro trial offer with three price cards + X to skip.
 class _TrialPage extends StatelessWidget {
   final ProSku selectedSku;
   final ValueChanged<ProSku> onSelectSku;
@@ -293,15 +293,42 @@ class _TrialPage extends StatelessWidget {
     return '${p.price}/yr';
   }
 
+  String _lifetimePrice() {
+    final p = PurchaseService.instance.productFor(ProSku.lifetime);
+    if (p == null) return '\$79.99';
+    return p.price;
+  }
+
+  String _ctaLabel() {
+    switch (selectedSku) {
+      case ProSku.yearly:
+      case ProSku.monthly:
+        return 'Start free trial';
+      case ProSku.lifetime:
+        return 'Buy lifetime';
+    }
+  }
+
+  String _footerLine() {
+    switch (selectedSku) {
+      case ProSku.yearly:
+        return '7 days free, then ${_yearlyTotal()}';
+      case ProSku.monthly:
+        return '7 days free, then ${_monthlyPrice()}/mo';
+      case ProSku.lifetime:
+        return '${_lifetimePrice()} one-time · no renewal';
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Stack(
       children: [
         Column(
           children: [
-            const SizedBox(height: 56),
+            const SizedBox(height: 48),
             const _HeroIcon(icon: Icons.auto_awesome),
-            const SizedBox(height: 24),
+            const SizedBox(height: 18),
             const Padding(
               padding: EdgeInsets.symmetric(horizontal: 32),
               child: Text(
@@ -316,7 +343,7 @@ class _TrialPage extends StatelessWidget {
                 ),
               ),
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: 8),
             const Text(
               'Unlock everything. Cancel anytime.',
               textAlign: TextAlign.center,
@@ -326,12 +353,14 @@ class _TrialPage extends StatelessWidget {
                 fontWeight: FontWeight.w500,
               ),
             ),
-            const SizedBox(height: 28),
+            const SizedBox(height: 22),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 24),
               child: _PriceCard(
-                label: 'Yearly · save 33%',
+                label: 'Yearly',
+                badge: 'SAVE 33%',
                 priceLine: '${_yearlyPerMonth()}/mo',
+                secondaryLine: '${_yearlyTotal()} billed yearly',
                 selected: selectedSku == ProSku.yearly,
                 onTap: () => onSelectSku(ProSku.yearly),
               ),
@@ -342,8 +371,20 @@ class _TrialPage extends StatelessWidget {
               child: _PriceCard(
                 label: 'Monthly',
                 priceLine: '${_monthlyPrice()}/mo',
+                secondaryLine: 'Cancel anytime',
                 selected: selectedSku == ProSku.monthly,
                 onTap: () => onSelectSku(ProSku.monthly),
+              ),
+            ),
+            const SizedBox(height: 10),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              child: _PriceCard(
+                label: 'Lifetime',
+                priceLine: _lifetimePrice(),
+                secondaryLine: 'One-time · no renewal',
+                selected: selectedSku == ProSku.lifetime,
+                onTap: () => onSelectSku(ProSku.lifetime),
               ),
             ),
             const Spacer(),
@@ -371,9 +412,9 @@ class _TrialPage extends StatelessWidget {
                             strokeWidth: 2.4,
                           ),
                         )
-                      : const Text(
-                          'Start free trial',
-                          style: TextStyle(
+                      : Text(
+                          _ctaLabel(),
+                          style: const TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w800,
                           ),
@@ -383,16 +424,14 @@ class _TrialPage extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             Text(
-              selectedSku == ProSku.yearly
-                  ? '7 days free, then ${_yearlyTotal()}'
-                  : '7 days free, then ${_monthlyPrice()}/mo',
+              _footerLine(),
               style: const TextStyle(
                 fontSize: 12,
                 color: AppColors.textTertiary,
                 fontWeight: FontWeight.w500,
               ),
             ),
-            const SizedBox(height: 6),
+            const SizedBox(height: 4),
             TextButton(
               onPressed: PurchaseService.instance.restorePurchases,
               child: const Text(
@@ -404,7 +443,7 @@ class _TrialPage extends StatelessWidget {
                 ),
               ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 4),
             const _LegalAcceptance(),
             const SizedBox(height: 12),
           ],
@@ -532,12 +571,16 @@ class _FeatureRow extends StatelessWidget {
 class _PriceCard extends StatelessWidget {
   final String label;
   final String priceLine;
+  final String? secondaryLine;
+  final String? badge;
   final bool selected;
   final VoidCallback onTap;
 
   const _PriceCard({
     required this.label,
     required this.priceLine,
+    this.secondaryLine,
+    this.badge,
     required this.selected,
     required this.onTap,
   });
@@ -553,7 +596,7 @@ class _PriceCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(14),
         onTap: onTap,
         child: Container(
-          padding: const EdgeInsets.fromLTRB(16, 14, 14, 14),
+          padding: const EdgeInsets.fromLTRB(16, 12, 14, 12),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(14),
             border: Border.all(
@@ -568,24 +611,61 @@ class _PriceCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text(
-                      label,
-                      style: const TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.textSecondary,
-                      ),
+                    Row(
+                      children: [
+                        Text(
+                          label,
+                          style: const TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.textSecondary,
+                          ),
+                        ),
+                        if (badge != null) ...[
+                          const SizedBox(width: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 6,
+                              vertical: 2,
+                            ),
+                            decoration: BoxDecoration(
+                              color: AppColors.warning,
+                              borderRadius: BorderRadius.circular(99),
+                            ),
+                            child: Text(
+                              badge!,
+                              style: const TextStyle(
+                                fontSize: 9,
+                                fontWeight: FontWeight.w800,
+                                color: Colors.white,
+                                letterSpacing: 0.5,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ],
                     ),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: 2),
                     Text(
                       priceLine,
                       style: const TextStyle(
-                        fontSize: 20,
+                        fontSize: 18,
                         fontWeight: FontWeight.w800,
                         color: AppColors.textPrimary,
                         letterSpacing: -0.3,
                       ),
                     ),
+                    if (secondaryLine != null) ...[
+                      const SizedBox(height: 1),
+                      Text(
+                        secondaryLine!,
+                        style: const TextStyle(
+                          fontSize: 11,
+                          color: AppColors.textTertiary,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
                   ],
                 ),
               ),
