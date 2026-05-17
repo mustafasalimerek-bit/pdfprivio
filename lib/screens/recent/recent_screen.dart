@@ -6,18 +6,27 @@ import 'package:open_filex/open_filex.dart';
 import 'package:share_plus/share_plus.dart';
 
 import '../../core/theme/colors.dart';
+import '../../core/theme/layout.dart';
 import '../../core/utils/format_bytes.dart';
 import '../../core/utils/responsive.dart';
 import '../../data/models/recent_file.dart';
 import '../../data/services/haptics_service.dart';
 import '../../data/services/quick_look_service.dart';
 import '../../data/services/recent_files_service.dart';
-import '../../widgets/tool_chrome.dart';
+import '../../widgets/app_card.dart';
+import '../../widgets/primary_button.dart';
+import '../../widgets/privacy_pill.dart';
+import '../../widgets/screen_container.dart';
+import '../../widgets/section_header.dart';
 import '../scan/scan_screen.dart';
 
-/// Full-screen list of recent tool outputs. Editorial design: large
-/// title + privacy pill, paper-glyph hero in the empty state, search
-/// + filter chips + date-grouped sections in the populated state.
+/// Full-screen list of recent tool outputs.
+///
+/// Empty state uses [CenteredScreenContainer] so the hero illustration
+/// lands at the optical center on iPhone 17 Pro Max instead of
+/// floating in negative space at the top. Populated state uses
+/// [ScreenContainer] — same horizontal padding and title font, so
+/// the user feels the same layout grammar across nav tabs.
 class RecentScreen extends StatefulWidget {
   const RecentScreen({super.key});
 
@@ -147,6 +156,7 @@ class _RecentScreenState extends State<RecentScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppColors.background,
       body: SafeArea(
         child: MaxWidthBody(
           child: !_loaded
@@ -191,116 +201,71 @@ class _EmptyState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        const SizedBox(height: 8),
-        const _RecentHeader(),
-        const Spacer(),
-        const Center(child: _PaperStackHero()),
-        const SizedBox(height: 28),
-        const Text(
-          'Nothing here yet',
-          textAlign: TextAlign.center,
-          style: TextStyle(
-            fontSize: 22,
-            fontWeight: FontWeight.w800,
-            color: AppColors.textPrimary,
+    return CenteredScreenContainer(
+      topBar: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: const [
+          Text(
+            'Recent',
+            style: TextStyle(
+              fontSize: Layout.titleFontSize,
+              fontWeight: FontWeight.w600,
+              color: AppColors.textPrimary,
+              letterSpacing: -0.4,
+              height: 1.1,
+            ),
           ),
-        ),
-        const SizedBox(height: 8),
-        const Padding(
-          padding: EdgeInsets.symmetric(horizontal: 36),
-          child: Text(
-            'Every PDF you scan, sign, or edit lands here for quick access.',
+          SizedBox(height: 8),
+          PrivacyPill(),
+        ],
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          const _PaperStackHero(),
+          const SizedBox(height: 22),
+          const Text(
+            'Nothing here yet',
             textAlign: TextAlign.center,
             style: TextStyle(
-              fontSize: 14,
-              color: AppColors.textSecondary,
-              fontWeight: FontWeight.w500,
-              height: 1.4,
+              fontSize: 20,
+              fontWeight: FontWeight.w600,
+              color: AppColors.textPrimary,
+              letterSpacing: -0.3,
             ),
           ),
-        ),
-        const SizedBox(height: 28),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24),
-          child: SizedBox(
-            width: double.infinity,
-            child: FilledButton.icon(
-              onPressed: onScan,
-              icon: const Icon(Icons.camera_alt_outlined, size: 20),
-              label: const Text(
-                'Scan your first PDF',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
-              ),
-              style: FilledButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(99),
-                ),
+          const SizedBox(height: 8),
+          const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 12),
+            child: Text(
+              'Every PDF you scan, sign, or edit lands here for quick access.',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 14,
+                color: AppColors.textSecondary,
+                fontWeight: FontWeight.w400,
+                height: 1.4,
               ),
             ),
           ),
-        ),
-        const SizedBox(height: 10),
-        TextButton.icon(
-          onPressed: onOpenFromFiles,
-          icon: const Icon(Icons.folder_outlined, size: 18),
-          label: const Text(
-            'Open from Files',
-            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
+          const SizedBox(height: 28),
+          PrimaryButton(
+            title: 'Scan your first PDF',
+            icon: Icons.camera_alt_outlined,
+            onPressed: onScan,
           ),
-          style: TextButton.styleFrom(
-            foregroundColor: AppColors.primary,
-          ),
-        ),
-        const Spacer(),
-      ],
-    );
-  }
-}
-
-class _RecentHeader extends StatelessWidget {
-  const _RecentHeader();
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 14, 20, 8),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const PageTitle('Recent'),
-          const SizedBox(height: 10),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-            decoration: BoxDecoration(
-              color: AppColors.success.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(99),
+          const SizedBox(height: 14),
+          TextButton.icon(
+            onPressed: onOpenFromFiles,
+            icon: const Icon(Icons.folder_outlined, size: 16),
+            label: const Text(
+              'Open from Files',
+              style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
             ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  width: 6,
-                  height: 6,
-                  decoration: const BoxDecoration(
-                    color: AppColors.success,
-                    shape: BoxShape.circle,
-                  ),
-                ),
-                const SizedBox(width: 6),
-                const Text(
-                  'Stays on your iPhone',
-                  style: TextStyle(
-                    fontSize: 11,
-                    color: AppColors.success,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ],
+            style: TextButton.styleFrom(
+              foregroundColor: AppColors.primary,
             ),
           ),
         ],
@@ -315,25 +280,25 @@ class _PaperStackHero extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      width: 120,
-      height: 120,
+      width: Layout.emptyStateIllustrationSize,
+      height: Layout.emptyStateIllustrationSize,
       child: Stack(
         alignment: Alignment.center,
         children: [
           Positioned(
-            left: 12,
-            top: 26,
+            left: 10,
+            top: 22,
             child: Transform.rotate(
               angle: -0.12,
-              child: _PaperGlyph(opacity: 0.55, width: 68, height: 84),
+              child: const _PaperGlyph(opacity: 0.55, width: 62, height: 78),
             ),
           ),
           Positioned(
-            right: 12,
-            top: 14,
+            right: 10,
+            top: 12,
             child: Transform.rotate(
               angle: 0.10,
-              child: _PaperGlyph(opacity: 1, width: 68, height: 84),
+              child: const _PaperGlyph(opacity: 1, width: 62, height: 78),
             ),
           ),
         ],
@@ -359,7 +324,7 @@ class _PaperGlyph extends StatelessWidget {
       child: Container(
         width: width,
         height: height,
-        padding: const EdgeInsets.fromLTRB(10, 16, 10, 0),
+        padding: const EdgeInsets.fromLTRB(9, 14, 9, 0),
         decoration: BoxDecoration(
           color: AppColors.surface,
           borderRadius: BorderRadius.circular(10),
@@ -368,7 +333,7 @@ class _PaperGlyph extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            for (final w in [44.0, 36.0, 28.0])
+            for (final w in [40.0, 32.0, 24.0])
               Padding(
                 padding: const EdgeInsets.only(bottom: 6),
                 child: Container(
@@ -417,113 +382,71 @@ class _Populated extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final grouped = _groupByDate(files);
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(20, 14, 20, 8),
-          child: PageTitle(
-            'Recent',
-            trailing: GestureDetector(
-              onTap: onClearAll,
-              child: Text(
-                '$totalCount ${totalCount == 1 ? 'file' : 'files'}',
-                style: const TextStyle(
-                  fontSize: 13,
-                  color: AppColors.textSecondary,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ),
+    return ScreenContainer(
+      title: 'Recent',
+      titleTrailing: GestureDetector(
+        onTap: onClearAll,
+        behavior: HitTestBehavior.opaque,
+        child: Text(
+          '$totalCount ${totalCount == 1 ? 'file' : 'files'}',
+          style: const TextStyle(
+            fontSize: 13,
+            color: AppColors.textSecondary,
+            fontWeight: FontWeight.w500,
           ),
         ),
-        Padding(
-          padding: const EdgeInsets.fromLTRB(20, 4, 20, 10),
-          child: _SearchBar(
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const PrivacyPill(),
+          const SizedBox(height: 14),
+          _SearchBar(
             controller: searchController,
             onChanged: onSearch,
           ),
-        ),
-        SizedBox(
-          height: 36,
-          child: ListView.separated(
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: 20),
-            itemCount: filters.length,
-            separatorBuilder: (_, _) => const SizedBox(width: 8),
-            itemBuilder: (context, i) {
-              final label = filters[i];
-              return _FilterChip(
-                label: label,
-                selected: label == activeFilter,
-                onTap: () => onFilter(label),
-              );
-            },
+          const SizedBox(height: 10),
+          _FilterRow(
+            filters: filters,
+            activeFilter: activeFilter,
+            onFilter: onFilter,
           ),
-        ),
-        const SizedBox(height: 12),
-        Expanded(
-          child: files.isEmpty
-              ? const _NoResultsState()
-              : ListView.builder(
-                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
-                  itemCount: grouped.length,
-                  itemBuilder: (context, i) {
-                    final section = grouped[i];
-                    return Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Padding(
-                          padding: const EdgeInsets.fromLTRB(4, 8, 4, 8),
-                          child: Text(
-                            section.label.toUpperCase(),
-                            style: const TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w800,
-                              color: AppColors.textTertiary,
-                              letterSpacing: 1.2,
-                            ),
-                          ),
-                        ),
-                        Container(
-                          decoration: BoxDecoration(
-                            color: AppColors.surface,
-                            borderRadius: BorderRadius.circular(18),
-                            border: Border.all(color: AppColors.border),
-                          ),
-                          child: Column(
-                            children: [
-                              for (var j = 0; j < section.files.length; j++) ...[
-                                _RecentRow(
-                                  file: section.files[j],
-                                  onTap: () => onTap(section.files[j]),
-                                  onShare: () => onShare(section.files[j]),
-                                  onDelete: () =>
-                                      onDelete(section.files[j]),
-                                ),
-                                if (j != section.files.length - 1)
-                                  Padding(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 14,
-                                    ),
-                                    child: Divider(
-                                      height: 1,
-                                      thickness: 1,
-                                      color: AppColors.border
-                                          .withValues(alpha: 0.6),
-                                    ),
-                                  ),
-                              ],
-                            ],
-                          ),
-                        ),
-                        const SizedBox(height: 6),
-                      ],
-                    );
-                  },
+          const SizedBox(height: 14),
+          if (files.isEmpty)
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 32),
+              child: Center(
+                child: Text(
+                  'No matches.',
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: AppColors.textTertiary,
+                    fontWeight: FontWeight.w500,
+                  ),
                 ),
-        ),
-      ],
+              ),
+            )
+          else
+            for (final section in grouped) ...[
+              SectionHeader(section.label),
+              AppCard(
+                children: [
+                  for (var i = 0; i < section.files.length; i++)
+                    CardRow(
+                      isLast: i == section.files.length - 1,
+                      onTap: () => onTap(section.files[i]),
+                      leading: _RecentRowLeading(file: section.files[i]),
+                      trailing: _RecentRowMenu(
+                        onShare: () => onShare(section.files[i]),
+                        onDelete: () => onDelete(section.files[i]),
+                      ),
+                    ),
+                ],
+              ),
+              const SizedBox(height: Layout.sectionSpacing),
+            ],
+        ],
+      ),
     );
   }
 
@@ -572,7 +495,7 @@ class _SearchBar extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: AppColors.surface,
-        borderRadius: BorderRadius.circular(99),
+        borderRadius: BorderRadius.circular(12),
         border: Border.all(color: AppColors.border),
       ),
       child: TextField(
@@ -583,12 +506,12 @@ class _SearchBar extends StatelessWidget {
           hintStyle: TextStyle(
             color: AppColors.textTertiary,
             fontSize: 14,
-            fontWeight: FontWeight.w500,
+            fontWeight: FontWeight.w400,
           ),
           prefixIcon: Icon(
             Icons.search,
             color: AppColors.textTertiary,
-            size: 20,
+            size: 18,
           ),
           border: InputBorder.none,
           enabledBorder: InputBorder.none,
@@ -600,6 +523,39 @@ class _SearchBar extends StatelessWidget {
           fontSize: 14,
           color: AppColors.textPrimary,
         ),
+      ),
+    );
+  }
+}
+
+class _FilterRow extends StatelessWidget {
+  final List<String> filters;
+  final String activeFilter;
+  final ValueChanged<String> onFilter;
+
+  const _FilterRow({
+    required this.filters,
+    required this.activeFilter,
+    required this.onFilter,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 32,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        padding: EdgeInsets.zero,
+        itemCount: filters.length,
+        separatorBuilder: (_, _) => const SizedBox(width: 7),
+        itemBuilder: (context, i) {
+          final label = filters[i];
+          return _FilterChip(
+            label: label,
+            selected: label == activeFilter,
+            onTap: () => onFilter(label),
+          );
+        },
       ),
     );
   }
@@ -624,7 +580,7 @@ class _FilterChip extends StatelessWidget {
         borderRadius: BorderRadius.circular(99),
         onTap: onTap,
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(99),
             border: Border.all(
@@ -634,8 +590,8 @@ class _FilterChip extends StatelessWidget {
           child: Text(
             label,
             style: TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w700,
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
               color: selected ? Colors.white : AppColors.textPrimary,
             ),
           ),
@@ -645,38 +601,9 @@ class _FilterChip extends StatelessWidget {
   }
 }
 
-class _NoResultsState extends StatelessWidget {
-  const _NoResultsState();
-
-  @override
-  Widget build(BuildContext context) {
-    return const Center(
-      child: Padding(
-        padding: EdgeInsets.all(32),
-        child: Text(
-          'No matches.',
-          style: TextStyle(
-            fontSize: 14,
-            color: AppColors.textTertiary,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _RecentRow extends StatelessWidget {
+class _RecentRowLeading extends StatelessWidget {
   final RecentFile file;
-  final VoidCallback onTap;
-  final VoidCallback onShare;
-  final VoidCallback onDelete;
-  const _RecentRow({
-    required this.file,
-    required this.onTap,
-    required this.onShare,
-    required this.onDelete,
-  });
+  const _RecentRowLeading({required this.file});
 
   String _ago(DateTime at) {
     final delta = DateTime.now().difference(at);
@@ -726,106 +653,111 @@ class _RecentRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(14),
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(14, 12, 4, 12),
-        child: Row(
-          children: [
-            _MiniPaper(),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        _MiniPaper(),
+        const SizedBox(width: 11),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                file.displayName,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textPrimary,
+                  height: 1.2,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Row(
                 children: [
-                  Text(
-                    file.displayName,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.textPrimary,
-                      height: 1.2,
-                    ),
+                  Icon(
+                    _toolIcon(),
+                    size: 12,
+                    color: AppColors.primary,
                   ),
-                  const SizedBox(height: 3),
-                  Row(
-                    children: [
-                      Icon(
-                        _toolIcon(),
-                        size: 12,
-                        color: AppColors.primary,
+                  const SizedBox(width: 5),
+                  Flexible(
+                    child: Text(
+                      '${file.toolLabel} · ${_ago(file.openedAt)} · '
+                      '${formatBytes(file.sizeBytes)}',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: 11,
+                        color: AppColors.textSecondary,
+                        fontWeight: FontWeight.w400,
                       ),
-                      const SizedBox(width: 5),
-                      Flexible(
-                        child: Text(
-                          '${file.toolLabel} · ${_ago(file.openedAt)} · '
-                          '${formatBytes(file.sizeBytes)}',
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            fontSize: 11,
-                            color: AppColors.textSecondary,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ),
-                    ],
+                    ),
                   ),
                 ],
               ),
-            ),
-            PopupMenuButton<String>(
-              icon: const Icon(
-                Icons.more_horiz,
-                color: AppColors.textTertiary,
-                size: 22,
-              ),
-              tooltip: 'More',
-              onSelected: (v) {
-                switch (v) {
-                  case 'share':
-                    onShare();
-                  case 'delete':
-                    onDelete();
-                }
-              },
-              itemBuilder: (_) => [
-                const PopupMenuItem(
-                  value: 'share',
-                  child: Row(
-                    children: [
-                      Icon(Icons.ios_share, size: 18),
-                      SizedBox(width: 10),
-                      Text('Share'),
-                    ],
-                  ),
-                ),
-                const PopupMenuItem(
-                  value: 'delete',
-                  child: Row(
-                    children: [
-                      Icon(
-                        Icons.delete_outline,
-                        size: 18,
-                        color: AppColors.error,
-                      ),
-                      SizedBox(width: 10),
-                      Text(
-                        'Remove from recents',
-                        style: TextStyle(color: AppColors.error),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ],
+            ],
+          ),
         ),
+      ],
+    );
+  }
+}
+
+class _RecentRowMenu extends StatelessWidget {
+  final VoidCallback onShare;
+  final VoidCallback onDelete;
+  const _RecentRowMenu({required this.onShare, required this.onDelete});
+
+  @override
+  Widget build(BuildContext context) {
+    return PopupMenuButton<String>(
+      icon: const Icon(
+        Icons.more_horiz,
+        color: AppColors.textTertiary,
+        size: 20,
       ),
+      tooltip: 'More',
+      padding: EdgeInsets.zero,
+      onSelected: (v) {
+        switch (v) {
+          case 'share':
+            onShare();
+          case 'delete':
+            onDelete();
+        }
+      },
+      itemBuilder: (_) => [
+        const PopupMenuItem(
+          value: 'share',
+          child: Row(
+            children: [
+              Icon(Icons.ios_share, size: 18),
+              SizedBox(width: 10),
+              Text('Share'),
+            ],
+          ),
+        ),
+        const PopupMenuItem(
+          value: 'delete',
+          child: Row(
+            children: [
+              Icon(
+                Icons.delete_outline,
+                size: 18,
+                color: AppColors.error,
+              ),
+              SizedBox(width: 10),
+              Text(
+                'Remove from recents',
+                style: TextStyle(color: AppColors.error),
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }
@@ -834,8 +766,8 @@ class _MiniPaper extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 38,
-      height: 46,
+      width: 36,
+      height: 44,
       padding: const EdgeInsets.fromLTRB(6, 9, 6, 0),
       decoration: BoxDecoration(
         color: AppColors.background,

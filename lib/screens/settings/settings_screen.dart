@@ -6,6 +6,7 @@ import 'package:package_info_plus/package_info_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../core/theme/colors.dart';
+import '../../core/theme/layout.dart';
 import '../../core/utils/responsive.dart';
 import '../../data/services/audit_service.dart';
 import '../../data/services/consent_service.dart';
@@ -14,8 +15,10 @@ import '../../data/services/haptics_service.dart';
 import '../../data/services/promo_code_service.dart';
 import '../../data/services/purchase_service.dart';
 import '../../data/services/widget_data_service.dart';
+import '../../widgets/app_card.dart';
 import '../../widgets/redeem_promo_dialog.dart';
-import '../../widgets/tool_chrome.dart';
+import '../../widgets/screen_container.dart';
+import '../../widgets/section_header.dart';
 import '../audit_log/audit_log_screen.dart';
 import '../pro/pro_screen.dart';
 import '../receipts/expense_ledger_screen.dart';
@@ -82,7 +85,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       case ProSku.lifetime:
         return 'Pro · Lifetime';
       case null:
-        // Promo or sandbox edge case — still Pro, just no SKU info.
         return 'Pro · active';
     }
   }
@@ -123,7 +125,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               autofocus: true,
               maxLength: 24,
               decoration: const InputDecoration(
-                hintText: 'e.g. Mustafa',
+                hintText: 'Your name',
                 border: OutlineInputBorder(),
               ),
             ),
@@ -149,7 +151,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         ],
       ),
     );
-    if (result == null) return; // cancelled
+    if (result == null) return;
     final trimmed = result.trim();
     await DisplayNameService.instance
         .set(trimmed.isEmpty ? null : trimmed);
@@ -207,18 +209,14 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     }
   }
 
-  /// Subscription management deep link. iOS opens the App Store
-  /// directly when this resolves; on simulator / signed-out devices
   Future<void> _openProScreen() async {
     HapticsService.instance.tap();
     await Navigator.of(context).push(
       MaterialPageRoute(builder: (_) => const ProScreen()),
     );
-    if (mounted) setState(() {}); // pick up post-purchase state change
+    if (mounted) setState(() {});
   }
 
-  /// it doesn't, so fall back to a dialog with the URL the user can
-  /// copy + open manually.
   Future<void> _openSubscriptions() async {
     HapticsService.instance.tap();
     const url = 'https://apps.apple.com/account/subscriptions';
@@ -246,7 +244,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               'apps.apple.com/account/subscriptions',
               style: TextStyle(
                 fontSize: 13,
-                fontWeight: FontWeight.w800,
+                fontWeight: FontWeight.w700,
                 color: AppColors.primary,
               ),
             ),
@@ -269,9 +267,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     );
   }
 
-  /// Email-the-developer link. iOS Mail / Outlook handle mailto if
-  /// configured; if not, fall back to a copyable address dialog so
-  /// the user can still get in touch.
   Future<void> _emailSupport() async {
     HapticsService.instance.tap();
     const email = 'mustafasalimerek@gmail.com';
@@ -299,7 +294,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               email,
               style: TextStyle(
                 fontSize: 14,
-                fontWeight: FontWeight.w800,
+                fontWeight: FontWeight.w700,
                 color: AppColors.primary,
               ),
             ),
@@ -325,9 +320,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   Future<void> _resurfaceConsent() async {
     HapticsService.instance.tap();
     await ConsentService.instance.resurfaceConsentForm();
-    // The UMP SDK is silent if the consent form isn't required for the
-    // current region / state — the user taps and sees nothing. Always
-    // surface a follow-up so the tap doesn't feel broken.
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
@@ -369,255 +361,258 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     final info = _info;
     return Scaffold(
       backgroundColor: AppColors.background,
-      // No AppBar — title is inline below.
       body: SafeArea(
         child: MaxWidthBody(
-          child: ListView(
-            padding: const EdgeInsets.fromLTRB(20, 14, 20, 28),
-            children: [
-              const PageTitle('Settings'),
-              const SizedBox(height: 18),
-              _ProTopCard(
-                onOpenPro: _openProScreen,
-                onManageSubscription: _openSubscriptions,
-              ),
-              const SizedBox(height: 24),
+          child: ScreenContainer(
+            title: 'Settings',
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                _ProTopCard(
+                  onOpenPro: _openProScreen,
+                  onManageSubscription: _openSubscriptions,
+                ),
+                const SizedBox(height: Layout.sectionSpacing),
 
-              // ACCOUNT -----------------------------------------------------
-              const _SectionLabel('Account'),
-              _SettingsCard(
-                children: [
-                  if (PurchaseService.instance.hasPro)
-                    _SettingsRow(
-                      icon: Icons.auto_awesome,
-                      title: _proPlanLabel(),
-                      subtitle: _proPlanSubtitle(),
-                      trailing: const _TextLink('Manage'),
-                      onTap: _openSubscriptions,
-                    ),
-                  _SettingsRow(
-                    icon: Icons.restart_alt_outlined,
-                    title: 'Restore purchases',
-                    subtitle: 'Recover a previous purchase on this Apple ID',
-                    onTap: _restorePurchases,
-                  ),
-                  _buildPromoRow(),
-                  if (kDebugMode)
-                    _SettingsRow(
-                      icon: Icons.bug_report_outlined,
-                      title: PurchaseService.instance.hasPro
-                          ? 'DEBUG: turn Pro OFF'
-                          : 'DEBUG: turn Pro ON',
-                      subtitle: 'Debug builds only — bypasses StoreKit',
-                      onTap: () async {
-                        HapticsService.instance.tap();
-                        await PurchaseService.instance.setProForTesting(
-                          !PurchaseService.instance.hasPro,
-                        );
-                        if (mounted) setState(() {});
-                      },
-                    ),
-                  if (kDebugMode &&
-                      (PromoCodeService.instance.hasActivePromo ||
-                          _promoUsed))
-                    _SettingsRow(
-                      icon: Icons.delete_sweep_outlined,
-                      title: 'DEBUG: clear promo redemptions',
-                      subtitle: 'Wipe redemption history — debug only',
-                      onTap: () async {
-                        HapticsService.instance.tap();
-                        await PromoCodeService.instance.clearForTesting();
-                        await _loadPromoState();
-                        if (mounted) setState(() {});
-                      },
-                    ),
-                ],
-              ),
-              const SizedBox(height: 24),
+                // ACCOUNT
+                const SectionHeader('Account'),
+                AppCard(children: _accountRows()),
+                const SizedBox(height: Layout.sectionSpacing),
 
-              // PERSONALIZATION --------------------------------------------
-              const _SectionLabel('Personalization'),
-              _SettingsCard(
-                children: [
-                  _SettingsRow(
-                    icon: Icons.person_outline,
-                    title: 'Display name',
-                    subtitle: 'For your home screen greeting',
-                    trailing: _displayName == null || _displayName!.isEmpty
-                        ? const _TrailingValue('Not set')
-                        : _TrailingValue(_displayName!),
-                    onTap: _editDisplayName,
-                  ),
-                  _SettingsRow(
-                    icon: Icons.palette_outlined,
-                    title: 'Appearance',
-                    subtitle: 'Match system',
-                    onTap: _openAppearance,
-                  ),
-                  _SettingsRow(
-                    icon: Icons.widgets_outlined,
-                    title: 'Widget privacy',
-                    subtitle: _widgetShowsNames
-                        ? 'Show file names on home screen'
-                        : 'Hide file names on home screen',
-                    trailing: Switch.adaptive(
-                      value: _widgetShowsNames,
-                      onChanged: (_) => _toggleWidgetNames(),
-                      activeThumbColor: AppColors.primary,
-                    ),
-                    onTap: _toggleWidgetNames,
-                  ),
-                ],
-              ),
-              const SizedBox(height: 24),
+                // PERSONALIZATION
+                const SectionHeader('Personalization'),
+                AppCard(children: _personalizationRows()),
+                const SizedBox(height: Layout.sectionSpacing),
 
-              // PRIVACY & DATA ---------------------------------------------
-              const _SectionLabel('Privacy & data'),
-              _SettingsCard(
-                children: [
-                  _SettingsRow(
-                    icon: Icons.receipt_long_outlined,
-                    title: 'Audit log',
-                    subtitle: _auditCount == 0
-                        ? 'No events yet · export or clear'
-                        : '$_auditCount event${_auditCount == 1 ? '' : 's'} · export or clear',
-                    onTap: () {
-                      HapticsService.instance.tap();
-                      Navigator.of(context)
-                          .push(
-                            MaterialPageRoute(
-                              builder: (_) => const AuditLogScreen(),
-                            ),
-                          )
-                          .then((_) => _loadAuditCount());
-                    },
-                  ),
-                  _SettingsRow(
-                    icon: Icons.account_balance_wallet_outlined,
-                    title: 'Expense ledger',
-                    subtitle: 'Receipts → QuickBooks-friendly CSV',
-                    onTap: () {
-                      HapticsService.instance.tap();
-                      Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (_) => const ExpenseLedgerScreen(),
-                        ),
-                      );
-                    },
-                  ),
-                  _SettingsRow(
-                    icon: Icons.shield_outlined,
-                    title: 'Data preferences',
-                    subtitle: 'Analytics, ads, California opt-out',
-                    onTap: _resurfaceConsent,
-                  ),
-                  _SettingsRow(
-                    icon: Icons.description_outlined,
-                    title: 'Privacy Policy',
-                    subtitle: 'What we collect — and what we never collect',
-                    onTap: () => _open(
-                      'https://mustafasalimerek-bit.github.io/pdfprivio/privacy/',
-                    ),
-                  ),
-                  _SettingsRow(
-                    icon: Icons.gavel_outlined,
-                    title: 'Terms of Service',
-                    subtitle: 'The rules of using PDFPrivio',
-                    onTap: () => _open(
-                      'https://mustafasalimerek-bit.github.io/pdfprivio/terms/',
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 24),
+                // PRIVACY & DATA
+                const SectionHeader('Privacy & data'),
+                AppCard(children: _privacyRows()),
+                const SizedBox(height: Layout.sectionSpacing),
 
-              // iOS INTEGRATIONS -------------------------------------------
-              const _SectionLabel('iOS integrations'),
-              _SettingsCard(
-                children: [
-                  _SettingsRow(
-                    icon: Icons.bolt_outlined,
-                    title: 'Action Button',
-                    subtitle: 'Bind Scan to PDF on iPhone 15 Pro+',
-                    onTap: _showActionButtonDialog,
-                  ),
-                  _SettingsRow(
-                    icon: Icons.tune_outlined,
-                    title: 'Control Center',
-                    subtitle: 'iOS 18+ Lock Screen quick scan',
-                    onTap: _showControlCenterDialog,
-                  ),
-                ],
-              ),
-              const SizedBox(height: 24),
+                // iOS INTEGRATIONS
+                const SectionHeader('iOS integrations'),
+                AppCard(children: _integrationRows()),
+                const SizedBox(height: Layout.sectionSpacing),
 
-              // ABOUT ------------------------------------------------------
-              const _SectionLabel('About'),
-              _SettingsCard(
-                children: [
-                  _SettingsRow(
-                    icon: Icons.info_outline,
-                    title: 'About PDFPrivio',
-                    subtitle: 'On-device PDF toolkit by Erek Studio',
-                    onTap: () => _open(
-                      'https://mustafasalimerek-bit.github.io/pdfprivio/',
+                // ABOUT
+                const SectionHeader('About'),
+                AppCard(children: _aboutRows()),
+                const SizedBox(height: 18),
+
+                // Disclaimer + version footer
+                const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 4),
+                  child: Text(
+                    'PDFPrivio is a tool, not legal, medical, financial, '
+                    'or tax advice. Outputs are aids — not substitutes for '
+                    'human review.',
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: AppColors.textTertiary,
+                      height: 1.5,
                     ),
-                  ),
-                  _SettingsRow(
-                    icon: Icons.mail_outline,
-                    title: 'Contact support',
-                    subtitle: 'Questions, bugs, feature requests',
-                    onTap: _emailSupport,
-                  ),
-                ],
-              ),
-              const SizedBox(height: 20),
-
-              // Disclaimer + version footer (kept terse) -------------------
-              const Padding(
-                padding: EdgeInsets.symmetric(horizontal: 4),
-                child: Text(
-                  'PDFPrivio is a tool, not legal, medical, financial, '
-                  'or tax advice. Outputs are aids — not substitutes for '
-                  'human review.',
-                  style: TextStyle(
-                    fontSize: 11,
-                    color: AppColors.textTertiary,
-                    height: 1.5,
                   ),
                 ),
-              ),
-              const SizedBox(height: 18),
-              Center(
-                child: Text(
-                  info == null
-                      ? ''
-                      : 'PDFPrivio ${info.version} (${info.buildNumber})',
-                  style: const TextStyle(
-                    fontSize: 12,
-                    color: AppColors.textTertiary,
-                    fontWeight: FontWeight.w600,
+                const SizedBox(height: 16),
+                Center(
+                  child: Text(
+                    info == null
+                        ? ''
+                        : 'PDFPrivio ${info.version} (${info.buildNumber})',
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: AppColors.textTertiary,
+                      fontWeight: FontWeight.w500,
+                    ),
                   ),
                 ),
-              ),
-              const SizedBox(height: 4),
-              const Center(
-                child: Text(
-                  'Made by Erek Studio · Istanbul',
-                  style: TextStyle(
-                    fontSize: 11,
-                    color: AppColors.textTertiary,
+                const SizedBox(height: 4),
+                const Center(
+                  child: Text(
+                    'Made by Erek Studio · Istanbul',
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: AppColors.textTertiary,
+                    ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
     );
   }
 
-  Widget _buildPromoRow() {
+  List<Widget> _accountRows() {
+    final rows = <_RowSpec>[];
+    if (PurchaseService.instance.hasPro) {
+      rows.add(_RowSpec(
+        icon: Icons.auto_awesome,
+        title: _proPlanLabel(),
+        subtitle: _proPlanSubtitle(),
+        trailing: const _TextLink('Manage'),
+        onTap: _openSubscriptions,
+      ));
+    }
+    rows.add(_RowSpec(
+      icon: Icons.restart_alt_outlined,
+      title: 'Restore purchases',
+      subtitle: 'Recover a previous purchase on this Apple ID',
+      onTap: _restorePurchases,
+    ));
+    rows.add(_promoRowSpec());
+    if (kDebugMode) {
+      rows.add(_RowSpec(
+        icon: Icons.bug_report_outlined,
+        title: PurchaseService.instance.hasPro
+            ? 'DEBUG: turn Pro OFF'
+            : 'DEBUG: turn Pro ON',
+        subtitle: 'Debug builds only — bypasses StoreKit',
+        onTap: () async {
+          HapticsService.instance.tap();
+          await PurchaseService.instance.setProForTesting(
+            !PurchaseService.instance.hasPro,
+          );
+          if (mounted) setState(() {});
+        },
+      ));
+    }
+    if (kDebugMode &&
+        (PromoCodeService.instance.hasActivePromo || _promoUsed)) {
+      rows.add(_RowSpec(
+        icon: Icons.delete_sweep_outlined,
+        title: 'DEBUG: clear promo redemptions',
+        subtitle: 'Wipe redemption history — debug only',
+        onTap: () async {
+          HapticsService.instance.tap();
+          await PromoCodeService.instance.clearForTesting();
+          await _loadPromoState();
+          if (mounted) setState(() {});
+        },
+      ));
+    }
+    return _build(rows);
+  }
+
+  List<Widget> _personalizationRows() => _build([
+        _RowSpec(
+          icon: Icons.person_outline,
+          title: 'Display name',
+          subtitle: 'For your home screen greeting',
+          trailing: CardRowTrailingValue(
+            _displayName == null || _displayName!.isEmpty
+                ? 'Not set'
+                : _displayName!,
+          ),
+          onTap: _editDisplayName,
+        ),
+        _RowSpec(
+          icon: Icons.palette_outlined,
+          title: 'Appearance',
+          subtitle: 'Match system',
+          onTap: _openAppearance,
+        ),
+        _RowSpec(
+          icon: Icons.widgets_outlined,
+          title: 'Widget privacy',
+          subtitle: _widgetShowsNames
+              ? 'Show file names on home screen'
+              : 'Hide file names on home screen',
+          trailing: Switch.adaptive(
+            value: _widgetShowsNames,
+            onChanged: (_) => _toggleWidgetNames(),
+            activeThumbColor: AppColors.primary,
+          ),
+          onTap: _toggleWidgetNames,
+        ),
+      ]);
+
+  List<Widget> _privacyRows() => _build([
+        _RowSpec(
+          icon: Icons.receipt_long_outlined,
+          title: 'Audit log',
+          subtitle: _auditCount == 0
+              ? 'No events yet · export or clear'
+              : '$_auditCount event${_auditCount == 1 ? '' : 's'} · export or clear',
+          onTap: () {
+            HapticsService.instance.tap();
+            Navigator.of(context)
+                .push(
+                  MaterialPageRoute(
+                    builder: (_) => const AuditLogScreen(),
+                  ),
+                )
+                .then((_) => _loadAuditCount());
+          },
+        ),
+        _RowSpec(
+          icon: Icons.account_balance_wallet_outlined,
+          title: 'Expense ledger',
+          subtitle: 'Receipts → QuickBooks-friendly CSV',
+          onTap: () {
+            HapticsService.instance.tap();
+            Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (_) => const ExpenseLedgerScreen(),
+              ),
+            );
+          },
+        ),
+        _RowSpec(
+          icon: Icons.shield_outlined,
+          title: 'Data preferences',
+          subtitle: 'Analytics, ads, California opt-out',
+          onTap: _resurfaceConsent,
+        ),
+        _RowSpec(
+          icon: Icons.description_outlined,
+          title: 'Privacy Policy',
+          subtitle: 'What we collect — and what we never collect',
+          onTap: () => _open(
+              'https://mustafasalimerek-bit.github.io/pdfprivio/privacy/'),
+        ),
+        _RowSpec(
+          icon: Icons.gavel_outlined,
+          title: 'Terms of Service',
+          subtitle: 'The rules of using PDFPrivio',
+          onTap: () => _open(
+              'https://mustafasalimerek-bit.github.io/pdfprivio/terms/'),
+        ),
+      ]);
+
+  List<Widget> _integrationRows() => _build([
+        _RowSpec(
+          icon: Icons.bolt_outlined,
+          title: 'Action Button',
+          subtitle: 'Bind Scan to PDF on iPhone 15 Pro+',
+          onTap: _showActionButtonDialog,
+        ),
+        _RowSpec(
+          icon: Icons.tune_outlined,
+          title: 'Control Center',
+          subtitle: 'iOS 18+ Lock Screen quick scan',
+          onTap: _showControlCenterDialog,
+        ),
+      ]);
+
+  List<Widget> _aboutRows() => _build([
+        _RowSpec(
+          icon: Icons.info_outline,
+          title: 'About PDFPrivio',
+          subtitle: 'On-device PDF toolkit by Erek Studio',
+          onTap: () =>
+              _open('https://mustafasalimerek-bit.github.io/pdfprivio/'),
+        ),
+        _RowSpec(
+          icon: Icons.mail_outline,
+          title: 'Contact support',
+          subtitle: 'Questions, bugs, feature requests',
+          onTap: _emailSupport,
+        ),
+      ]);
+
+  _RowSpec _promoRowSpec() {
     final timeLeft = PromoCodeService.instance.timeLeft;
     final hasActive = timeLeft != null;
     final daysLeft = hasActive ? timeLeft.inDays : 0;
@@ -634,12 +629,31 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       title = 'Redeem a promo code';
       subtitle = '14 days of Pro, no purchase';
     }
-    return _SettingsRow(
+    return _RowSpec(
       icon: Icons.card_giftcard_outlined,
       title: title,
       subtitle: subtitle,
       onTap: _openRedeemDialog,
     );
+  }
+
+  /// Turn a list of row specs into [CardRow]s with correct `isLast`,
+  /// auto-attaching a chevron when no trailing is supplied.
+  List<Widget> _build(List<_RowSpec> rows) {
+    return [
+      for (var i = 0; i < rows.length; i++)
+        CardRow(
+          isLast: i == rows.length - 1,
+          onTap: rows[i].onTap,
+          leading: CardRowLeading(
+            icon: rows[i].icon,
+            title: rows[i].title,
+            subtitle: rows[i].subtitle,
+          ),
+          trailing: rows[i].trailing ??
+              (rows[i].onTap != null ? const CardRowChevron() : null),
+        ),
+    ];
   }
 
   void _showActionButtonDialog() {
@@ -703,17 +717,26 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   }
 }
 
-// ============================================================================
-// Layout primitives
-// ============================================================================
+/// Plain data shape so [_build] can wire each row uniformly.
+class _RowSpec {
+  final IconData icon;
+  final String title;
+  final String? subtitle;
+  final Widget? trailing;
+  final VoidCallback? onTap;
 
-/// Privacy hero card — dark teal, full-width, rounded. Shield glyph
-/// + "Working offline" / "No cloud uploads…" + a small pulse dot.
-/// Sits between the screen title and the first section as the one
-/// Top-of-Settings hero card. Free users see the Pro upsell with a
-/// "Start 7-day free trial" pill that pushes ProScreen; Pro users see
-/// a quieter "Pro active" thank-you card with a Manage link that
-/// opens the App Store subscriptions page.
+  _RowSpec({
+    required this.icon,
+    required this.title,
+    this.subtitle,
+    this.trailing,
+    this.onTap,
+  });
+}
+
+/// Dark-teal hero card at the top of Settings. Drives the Pro
+/// upsell for free users and surfaces "Manage subscription" for
+/// active Pro users.
 class _ProTopCard extends StatelessWidget {
   final VoidCallback onOpenPro;
   final VoidCallback onManageSubscription;
@@ -727,15 +750,12 @@ class _ProTopCard extends StatelessWidget {
     final hasPro = PurchaseService.instance.hasPro;
     return Material(
       color: AppColors.primary,
-      borderRadius: BorderRadius.circular(20),
+      borderRadius: BorderRadius.circular(Layout.heroCornerRadius),
       child: InkWell(
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(Layout.heroCornerRadius),
         onTap: hasPro ? onManageSubscription : onOpenPro,
-        child: Container(
-          padding: const EdgeInsets.fromLTRB(20, 18, 20, 20),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(20),
-          ),
+        child: Padding(
+          padding: const EdgeInsets.all(Layout.heroPadding),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -759,7 +779,7 @@ class _ProTopCard extends StatelessWidget {
                       hasPro ? 'PDFPRIVIO PRO · ACTIVE' : 'PDFPRIVIO PRO',
                       style: const TextStyle(
                         fontSize: 10,
-                        fontWeight: FontWeight.w800,
+                        fontWeight: FontWeight.w700,
                         color: Colors.white,
                         letterSpacing: 0.6,
                       ),
@@ -772,7 +792,7 @@ class _ProTopCard extends StatelessWidget {
                 hasPro ? 'Full toolkit unlocked' : 'Unlock the full toolkit',
                 style: const TextStyle(
                   fontSize: 22,
-                  fontWeight: FontWeight.w800,
+                  fontWeight: FontWeight.w600,
                   color: Colors.white,
                   letterSpacing: -0.3,
                 ),
@@ -785,14 +805,16 @@ class _ProTopCard extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 13,
                   color: Colors.white.withValues(alpha: 0.86),
-                  fontWeight: FontWeight.w500,
+                  fontWeight: FontWeight.w400,
                   height: 1.4,
                 ),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 14),
               Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 9,
+                ),
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(99),
@@ -806,7 +828,7 @@ class _ProTopCard extends StatelessWidget {
                           : 'Start 7-day free trial',
                       style: const TextStyle(
                         fontSize: 13,
-                        fontWeight: FontWeight.w800,
+                        fontWeight: FontWeight.w600,
                         color: AppColors.primary,
                       ),
                     ),
@@ -814,7 +836,7 @@ class _ProTopCard extends StatelessWidget {
                     const Icon(
                       Icons.arrow_forward,
                       color: AppColors.primary,
-                      size: 14,
+                      size: 13,
                     ),
                   ],
                 ),
@@ -827,180 +849,7 @@ class _ProTopCard extends StatelessWidget {
   }
 }
 
-/// Uppercase grey label that sits above each [_SettingsCard].
-class _SectionLabel extends StatelessWidget {
-  final String label;
-  const _SectionLabel(this.label);
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(4, 0, 4, 8),
-      child: Text(
-        label.toUpperCase(),
-        style: const TextStyle(
-          fontSize: 11,
-          fontWeight: FontWeight.w800,
-          color: AppColors.textTertiary,
-          letterSpacing: 1.2,
-        ),
-      ),
-    );
-  }
-}
-
-/// White rounded card that groups multiple [_SettingsRow]s with
-/// hair dividers between them. Replaces the older per-row bordered
-/// cards — cleaner visual when 5 rows stack vertically.
-class _SettingsCard extends StatelessWidget {
-  final List<Widget> children;
-  const _SettingsCard({required this.children});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: AppColors.border),
-      ),
-      child: Column(
-        children: [
-          for (var i = 0; i < children.length; i++) ...[
-            children[i],
-            if (i != children.length - 1)
-              Padding(
-                padding: const EdgeInsets.only(left: 62),
-                child: Divider(
-                  height: 1,
-                  thickness: 1,
-                  color: AppColors.border.withValues(alpha: 0.6),
-                ),
-              ),
-          ],
-        ],
-      ),
-    );
-  }
-}
-
-/// Single row inside a [_SettingsCard]. Round mint icon bubble +
-/// title + 1-line subtitle on the left, optional trailing widget
-/// (current value text, "Manage" link, Switch, etc.) on the right,
-/// chevron when no trailing.
-class _SettingsRow extends StatelessWidget {
-  final IconData icon;
-  final String title;
-  final String? subtitle;
-  final Widget? trailing;
-  final VoidCallback? onTap;
-
-  const _SettingsRow({
-    required this.icon,
-    required this.title,
-    this.subtitle,
-    this.trailing,
-    this.onTap,
-  });
-
-  bool get _showChevron =>
-      onTap != null && trailing is! Switch && trailing is! _TrailingValue;
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(18),
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
-        child: Row(
-          children: [
-            Container(
-              width: 36,
-              height: 36,
-              decoration: BoxDecoration(
-                color: AppColors.iconTint,
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Icon(icon, color: AppColors.primary, size: 18),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    title,
-                    style: const TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w700,
-                      height: 1.15,
-                    ),
-                  ),
-                  if (subtitle != null) ...[
-                    const SizedBox(height: 2),
-                    Text(
-                      subtitle!,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: AppColors.textSecondary,
-                        height: 1.3,
-                      ),
-                    ),
-                  ],
-                ],
-              ),
-            ),
-            if (trailing != null) ...[
-              const SizedBox(width: 8),
-              trailing!,
-            ],
-            if (_showChevron) ...[
-              const SizedBox(width: 4),
-              const Icon(
-                Icons.chevron_right,
-                color: AppColors.textTertiary,
-                size: 20,
-              ),
-            ],
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-/// Right-aligned grey value (e.g. "Mustafa", "Match system") shown
-/// inside a row. The wrapper is a marker type so [_SettingsRow]
-/// knows to skip the chevron when the row has a current value.
-class _TrailingValue extends StatelessWidget {
-  final String text;
-  const _TrailingValue(this.text);
-
-  @override
-  Widget build(BuildContext context) {
-    return ConstrainedBox(
-      constraints: const BoxConstraints(maxWidth: 140),
-      child: Text(
-        text,
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-        textAlign: TextAlign.end,
-        style: const TextStyle(
-          fontSize: 14,
-          color: AppColors.textTertiary,
-          fontWeight: FontWeight.w600,
-        ),
-      ),
-    );
-  }
-}
-
-/// Teal text "Manage" / "Open" link shown trailing in a row when
-/// the row's action is meaningfully named (vs. a generic chevron).
+/// Teal "Manage" / "Open" trailing link.
 class _TextLink extends StatelessWidget {
   final String label;
   const _TextLink(this.label);
@@ -1013,7 +862,7 @@ class _TextLink extends StatelessWidget {
         label,
         style: const TextStyle(
           fontSize: 14,
-          fontWeight: FontWeight.w700,
+          fontWeight: FontWeight.w600,
           color: AppColors.primary,
         ),
       ),
