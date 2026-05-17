@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../core/constants/price_fallbacks.dart';
-import '../../core/theme/colors.dart';
 import '../../data/services/haptics_service.dart';
 import '../../data/services/onboarding_service.dart';
 import '../../data/services/purchase_service.dart';
@@ -36,15 +35,23 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   ProSku _selectedSku = ProSku.yearly;
   bool _buying = false;
 
-  // Onboarding-local design tokens; kept off AppColors on purpose
-  // so the spec values don't leak into the rest of the app.
+  // Onboarding-local design tokens; kept off AppColors on purpose so
+  // the spec values don't leak into the rest of the app — and so the
+  // rest of the app's palette changes don't leak in here.
+  //
+  // _textPrimary mirrors AppColors.textPrimary (#0F172A) so onboarding
+  // typography matches the rest of the app — slate-900, not pure black.
+  // The other tokens (_bgCream, _teal, _tealBg, …) stay intentionally
+  // distinct because they're brand-isolation decisions.
   static const _bgCream = Color(0xFFF5F4EF);
   static const _tealBg = Color(0xFFE1F5EE);
   static const _teal = Color(0xFF0F6E56);
-  static const _textPrimary = Color(0xFF000000);
+  static const _textPrimary = Color(0xFF0F172A);
   static const _textSecondary = Color(0xFF6B6B6B);
   static const _textTertiary = Color(0xFF888780);
   static const _dotInactive = Color(0xFFD3D1C7);
+  static const _warning = Color(0xFFF59E0B); // mirrors _OnboardingScreenState._warning
+  static const _border = Color(0xFFE7E0D2); // mirrors _OnboardingScreenState._border
 
   @override
   void dispose() {
@@ -204,6 +211,14 @@ class PrivacyPromiseView extends StatelessWidget {
           decoration: BoxDecoration(
             color: _OnboardingScreenState._tealBg,
             borderRadius: BorderRadius.circular(22),
+            boxShadow: [
+              BoxShadow(
+                color: _OnboardingScreenState._teal.withValues(alpha: 0.08),
+                blurRadius: 24,
+                offset: const Offset(0, 8),
+                spreadRadius: -4,
+              ),
+            ],
           ),
           child: const Icon(
             Icons.security,
@@ -449,6 +464,14 @@ class TrialPaywallView extends StatelessWidget {
           decoration: BoxDecoration(
             color: _OnboardingScreenState._tealBg,
             borderRadius: BorderRadius.circular(22),
+            boxShadow: [
+              BoxShadow(
+                color: _OnboardingScreenState._teal.withValues(alpha: 0.08),
+                blurRadius: 24,
+                offset: const Offset(0, 8),
+                spreadRadius: -4,
+              ),
+            ],
           ),
           child: const Icon(
             Icons.auto_awesome,
@@ -518,7 +541,7 @@ class TrialPaywallView extends StatelessWidget {
           onPressed: busy ? null : onStartTrial,
           busy: busy,
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 14),
         Text(
           _footerLine(),
           textAlign: TextAlign.center,
@@ -740,7 +763,7 @@ class _PriceCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Material(
       color: selected
-          ? _OnboardingScreenState._teal.withValues(alpha: 0.06)
+          ? _OnboardingScreenState._tealBg
           : Colors.white,
       borderRadius: BorderRadius.circular(14),
       child: InkWell(
@@ -753,7 +776,7 @@ class _PriceCard extends StatelessWidget {
             border: Border.all(
               color: selected
                   ? _OnboardingScreenState._teal
-                  : AppColors.border,
+                  : _OnboardingScreenState._border,
               width: selected ? 1.5 : 1,
             ),
           ),
@@ -782,16 +805,16 @@ class _PriceCard extends StatelessWidget {
                               vertical: 2,
                             ),
                             decoration: BoxDecoration(
-                              color: AppColors.warning,
+                              color: _OnboardingScreenState._warning,
                               borderRadius: BorderRadius.circular(99),
                             ),
                             child: Text(
                               badge!,
                               style: const TextStyle(
-                                fontSize: 9,
-                                fontWeight: FontWeight.w800,
+                                fontSize: 10,
+                                fontWeight: FontWeight.w700,
                                 color: Colors.white,
-                                letterSpacing: 0.5,
+                                letterSpacing: 0.4,
                               ),
                             ),
                           ),
@@ -832,7 +855,7 @@ class _PriceCard extends StatelessWidget {
                   border: Border.all(
                     color: selected
                         ? _OnboardingScreenState._teal
-                        : AppColors.border,
+                        : _OnboardingScreenState._border,
                     width: 1.5,
                   ),
                   shape: BoxShape.circle,
@@ -879,14 +902,14 @@ class _InlineDot extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Padding(
-      padding: EdgeInsets.symmetric(horizontal: 5),
-      child: Text(
-        '·',
-        style: TextStyle(
-          fontSize: 12,
-          fontWeight: FontWeight.w600,
-          color: AppColors.border,
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 6),
+      child: Container(
+        width: 3,
+        height: 3,
+        decoration: const BoxDecoration(
+          color: _OnboardingScreenState._dotInactive,
+          shape: BoxShape.circle,
         ),
       ),
     );
