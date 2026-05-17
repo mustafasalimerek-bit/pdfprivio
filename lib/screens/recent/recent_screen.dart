@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:file_picker/file_picker.dart';
@@ -40,25 +41,34 @@ class _RecentScreenState extends State<RecentScreen> {
   String _query = '';
   String _filter = 'All';
   final TextEditingController _searchController = TextEditingController();
+  StreamSubscription<void>? _recentChangesSub;
 
-  static const List<String> _filterChips = [
-    'All',
-    'Scanned',
-    'Signed',
-    'Merged',
-  ];
+  /// Derived from the current `_files` list — only shows chips for tool
+  /// labels that actually exist in the user's history, ordered by how
+  /// many entries each tool produced. The static "All / Scanned /
+  /// Signed / Merged" set was misleading for the other 20 tools.
+  List<String> get _filterChips {
+    final byFrequency = <String, int>{};
+    for (final f in _files) {
+      byFrequency[f.toolLabel] = (byFrequency[f.toolLabel] ?? 0) + 1;
+    }
+    final sorted = byFrequency.keys.toList()
+      ..sort((a, b) => byFrequency[b]!.compareTo(byFrequency[a]!));
+    return ['All', ...sorted];
+  }
 
   @override
   void initState() {
     super.initState();
     _load();
-    RecentFilesService.instance.changes.listen((_) {
+    _recentChangesSub = RecentFilesService.instance.changes.listen((_) {
       if (mounted) _load();
     });
   }
 
   @override
   void dispose() {
+    _recentChangesSub?.cancel();
     _searchController.dispose();
     super.dispose();
   }
@@ -69,6 +79,14 @@ class _RecentScreenState extends State<RecentScreen> {
     setState(() {
       _files = files;
       _loaded = true;
+      // If the active filter pointed at a tool that no longer has any
+      // entries (user deleted the last "Signed" file, etc.), the chip
+      // would vanish and the filtered list go empty — leaving the user
+      // staring at "No matches" with no way to recover. Reset to All
+      // so the visible state stays coherent.
+      if (_filter != 'All' && !_filterChips.contains(_filter)) {
+        _filter = 'All';
+      }
     });
   }
 
@@ -146,6 +164,9 @@ class _RecentScreenState extends State<RecentScreen> {
   }
 
   List<RecentFile> get _filtered {
+    // Filter validity is enforced inside `_load()` (the single
+    // entry-point that mutates `_files`), so we don't need a build-time
+    // postframe callback here.
     return _files.where((f) {
       if (_filter != 'All' && f.toolLabel != _filter) return false;
       if (_query.isEmpty) return true;
@@ -399,8 +420,16 @@ class _Populated extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const PrivacyPill(),
-          const SizedBox(height: 14),
+          // PrivacyPill sits directly under the title — matches the empty
+          // state's top bar so the on-device promise lives in the same
+          // visual slot regardless of which Recent view the user lands on.
+          const Padding(
+            padding: EdgeInsets.only(bottom: 18),
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: PrivacyPill(),
+            ),
+          ),
           _SearchBar(
             controller: searchController,
             onChanged: onSearch,
@@ -432,14 +461,12 @@ class _Populated extends StatelessWidget {
               AppCard(
                 children: [
                   for (var i = 0; i < section.files.length; i++)
-                    CardRow(
+                    _SwipeToDeleteRow(
+                      file: section.files[i],
                       isLast: i == section.files.length - 1,
                       onTap: () => onTap(section.files[i]),
-                      leading: _RecentRowLeading(file: section.files[i]),
-                      trailing: _RecentRowMenu(
-                        onShare: () => onShare(section.files[i]),
-                        onDelete: () => onDelete(section.files[i]),
-                      ),
+                      onShare: () => onShare(section.files[i]),
+                      onDelete: () => onDelete(section.files[i]),
                     ),
                 ],
               ),
@@ -502,7 +529,7 @@ class _SearchBar extends StatelessWidget {
         controller: controller,
         onChanged: onChanged,
         decoration: const InputDecoration(
-          hintText: 'Search by name or content',
+          hintText: 'Search by file name',
           hintStyle: TextStyle(
             color: AppColors.textTertiary,
             fontSize: 14,
@@ -656,7 +683,7 @@ class _RecentRowLeading extends StatelessWidget {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        _MiniPaper(),
+        const _MiniPaper(),
         const SizedBox(width: 11),
         Expanded(
           child: Column(
@@ -702,6 +729,90 @@ class _RecentRowLeading extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+/// iOS-native swipe-to-delete wrapper around [CardRow]. Sliding the
+/// row left reveals a red delete affordance; releasing past threshold
+/// triggers a "Remove from recents?" confirm dialog. The 3-dot menu
+/// Share / Delete entries stay as well — keyboard / VoiceOver users
+/// and folks who don't discover the gesture get the same actions.
+///
+/// The opaque `ColoredBox` is important: `CardRow` is transparent
+/// (its visible white background comes from the enclosing `AppCard`),
+/// so without the ColoredBox the `Dismissible.background` red would
+/// show through the row instead of being revealed only as it swipes.
+class _SwipeToDeleteRow extends StatelessWidget {
+  final RecentFile file;
+  final bool isLast;
+  final VoidCallback onTap;
+  final VoidCallback onShare;
+  final VoidCallback onDelete;
+
+  const _SwipeToDeleteRow({
+    required this.file,
+    required this.isLast,
+    required this.onTap,
+    required this.onShare,
+    required this.onDelete,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Dismissible(
+      key: ValueKey(file.id),
+      direction: DismissDirection.endToStart,
+      background: Container(
+        alignment: Alignment.centerRight,
+        padding: const EdgeInsets.symmetric(horizontal: 20),
+        color: AppColors.error,
+        child: const Icon(
+          Icons.delete_outline,
+          color: Colors.white,
+          size: 22,
+        ),
+      ),
+      confirmDismiss: (_) async {
+        HapticsService.instance.select();
+        return await showDialog<bool>(
+          context: context,
+          builder: (ctx) => AlertDialog(
+            title: const Text('Remove from recents?'),
+            content: const Text(
+              'The PDF stays on your device. Only the shortcut here is '
+              'removed.',
+              style: TextStyle(fontSize: 13),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(ctx).pop(false),
+                child: const Text('Cancel'),
+              ),
+              FilledButton(
+                onPressed: () => Navigator.of(ctx).pop(true),
+                style: FilledButton.styleFrom(
+                  backgroundColor: AppColors.error,
+                ),
+                child: const Text('Remove'),
+              ),
+            ],
+          ),
+        );
+      },
+      onDismissed: (_) => onDelete(),
+      child: ColoredBox(
+        color: AppColors.surface,
+        child: CardRow(
+          isLast: isLast,
+          onTap: onTap,
+          leading: _RecentRowLeading(file: file),
+          trailing: _RecentRowMenu(
+            onShare: onShare,
+            onDelete: onDelete,
+          ),
+        ),
+      ),
     );
   }
 }
@@ -763,6 +874,8 @@ class _RecentRowMenu extends StatelessWidget {
 }
 
 class _MiniPaper extends StatelessWidget {
+  const _MiniPaper();
+
   @override
   Widget build(BuildContext context) {
     return Container(
