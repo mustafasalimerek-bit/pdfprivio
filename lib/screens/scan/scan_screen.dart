@@ -49,9 +49,10 @@ class _ScanScreenState extends ConsumerState<ScanScreen> {
     setState(() => _scannerAvailable = avail);
   }
 
-  Future<void> _scan() async {
+  Future<void> _scan({ScanMode mode = ScanMode.doc}) async {
     HapticsService.instance.tap();
-    final result = await DocumentScannerService.instance.scan();
+    final result =
+        await DocumentScannerService.instance.scan(mode: mode);
     if (!mounted) return;
     switch (result) {
       case Ok(:final value):
@@ -60,7 +61,20 @@ class _ScanScreenState extends ConsumerState<ScanScreen> {
           return;
         }
         HapticsService.instance.success();
-        await _pushResult(value.pdfFile!, sourceCount: _estimatePageCount(value.pdfFile!));
+
+        // Receipt mode with an extracted amount → offer the Expense
+        // Ledger pre-fill before pushing the result screen. The PDF
+        // gets saved either way.
+        if (value.mode == ScanMode.receipt &&
+            value.metadata?.extractedAmount != null) {
+          await _maybePromptExpenseLedger(value);
+          return;
+        }
+
+        await _pushResult(
+          value.pdfFile!,
+          sourceCount: _estimatePageCount(value.pdfFile!),
+        );
       case Err(:final message):
         HapticsService.instance.error();
         ScaffoldMessenger.of(context).showSnackBar(
@@ -70,6 +84,66 @@ class _ScanScreenState extends ConsumerState<ScanScreen> {
           ),
         );
     }
+  }
+
+  /// Receipt mode flow: shows a dialog with the extracted merchant /
+  /// amount / date and asks the user whether to log it in the Expense
+  /// Ledger. The actual ledger write lives in ExpenseLedgerService —
+  /// wired in a follow-up task. For now we confirm intent and continue
+  /// the normal save flow.
+  Future<void> _maybePromptExpenseLedger(ScanOutcome outcome) async {
+    final meta = outcome.metadata!;
+    final amount = meta.extractedAmount;
+    final date = meta.extractedDate ?? DateTime.now();
+    final merchant = meta.extractedMerchant ?? 'Receipt';
+    final currency = meta.extractedCurrency ?? 'USD';
+
+    final addToLedger = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Add to Expense Ledger?'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Merchant: $merchant'),
+            Text(
+              'Amount: $currency ${amount?.toStringAsFixed(2) ?? '—'}',
+            ),
+            Text(
+              'Date: ${date.toLocal().toString().split(' ').first}',
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              'Tap Add to track this in Expense Ledger. The receipt PDF '
+              'is saved either way.',
+              style: TextStyle(fontSize: 12),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text('Skip'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: const Text('Add'),
+          ),
+        ],
+      ),
+    );
+
+    if (!mounted) return;
+    if (addToLedger == true) {
+      // TODO(@scanner): wire ExpenseLedgerService.instance.add(...)
+      // when the receipt-side schema lands.
+    }
+
+    await _pushResult(
+      outcome.pdfFile!,
+      sourceCount: _estimatePageCount(outcome.pdfFile!),
+    );
   }
 
   /// Cheap heuristic — we don't crack the PDF open here just for the

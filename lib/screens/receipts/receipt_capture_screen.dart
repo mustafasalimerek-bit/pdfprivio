@@ -81,7 +81,9 @@ class _ReceiptCaptureScreenState
 
   Future<void> _scan() async {
     HapticsService.instance.tap();
-    final res = await DocumentScannerService.instance.scan();
+    final res = await DocumentScannerService.instance.scan(
+      mode: ScanMode.receipt,
+    );
     if (!mounted) return;
     switch (res) {
       case Ok(:final value):

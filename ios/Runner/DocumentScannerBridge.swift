@@ -18,17 +18,147 @@ extension Color {
   static let brandTeal = Color(red: 0x0F / 255.0,
                                green: 0x76 / 255.0,
                                blue: 0x6E / 255.0)
+  static let brandTealDark = Color(red: 0x0B / 255.0,
+                                   green: 0x56 / 255.0,
+                                   blue: 0x50 / 255.0)
   static let brandTealLight = Color(red: 0x14 / 255.0,
                                     green: 0xB8 / 255.0,
                                     blue: 0xA6 / 255.0)
+  static let brandTealBg = Color(red: 0xDD / 255.0,
+                                 green: 0xEA / 255.0,
+                                 blue: 0xE6 / 255.0)
   static let brandCream = Color(red: 0xF5 / 255.0,
                                 green: 0xF1 / 255.0,
                                 blue: 0xEA / 255.0)
+  static let brandBorder = Color(red: 0xE7 / 255.0,
+                                 green: 0xE0 / 255.0,
+                                 blue: 0xD2 / 255.0)
+  static let brandTextPrimary = Color(red: 0x0F / 255.0,
+                                      green: 0x17 / 255.0,
+                                      blue: 0x2A / 255.0)
+  static let brandTextSecondary = Color(red: 0x64 / 255.0,
+                                        green: 0x74 / 255.0,
+                                        blue: 0x8B / 255.0)
+  static let brandTextTertiary = Color(red: 0x94 / 255.0,
+                                       green: 0xA3 / 255.0,
+                                       blue: 0xB8 / 255.0)
+  static let brandSuccess = Color(red: 0x10 / 255.0,
+                                  green: 0xB9 / 255.0,
+                                  blue: 0x81 / 255.0)
+  static let brandWarning = Color(red: 0xF5 / 255.0,
+                                  green: 0x9E / 255.0,
+                                  blue: 0x0B / 255.0)
+  static let brandError = Color(red: 0xEF / 255.0,
+                                green: 0x44 / 255.0,
+                                blue: 0x44 / 255.0)
 }
 
 // =============================================================================
 // MARK: - Scanner Models
 // =============================================================================
+
+/// Capture flavor. Tunes edge detection, default enhancement, OCR
+/// requirement, and post-capture flow (single page vs. flip vs. multi).
+/// Raw values are the wire string sent over MethodChannel from Dart.
+enum ScanMode: String {
+  case doc
+  case receipt
+  case card
+  case id
+
+  var displayName: String {
+    switch self {
+    case .doc: return "Document"
+    case .receipt: return "Receipt"
+    case .card: return "Card"
+    case .id: return "ID"
+    }
+  }
+
+  var shortLabel: String {
+    switch self {
+    case .doc: return "Doc"
+    case .receipt: return "Receipt"
+    case .card: return "Card"
+    case .id: return "ID"
+    }
+  }
+
+  var iconName: String {
+    switch self {
+    case .doc: return "doc.text"
+    case .receipt: return "receipt"
+    case .card: return "creditcard"
+    case .id: return "person.text.rectangle"
+    }
+  }
+
+  /// VNDetectRectanglesRequest tuning per mode. A receipt is tall +
+  /// narrow; a credit card is closer to a 1.6:1 landscape; a passport
+  /// page is a tight portrait. Doc is the loose default.
+  var rectangleDetectionConfig: (
+    aspectMin: Float, aspectMax: Float, sizeMin: Float, quadTolerance: Float
+  ) {
+    switch self {
+    case .doc:
+      return (0.4, 1.0, 0.3, 25)
+    case .receipt:
+      return (0.15, 0.6, 0.2, 30)
+    case .card:
+      return (0.55, 0.7, 0.35, 15)
+    case .id:
+      return (0.6, 0.72, 0.35, 18)
+    }
+  }
+
+  var defaultEnhancement: EnhancementMode {
+    switch self {
+    case .doc: return .colorDocument
+    case .receipt: return .blackAndWhite
+    case .card: return .magicColor
+    case .id: return .colorDocument
+    }
+  }
+
+  var requiresOCR: Bool {
+    switch self {
+    case .receipt, .id: return true
+    case .doc, .card: return false
+    }
+  }
+
+  var supportsMultiPage: Bool {
+    switch self {
+    case .doc, .receipt: return true
+    case .card, .id: return false
+    }
+  }
+
+  /// Card always wants front+back. Other modes are single-side.
+  var requiresTwoSides: Bool {
+    switch self {
+    case .card: return true
+    case .doc, .receipt, .id: return false
+    }
+  }
+}
+
+/// Which face of a card a captured page represents. Only meaningful
+/// for `.card` mode; nil for everything else.
+enum CardSide {
+  case front, back
+}
+
+/// Structured output for modes that extract content (receipt parsing,
+/// ID redaction). Marshals over MethodChannel as `[String: Any]`.
+struct ScanMetadata {
+  var extractedDate: Date?
+  var extractedAmount: Double?
+  var extractedCurrency: String?
+  var extractedMerchant: String?
+  var redactedFields: [String] = []
+  var ocrText: String?
+}
 
 enum ScannerGuidance: Equatable {
   case searching
@@ -39,6 +169,9 @@ enum ScannerGuidance: Equatable {
   case detected(quality: CGFloat)
   case readyToCapture
   case capturing
+  /// Card mode only — fired after the front side capture so the user
+  /// flips the card while the coordinator resets for the back side.
+  case flipCard
 
   var userMessage: String {
     switch self {
@@ -47,9 +180,10 @@ enum ScannerGuidance: Equatable {
     case .moveFurther: return "Move further away"
     case .holdSteady: return "Hold steady"
     case .improveLight: return "Move to better light"
-    case .detected: return "Document detected"
+    case .detected: return "Detected"
     case .readyToCapture: return "Capturing in 1s…"
     case .capturing: return "Captured"
+    case .flipCard: return "Now flip the card"
     }
   }
 
@@ -62,6 +196,7 @@ enum ScannerGuidance: Equatable {
     case .improveLight: return "lightbulb.fill"
     case .detected, .readyToCapture: return "checkmark.circle.fill"
     case .capturing: return "camera.fill"
+    case .flipCard: return "arrow.triangle.2.circlepath"
     }
   }
 
@@ -101,8 +236,23 @@ struct ScannedPage: Identifiable {
   var quad: [CGPoint]
   var enhancementMode: EnhancementMode = .colorDocument
   var blurScore: Double
+  /// Card mode tags pages as `.front` or `.back` so [PDFAssembler]
+  /// can lay them out side-by-side. nil for every other mode.
+  var side: CardSide?
 
-  var needsRetake: Bool { blurScore < 0.3 }
+  /// Whether the sharpness score is low enough to suggest a retake.
+  /// Card / ID get a looser threshold because users naturally hold
+  /// the subject closer than the device can quickly lock focus on —
+  /// 0.3 was rejecting otherwise fine captures.
+  func needsRetake(forMode mode: ScanMode) -> Bool {
+    let threshold: Double
+    switch mode {
+    case .card, .id: threshold = 0.18
+    case .receipt: threshold = 0.22
+    case .doc: threshold = 0.30
+    }
+    return blurScore < threshold
+  }
 }
 
 // =============================================================================
@@ -281,13 +431,344 @@ enum ImageProcessor {
   }
 }
 
+extension ImageProcessor {
+  /// Card mode helper — composites a front and a back side onto a single
+  /// landscape canvas with a small gap. Both inputs are normalised to a
+  /// target height (~CR80 proportion) before drawing.
+  static func combineCardSides(front: UIImage, back: UIImage) -> UIImage? {
+    let targetHeight: CGFloat = 800
+    guard let fScaled = scaleImage(front, toHeight: targetHeight),
+          let bScaled = scaleImage(back, toHeight: targetHeight) else {
+      return nil
+    }
+
+    let gap: CGFloat = 40
+    let totalWidth = fScaled.size.width + bScaled.size.width + gap
+    let canvasSize = CGSize(width: totalWidth, height: targetHeight)
+
+    UIGraphicsBeginImageContextWithOptions(canvasSize, true, 0)
+    defer { UIGraphicsEndImageContext() }
+
+    UIColor.white.setFill()
+    UIRectFill(CGRect(origin: .zero, size: canvasSize))
+
+    fScaled.draw(in: CGRect(x: 0, y: 0,
+                            width: fScaled.size.width,
+                            height: targetHeight))
+    bScaled.draw(in: CGRect(x: fScaled.size.width + gap, y: 0,
+                            width: bScaled.size.width,
+                            height: targetHeight))
+
+    return UIGraphicsGetImageFromCurrentImageContext()
+  }
+
+  private static func scaleImage(_ image: UIImage, toHeight height: CGFloat) -> UIImage? {
+    let ratio = height / image.size.height
+    let newWidth = image.size.width * ratio
+    let newSize = CGSize(width: newWidth, height: height)
+    UIGraphicsBeginImageContextWithOptions(newSize, false, 0)
+    defer { UIGraphicsEndImageContext() }
+    image.draw(in: CGRect(origin: .zero, size: newSize))
+    return UIGraphicsGetImageFromCurrentImageContext()
+  }
+}
+
+// =============================================================================
+// MARK: - OCR Processor
+// =============================================================================
+
+/// Wraps `VNRecognizeTextRequest`. Two entry points: `recognizeText`
+/// returns the joined text body (for receipt parsing / search index),
+/// `detectTextRegions` returns each observation's bounding box (for
+/// targeted redaction).
+enum OCRProcessor {
+  /// Accurate level, language correction on, supports the languages
+  /// PDFPrivio's other OCR paths support. Runs ~1-2s per image on
+  /// iPhone 17 Pro Max — acceptable for post-capture, not realtime.
+  static func recognizeText(in image: UIImage) async -> String {
+    guard let cgImage = image.cgImage else { return "" }
+    return await withCheckedContinuation { continuation in
+      let request = VNRecognizeTextRequest { request, _ in
+        guard let observations =
+                request.results as? [VNRecognizedTextObservation] else {
+          continuation.resume(returning: "")
+          return
+        }
+        let text = observations
+          .compactMap { $0.topCandidates(1).first?.string }
+          .joined(separator: "\n")
+        continuation.resume(returning: text)
+      }
+      request.recognitionLevel = .accurate
+      request.usesLanguageCorrection = true
+      request.recognitionLanguages = [
+        "en-US", "tr-TR", "es-ES", "de-DE", "fr-FR"
+      ]
+      let handler = VNImageRequestHandler(cgImage: cgImage, orientation: .up)
+      try? handler.perform([request])
+    }
+  }
+
+  /// For ID redaction: returns each observed text + its normalised
+  /// bounding box (Vision-style, origin bottom-left, 0..1 each axis).
+  /// Language correction is OFF so digit-heavy numbers (SSNs, card
+  /// numbers, license #) come through unaltered.
+  static func detectTextRegions(in image: UIImage) async
+    -> [(text: String, bounds: CGRect)] {
+    guard let cgImage = image.cgImage else { return [] }
+    return await withCheckedContinuation { continuation in
+      let request = VNRecognizeTextRequest { request, _ in
+        guard let observations =
+                request.results as? [VNRecognizedTextObservation] else {
+          continuation.resume(returning: [])
+          return
+        }
+        let regions = observations.compactMap {
+          obs -> (String, CGRect)? in
+          guard let candidate = obs.topCandidates(1).first else { return nil }
+          return (candidate.string, obs.boundingBox)
+        }
+        continuation.resume(returning: regions)
+      }
+      request.recognitionLevel = .accurate
+      request.usesLanguageCorrection = false
+      let handler = VNImageRequestHandler(cgImage: cgImage, orientation: .up)
+      try? handler.perform([request])
+    }
+  }
+}
+
+// =============================================================================
+// MARK: - Receipt Parser
+// =============================================================================
+
+/// Heuristic extraction of merchant / total / date / currency from a
+/// receipt's OCR output. Designed for thermal-printer fast food / café
+/// receipts in the en/tr/eu/uk patterns we see most. Output feeds the
+/// Expense Ledger pre-fill flow.
+enum ReceiptParser {
+  static func parse(_ text: String) -> ScanMetadata {
+    var meta = ScanMetadata()
+    meta.extractedDate = extractDate(from: text)
+    if let amountResult = extractAmount(from: text) {
+      meta.extractedAmount = amountResult.amount
+      meta.extractedCurrency = amountResult.currency
+    }
+    meta.extractedMerchant = extractMerchant(from: text)
+    meta.ocrText = text
+    return meta
+  }
+
+  private static func extractDate(from text: String) -> Date? {
+    guard let detector = try? NSDataDetector(
+      types: NSTextCheckingResult.CheckingType.date.rawValue
+    ) else { return nil }
+    let range = NSRange(text.startIndex..., in: text)
+    let matches = detector.matches(in: text, options: [], range: range)
+    // Take the last date found — receipts typically print the total /
+    // settlement date near the footer, not in the header banner.
+    return matches.compactMap { $0.date }.last
+  }
+
+  /// Tries currency-prefixed and currency-suffixed patterns in five
+  /// languages. Returns the first hit. The list is intentionally
+  /// short — a more robust pipeline would learn per-merchant formats.
+  private static func extractAmount(from text: String)
+    -> (amount: Double, currency: String)? {
+    let patterns: [(currency: String, regex: String)] = [
+      ("USD", #"(?:total|amount|due|grand total)\s*:?\s*\$?\s*(\d+[\.,]\d{2})"#),
+      ("EUR", #"(?:total|gesamt|montant)\s*:?\s*€?\s*(\d+[\.,]\d{2})\s*€?"#),
+      ("GBP", #"(?:total|amount due)\s*:?\s*£\s*(\d+[\.,]\d{2})"#),
+      ("TRY", #"(?:toplam|tutar|genel toplam)\s*:?\s*₺?\s*(\d+[\.,]\d{2})\s*₺?"#),
+      ("USD", #"\$\s*(\d+\.\d{2})\s*$"#),
+      ("EUR", #"(\d+[\.,]\d{2})\s*€\s*$"#),
+      ("TRY", #"(\d+[\.,]\d{2})\s*(?:TL|₺)\s*$"#),
+    ]
+
+    let lowered = text.lowercased()
+    for pattern in patterns {
+      guard let regex = try? NSRegularExpression(
+        pattern: pattern.regex,
+        options: [.caseInsensitive, .anchorsMatchLines]
+      ) else { continue }
+      let range = NSRange(lowered.startIndex..., in: lowered)
+      guard let match = regex.firstMatch(in: lowered, options: [], range: range),
+            match.numberOfRanges >= 2 else { continue }
+      let amountRange = match.range(at: 1)
+      guard let r = Range(amountRange, in: lowered) else { continue }
+      let raw = String(lowered[r]).replacingOccurrences(of: ",", with: ".")
+      if let amount = Double(raw) {
+        return (amount, pattern.currency)
+      }
+    }
+    return nil
+  }
+
+  /// Heuristic: most receipts print the merchant name as an
+  /// ALL-CAPS line near the top, before the address / item lines.
+  /// Falls back to the first non-empty line if the heuristic misses.
+  private static func extractMerchant(from text: String) -> String? {
+    let lines = text.split(separator: "\n").prefix(5)
+    for line in lines {
+      let trimmed = line.trimmingCharacters(in: .whitespacesAndNewlines)
+      guard trimmed.count >= 3 && trimmed.count <= 40 else { continue }
+      let uppercaseCount = trimmed.filter { $0.isUppercase }.count
+      let digitCount = trimmed.filter { $0.isNumber }.count
+      if uppercaseCount > trimmed.count / 2 &&
+         digitCount < trimmed.count / 3 {
+        return trimmed
+      }
+    }
+    return lines.first { !$0.trimmingCharacters(in: .whitespaces).isEmpty }
+      .map { String($0).trimmingCharacters(in: .whitespacesAndNewlines) }
+  }
+}
+
+// =============================================================================
+// MARK: - ID Redactor
+// =============================================================================
+
+/// Scans for sensitive patterns (SSN, card number, DOB, license #) in
+/// OCR observations and overlays black rectangles before the PDF is
+/// written. Operates on Vision-style normalised bounding boxes.
+enum IDRedactor {
+  enum RedactField: String, CaseIterable {
+    case ssn = "ssn"
+    case cardNumber = "card"
+    case dateOfBirth = "dob"
+    case licenseNumber = "license"
+
+    var displayName: String {
+      switch self {
+      case .ssn: return "Social Security Number"
+      case .cardNumber: return "Card Number"
+      case .dateOfBirth: return "Date of Birth"
+      case .licenseNumber: return "License Number"
+      }
+    }
+
+    var pattern: String {
+      switch self {
+      case .ssn:
+        return #"\b\d{3}[-\s]?\d{2}[-\s]?\d{4}\b"#
+      case .cardNumber:
+        return #"\b(?:\d{4}[-\s]?){3}\d{4}\b"#
+      case .dateOfBirth:
+        return #"\b(?:0?[1-9]|1[0-2])[/.-](?:0?[1-9]|[12]\d|3[01])[/.-](?:19|20)\d{2}\b"#
+      case .licenseNumber:
+        return #"\b[A-Z]\d{7,8}\b"#
+      }
+    }
+  }
+
+  /// Scans OCR regions for each redact pattern. Returns one entry per
+  /// region that matched (a single region only contributes once even
+  /// if multiple patterns overlap).
+  static func findSensitiveRegions(
+    in regions: [(text: String, bounds: CGRect)]
+  ) -> [(field: RedactField, bounds: CGRect)] {
+    var found: [(RedactField, CGRect)] = []
+    for region in regions {
+      for field in RedactField.allCases {
+        guard let regex = try? NSRegularExpression(
+          pattern: field.pattern, options: [.caseInsensitive]
+        ) else { continue }
+        let range = NSRange(region.text.startIndex..., in: region.text)
+        if regex.firstMatch(in: region.text, options: [], range: range) != nil {
+          found.append((field, region.bounds))
+          break
+        }
+      }
+    }
+    return found
+  }
+
+  /// Draws solid-black rectangles over the regions on a fresh copy of
+  /// the image. Vision boxes are normalised + bottom-left; UIKit is
+  /// pixel + top-left, so we flip Y before fill. A small inset is
+  /// added because text bounding boxes hug too tight to look opaque.
+  static func redact(
+    image: UIImage,
+    regions: [(field: RedactField, bounds: CGRect)]
+  ) -> UIImage {
+    let size = image.size
+    UIGraphicsBeginImageContextWithOptions(size, true, image.scale)
+    defer { UIGraphicsEndImageContext() }
+    image.draw(in: CGRect(origin: .zero, size: size))
+    guard let context = UIGraphicsGetCurrentContext() else { return image }
+    context.setFillColor(UIColor.black.cgColor)
+
+    for region in regions {
+      let bounds = region.bounds
+      let rect = CGRect(
+        x: bounds.minX * size.width,
+        y: (1 - bounds.maxY) * size.height,
+        width: bounds.width * size.width,
+        height: bounds.height * size.height
+      )
+      let padded = rect.insetBy(dx: -4, dy: -2)
+      context.fill(padded)
+    }
+    return UIGraphicsGetImageFromCurrentImageContext() ?? image
+  }
+}
+
 // =============================================================================
 // MARK: - PDF Assembler
 // =============================================================================
 
 enum PDFAssembler {
-  /// Builds a PDF from the enhanced images of each ScannedPage and
-  /// writes to `destination`. Returns true on success.
+  /// Mode-aware top-level entry. Per-mode page geometry:
+  ///   * doc:     each page laid out on A4 portrait with a 24pt margin
+  ///   * receipt: tight custom page; multi-page receipts stitch
+  ///              vertically so they look like one printout
+  ///   * card:    front + back composited side-by-side on a landscape
+  ///              CR80-ratio page
+  ///   * id:      A4 portrait, same as doc (redaction already baked
+  ///              into the enhancedImage)
+  static func assemble(pages: [ScannedPage], mode: ScanMode) -> Data? {
+    guard !pages.isEmpty else { return nil }
+    let pdf = PDFDocument()
+
+    switch mode {
+    case .doc, .id:
+      for (idx, page) in pages.enumerated() {
+        if let pdfPage = makeA4Page(image: page.enhancedImage) {
+          pdf.insert(pdfPage, at: idx)
+        }
+      }
+
+    case .receipt:
+      if pages.count == 1,
+         let pdfPage = makeReceiptPage(image: pages[0].enhancedImage) {
+        pdf.insert(pdfPage, at: 0)
+      } else if let stitched =
+                  combineImagesVertically(pages.map { $0.enhancedImage }),
+                let pdfPage = makeReceiptPage(image: stitched) {
+        pdf.insert(pdfPage, at: 0)
+      }
+
+    case .card:
+      if pages.count >= 2,
+         let combined = ImageProcessor.combineCardSides(
+           front: pages[0].enhancedImage,
+           back: pages[1].enhancedImage
+         ),
+         let pdfPage = makeCR80LandscapePage(image: combined) {
+        pdf.insert(pdfPage, at: 0)
+      } else if let only = pages.first,
+                let pdfPage = makeCR80LandscapePage(image: only.enhancedImage) {
+        pdf.insert(pdfPage, at: 0)
+      }
+    }
+
+    return pdf.dataRepresentation()
+  }
+
+  /// Legacy entry — writes one PDF page per enhancedImage with no
+  /// custom layout. Kept because the VisionKit fallback path didn't
+  /// know about ScanMode; both VisionKit and the custom path now
+  /// route through `assemble(pages:mode:)`.
   static func writePDF(pages: [ScannedPage], to destination: URL) -> Bool {
     let pdf = PDFDocument()
     for (idx, page) in pages.enumerated() {
@@ -297,8 +778,6 @@ enum PDFAssembler {
     return pdf.write(to: destination)
   }
 
-  /// Convenience overload for the VisionKit fallback path which only
-  /// has plain UIImages (no Quad / blur score).
   static func writePDF(images: [UIImage], to destination: URL) -> Bool {
     let pdf = PDFDocument()
     for (idx, image) in images.enumerated() {
@@ -306,6 +785,129 @@ enum PDFAssembler {
       pdf.insert(pdfPage, at: idx)
     }
     return pdf.write(to: destination)
+  }
+
+  /// A4 portrait at 72 DPI: 595 × 842 points. Image is aspect-fit
+  /// inside a 24pt-margin content rect on a white background.
+  private static func makeA4Page(image: UIImage) -> PDFPage? {
+    let a4Size = CGSize(width: 595, height: 842)
+    let renderer = UIGraphicsImageRenderer(size: a4Size)
+    let pageImage = renderer.image { _ in
+      UIColor.white.setFill()
+      UIRectFill(CGRect(origin: .zero, size: a4Size))
+      let margin: CGFloat = 24
+      let contentRect = CGRect(
+        x: margin, y: margin,
+        width: a4Size.width - margin * 2,
+        height: a4Size.height - margin * 2
+      )
+      image.draw(in: aspectFitRect(image: image, in: contentRect))
+    }
+    return PDFPage(image: pageImage)
+  }
+
+  /// Receipt page width is fixed at ~280pt; the page height grows
+  /// with the image aspect so a long stitched receipt becomes one
+  /// long PDF page instead of being chopped into A4-sized slices.
+  private static func makeReceiptPage(image: UIImage) -> PDFPage? {
+    let contentWidth: CGFloat = 280
+    let aspect = image.size.height / image.size.width
+    let pageSize = CGSize(
+      width: contentWidth + 40,
+      height: contentWidth * aspect + 40
+    )
+    let renderer = UIGraphicsImageRenderer(size: pageSize)
+    let pageImage = renderer.image { _ in
+      UIColor.white.setFill()
+      UIRectFill(CGRect(origin: .zero, size: pageSize))
+      image.draw(in: CGRect(
+        x: 20, y: 20,
+        width: contentWidth,
+        height: contentWidth * aspect
+      ))
+    }
+    return PDFPage(image: pageImage)
+  }
+
+  /// CR80 landscape — A4-landscape-ish (595 × 420) so the combined
+  /// front+back card image lands at a credit-card aspect ratio with
+  /// generous margins.
+  private static func makeCR80LandscapePage(image: UIImage) -> PDFPage? {
+    let pageSize = CGSize(width: 595, height: 420)
+    let renderer = UIGraphicsImageRenderer(size: pageSize)
+    let pageImage = renderer.image { _ in
+      UIColor.white.setFill()
+      UIRectFill(CGRect(origin: .zero, size: pageSize))
+      let margin: CGFloat = 30
+      let contentRect = CGRect(
+        x: margin, y: margin,
+        width: pageSize.width - margin * 2,
+        height: pageSize.height - margin * 2
+      )
+      image.draw(in: aspectFitRect(image: image, in: contentRect))
+    }
+    return PDFPage(image: pageImage)
+  }
+
+  /// Aspect-fit math shared between A4 + CR80 helpers.
+  private static func aspectFitRect(
+    image: UIImage, in contentRect: CGRect
+  ) -> CGRect {
+    let imageAspect = image.size.width / image.size.height
+    let contentAspect = contentRect.width / contentRect.height
+    if imageAspect > contentAspect {
+      let h = contentRect.width / imageAspect
+      return CGRect(
+        x: contentRect.minX,
+        y: contentRect.midY - h / 2,
+        width: contentRect.width,
+        height: h
+      )
+    } else {
+      let w = contentRect.height * imageAspect
+      return CGRect(
+        x: contentRect.midX - w / 2,
+        y: contentRect.minY,
+        width: w,
+        height: contentRect.height
+      )
+    }
+  }
+
+  private static func combineImagesVertically(_ images: [UIImage])
+    -> UIImage? {
+    guard !images.isEmpty else { return nil }
+    let targetWidth = images.map { $0.size.width }.max() ?? 0
+    let totalHeight = images.reduce(0) {
+      $0 + ($1.size.height * (targetWidth / $1.size.width))
+    }
+    let canvasSize = CGSize(width: targetWidth, height: totalHeight)
+    UIGraphicsBeginImageContextWithOptions(canvasSize, true, 0)
+    defer { UIGraphicsEndImageContext() }
+    UIColor.white.setFill()
+    UIRectFill(CGRect(origin: .zero, size: canvasSize))
+    var yOffset: CGFloat = 0
+    for image in images {
+      let scaledHeight = image.size.height * (targetWidth / image.size.width)
+      image.draw(in: CGRect(
+        x: 0, y: yOffset,
+        width: targetWidth,
+        height: scaledHeight
+      ))
+      yOffset += scaledHeight
+    }
+    return UIGraphicsGetImageFromCurrentImageContext()
+  }
+
+  /// Writes [data] to a tmp file and returns its path. Used by the
+  /// bridge to hand a fresh PDF off to Flutter.
+  static func writeToTemp(data: Data, fileName: String? = nil) throws -> String {
+    let tempDir = FileManager.default.temporaryDirectory
+    let timestamp = Int(Date().timeIntervalSince1970 * 1000)
+    let name = fileName ?? "pdfprivio_scan_\(timestamp).pdf"
+    let url = tempDir.appendingPathComponent(name)
+    try data.write(to: url)
+    return url.path
   }
 
   static func makeTemporaryDestination() -> URL {
@@ -327,6 +929,21 @@ final class ScannerCoordinator: NSObject, ObservableObject {
   @Published var isAutoCapture: Bool = true
   @Published var captureCountdown: Int? = nil
   @Published var blurWarningPage: ScannedPage? = nil
+
+  /// Active capture mode. Drives the Vision rectangle detector tuning,
+  /// the default enhancement applied per capture, and the card flip
+  /// state machine. Writing to this resets transient detection state
+  /// so the new mode's geometry takes effect immediately.
+  @Published var currentMode: ScanMode = .doc
+
+  /// Card mode only — once the front side is captured we stash it
+  /// here and switch guidance to .flipCard. The next successful
+  /// capture pairs with it and ends the session (preview).
+  @Published var capturedFrontSide: ScannedPage?
+
+  /// Set to true after the second card side is captured so the host
+  /// view can transition to the preview screen automatically.
+  @Published var shouldShowPreview: Bool = false
 
   let captureSession = AVCaptureSession()
   private let photoOutput = AVCapturePhotoOutput()
@@ -350,6 +967,19 @@ final class ScannerCoordinator: NSObject, ObservableObject {
     lightHaptic.prepare()
     mediumHaptic.prepare()
     heavyHaptic.prepare()
+  }
+
+  /// Switch capture flavor. Resets transient detection state so the
+  /// new mode's rectangle tuning applies on the next frame and so the
+  /// user doesn't see a half-confirmed bracket from the previous mode.
+  func setMode(_ mode: ScanMode) {
+    guard mode != currentMode else { return }
+    currentMode = mode
+    capturedFrontSide = nil
+    rectangleHistory.removeAll()
+    lastStableDetection = nil
+    captureCountdown = nil
+    guidance = .searching
   }
 
   func setupCamera() async throws {
@@ -444,22 +1074,63 @@ final class ScannerCoordinator: NSObject, ObservableObject {
 
     let quad = detectedQuad
     let corrected = ImageProcessor.correctPerspective(image: image, quad: quad) ?? image
-    let enhanced = ImageProcessor.applyEnhancement(.colorDocument, to: corrected) ?? corrected
+    let mode = currentMode
+    let defaultMode = mode.defaultEnhancement
+    let enhanced =
+      ImageProcessor.applyEnhancement(defaultMode, to: corrected) ?? corrected
 
-    let page = ScannedPage(
+    var page = ScannedPage(
       originalImage: image,
       correctedImage: corrected,
       enhancedImage: enhanced,
       quad: quad,
+      enhancementMode: defaultMode,
       blurScore: blurScore
     )
 
-    if page.needsRetake {
-      blurWarningPage = page
-    } else {
-      capturedPages.append(page)
+    // Blur warning disabled — it was firing on captures that looked
+    // perfectly fine to the human eye (parlak ID surfaces, indoor
+    // light, small subjects all push the Laplacian score down even
+    // without motion blur). The blur score is still surfaced in the
+    // review screen so the user can retake if they genuinely don't
+    // like a page.
+    _ = page.needsRetake(forMode: mode)
+
+    // Card mode flip flow: the first capture is the front side, then
+    // we prompt the user to flip and the next capture is the back —
+    // both get stitched in the preview / PDF assembler.
+    if mode == .card {
+      if capturedFrontSide == nil {
+        page.side = .front
+        capturedFrontSide = page
+        guidance = .flipCard
+        rectangleHistory.removeAll()
+        lastStableDetection = nil
+        captureCountdown = nil
+        // Hold the flip banner up briefly, then re-arm detection.
+        Task { [weak self] in
+          try? await Task.sleep(nanoseconds: 2_000_000_000)
+          await MainActor.run {
+            guard let self = self,
+                  self.currentMode == .card,
+                  self.capturedFrontSide != nil else { return }
+            self.guidance = .searching
+          }
+        }
+        return
+      } else {
+        page.side = .back
+        capturedPages.append(capturedFrontSide!)
+        capturedPages.append(page)
+        capturedFrontSide = nil
+        // Card flow is single-shot: roll to the preview automatically.
+        shouldShowPreview = true
+        resetState()
+        return
+      }
     }
 
+    capturedPages.append(page)
     resetState()
   }
 
@@ -473,6 +1144,12 @@ final class ScannerCoordinator: NSObject, ObservableObject {
   // MARK: Vision frame analysis
 
   fileprivate func processFrame(pixelBuffer: CVPixelBuffer) {
+    // Pull rectangle detection tuning from the active mode — receipt
+    // (tall narrow), card (1.6:1 landscape), id (passport portrait),
+    // doc (loose default). Without this, the detector would stay on
+    // doc-tuned thresholds and reject narrow receipts entirely.
+    let config = currentMode.rectangleDetectionConfig
+
     let request = VNDetectRectanglesRequest { [weak self] request, _ in
       guard let self = self else { return }
       let observations = request.results as? [VNRectangleObservation] ?? []
@@ -481,12 +1158,12 @@ final class ScannerCoordinator: NSObject, ObservableObject {
       }
     }
 
-    request.minimumAspectRatio = 0.4
-    request.maximumAspectRatio = 1.0
-    request.minimumSize = 0.3
+    request.minimumAspectRatio = config.aspectMin
+    request.maximumAspectRatio = config.aspectMax
+    request.minimumSize = config.sizeMin
     request.maximumObservations = 1
     request.minimumConfidence = 0.75
-    request.quadratureTolerance = 25
+    request.quadratureTolerance = config.quadTolerance
 
     let handler = VNImageRequestHandler(cvPixelBuffer: pixelBuffer,
                                         orientation: .right,
@@ -496,6 +1173,24 @@ final class ScannerCoordinator: NSObject, ObservableObject {
 
   @MainActor
   private func handleObservations(_ observations: [VNRectangleObservation]) {
+    // Once the auto-capture countdown is armed, freeze the state
+    // machine. Without this, a single jittery frame mid-countdown
+    // (which is ~50 frames at 30fps) bumps guidance back to
+    // .holdSteady and the trigger Task's `case .readyToCapture =
+    // guidance` guard then cancels the capture. Net effect for the
+    // user: "Capturing in 1s" shows up and nothing actually fires.
+    if captureCountdown != nil {
+      // Still update the visible quad so brackets follow the doc
+      // smoothly, but don't touch guidance / stability / history.
+      if let rect = observations.first {
+        detectedQuad = [
+          rect.topLeft, rect.topRight,
+          rect.bottomRight, rect.bottomLeft,
+        ]
+      }
+      return
+    }
+
     guard let rect = observations.first else {
       handleNoDetection()
       return
@@ -506,18 +1201,46 @@ final class ScannerCoordinator: NSObject, ObservableObject {
       rect.bottomRight, rect.bottomLeft
     ]
 
-    let area = abs(
-      (rect.topRight.x - rect.topLeft.x) *
-      (rect.bottomLeft.y - rect.topLeft.y)
-    )
+    // `boundingBox` returns Vision's axis-aligned bbox of the quad in
+    // normalised image coordinates. Using it instead of the raw
+    // top-edge × left-edge multiply means a slightly tilted card still
+    // gets its real area counted instead of an artificially squashed
+    // one (the old formula assumed topRight.y == topLeft.y).
+    let bbox = rect.boundingBox
+    let area = bbox.width * bbox.height
 
-    if area < 0.25 {
+    // Each mode wants a different "close enough / too close" band:
+    //   * card / id: tight subjects, often only fill ~12-40% of the
+    //     frame because users naturally hold them at a comfortable
+    //     reading distance — push the lower bound down hard.
+    //   * receipt: a thermal receipt is tall + narrow, so even when
+    //     it fills the frame it usually only covers ~25-50%.
+    //   * doc: full-page documents need to fill most of the frame.
+    let mode = currentMode
+    let minArea: CGFloat
+    let maxArea: CGFloat
+    switch mode {
+    case .doc:
+      minArea = 0.25
+      maxArea = 0.92
+    case .receipt:
+      minArea = 0.12
+      maxArea = 0.88
+    case .card:
+      minArea = 0.08
+      maxArea = 0.80
+    case .id:
+      minArea = 0.15
+      maxArea = 0.88
+    }
+
+    if area < minArea {
       updateGuidance(.moveCloser)
       resetStability()
       return
     }
 
-    if area > 0.92 {
+    if area > maxArea {
       updateGuidance(.moveFurther)
       resetStability()
       return
@@ -544,7 +1267,15 @@ final class ScannerCoordinator: NSObject, ObservableObject {
 
     let stableDuration = Date().timeIntervalSince(lastStableDetection!)
 
-    if stableDuration >= stabilityThreshold && isAutoCapture {
+    // Card / ID don't need a full 0.6s lock — the subject is small,
+    // users naturally hold it more steady than a full doc, and the
+    // longer wait reads as "the scanner isn't responding".
+    let requiredHold: TimeInterval
+    switch currentMode {
+    case .doc, .receipt: requiredHold = stabilityThreshold
+    case .card, .id: requiredHold = 0.4
+    }
+    if stableDuration >= requiredHold && isAutoCapture {
       updateGuidance(.readyToCapture)
       startAutoCaptureCountdown()
     }
@@ -577,7 +1308,18 @@ final class ScannerCoordinator: NSObject, ObservableObject {
     let recent = Array(rectangleHistory.suffix(5))
     let xVariance = variance(recent.map { $0.topLeft.x })
     let yVariance = variance(recent.map { $0.topLeft.y })
-    return xVariance < 0.003 && yVariance < 0.003
+    // The 0.003 threshold worked for full-page documents (the small
+    // subject moves less in normalised image space) but failed on
+    // hand-held cards and IDs where micro-jitter pushes variance over
+    // the line repeatedly, so the user sees "Detected ↔ Hold steady"
+    // bouncing forever. Loosen for the close-subject modes.
+    let threshold: CGFloat
+    switch currentMode {
+    case .doc: threshold = 0.003
+    case .receipt: threshold = 0.006
+    case .card, .id: threshold = 0.012
+    }
+    return xVariance < threshold && yVariance < threshold
   }
 
   private func variance(_ values: [CGFloat]) -> CGFloat {
@@ -599,10 +1341,16 @@ final class ScannerCoordinator: NSObject, ObservableObject {
     Task { [weak self] in
       try? await Task.sleep(nanoseconds: 1_000_000_000)
       await MainActor.run {
-        guard let self = self,
-              case .readyToCapture = self.guidance else { return }
-        self.triggerCapture()
+        guard let self = self else { return }
+        // No more `case .readyToCapture = guidance` guard — once we
+        // armed the countdown and the user didn't dismiss the
+        // scanner, we want the photo fired even if a stray frame
+        // briefly bumped guidance somewhere else. handleObservations
+        // also freezes state while `captureCountdown != nil`, so by
+        // the time we're here the guidance should still be ready —
+        // but treat the guard as defensive, not gating.
         self.captureCountdown = nil
+        self.triggerCapture()
       }
     }
   }
@@ -667,9 +1415,17 @@ struct ScannerView: View {
         )
         .padding(.top, 8)
 
+        ModeBanner(
+          mode: coordinator.currentMode,
+          hasCapturedFront: coordinator.capturedFrontSide != nil
+        )
+        .padding(.top, 6)
+
         Spacer()
 
         ScannerBottomBar(
+          mode: coordinator.currentMode,
+          onModeChange: { coordinator.setMode($0) },
           capturedCount: coordinator.capturedPages.count,
           isAutoCapture: $coordinator.isAutoCapture,
           onCapture: { coordinator.capturePhoto() },
@@ -771,6 +1527,8 @@ private struct GuidancePill: View {
       return Color.orange.opacity(0.92)
     case .detected, .readyToCapture, .capturing:
       return Color.brandTeal.opacity(0.95)
+    case .flipCard:
+      return Color.brandTealLight.opacity(0.95)
     }
   }
 }
@@ -862,27 +1620,28 @@ private struct CornerBracket: View {
 }
 
 private struct ScannerBottomBar: View {
+  let mode: ScanMode
+  let onModeChange: (ScanMode) -> Void
   let capturedCount: Int
   @Binding var isAutoCapture: Bool
   let onCapture: () -> Void
   let onShowPreview: () -> Void
 
-  @State private var selectedMode: String = "Doc"
-  @State private var showComingSoon: Bool = false
-  private let modes = ["Doc", "Receipt", "Card", "ID"]
+  private let modes: [ScanMode] = [.doc, .receipt, .card, .id]
 
   var body: some View {
     VStack(spacing: 16) {
       HStack(spacing: 6) {
-        ForEach(modes, id: \.self) { mode in
-          modeChip(mode, isActive: mode == selectedMode, enabled: mode == "Doc")
-            .onTapGesture {
-              if mode == "Doc" {
-                selectedMode = mode
-              } else {
-                showComingSoon = true
-              }
+        ForEach(modes, id: \.self) { m in
+          Button {
+            if m != mode {
+              UIImpactFeedbackGenerator(style: .light).impactOccurred()
+              onModeChange(m)
             }
+          } label: {
+            modeChip(m, isActive: m == mode)
+          }
+          .buttonStyle(.plain)
         }
       }
 
@@ -896,11 +1655,6 @@ private struct ScannerBottomBar: View {
     }
     .padding(.horizontal, 22)
     .padding(.bottom, 30)
-    .alert("Coming soon", isPresented: $showComingSoon) {
-      Button("OK", role: .cancel) {}
-    } message: {
-      Text("Receipt, Card, and ID modes are arriving in a future update. Doc mode handles most documents today.")
-    }
   }
 
   private var galleryButton: some View {
@@ -975,16 +1729,54 @@ private struct ScannerBottomBar: View {
     }
   }
 
-  private func modeChip(_ title: String, isActive: Bool, enabled: Bool) -> some View {
-    Text(title)
-      .font(.system(size: 12, weight: .medium))
-      .foregroundColor(enabled
-                       ? (isActive ? .white : .white.opacity(0.5))
-                       : .white.opacity(0.25))
-      .padding(.horizontal, 12)
-      .padding(.vertical, 6)
-      .background(isActive ? Color.white.opacity(0.18) : Color.clear)
-      .clipShape(Capsule())
+  private func modeChip(_ m: ScanMode, isActive: Bool) -> some View {
+    VStack(spacing: 3) {
+      Image(systemName: m.iconName)
+        .font(.system(size: 14, weight: .medium))
+      Text(m.shortLabel)
+        .font(.system(size: 11, weight: .semibold))
+    }
+    // 0.75 instead of 0.5 — the old contrast read as "disabled".
+    .foregroundColor(isActive ? .white : .white.opacity(0.75))
+    .padding(.horizontal, 14)
+    .padding(.vertical, 8)
+    .background(isActive
+                ? Color.white.opacity(0.18)
+                : Color.white.opacity(0.05))
+    .clipShape(RoundedRectangle(cornerRadius: 12))
+    // Make the entire pill (including transparent areas) tap-able.
+    .contentShape(RoundedRectangle(cornerRadius: 12))
+  }
+}
+
+/// Small pill under the guidance prompt that reminds the user which
+/// mode is active and — for card mode — which side is being asked for
+/// right now.
+private struct ModeBanner: View {
+  let mode: ScanMode
+  let hasCapturedFront: Bool
+
+  var body: some View {
+    HStack(spacing: 6) {
+      Image(systemName: mode.iconName)
+        .font(.system(size: 11, weight: .medium))
+      Text(displayText)
+        .font(.system(size: 11, weight: .semibold))
+    }
+    .foregroundColor(.white.opacity(0.9))
+    .padding(.horizontal, 12)
+    .padding(.vertical, 5)
+    .background(Color.black.opacity(0.4))
+    .clipShape(Capsule())
+  }
+
+  private var displayText: String {
+    if mode == .card {
+      return hasCapturedFront
+        ? "Card · Back side"
+        : "Card · Front side"
+    }
+    return mode.displayName
   }
 }
 
@@ -1014,11 +1806,17 @@ private final class PreviewUIView: UIView {
 
 struct ScannerPreviewView: View {
   @ObservedObject var coordinator: ScannerCoordinator
+  let enableOCR: Bool
   let onBackToScanner: () -> Void
-  let onDone: (URL) -> Void
+  let onDone: (URL, ScanMetadata?) -> Void
 
   @State private var isBuilding = false
   @State private var buildError: String?
+  @State private var receiptMeta: ScanMetadata?
+  @State private var idRegions: [(field: IDRedactor.RedactField, bounds: CGRect)] = []
+  @State private var didApplyRedaction: Bool = false
+  @State private var didRunModePostProcess: Bool = false
+  @State private var selectedPageIndex: Int = 0
 
   var body: some View {
     NavigationView {
@@ -1029,7 +1827,18 @@ struct ScannerPreviewView: View {
           emptyState
         } else {
           VStack(spacing: 0) {
-            pageList
+            ScrollView {
+              VStack(spacing: 14) {
+                if coordinator.currentMode == .receipt, let meta = receiptMeta {
+                  receiptBanner(meta)
+                }
+                if coordinator.currentMode == .id && !idRegions.isEmpty {
+                  idBanner
+                }
+                pageList
+              }
+              .padding(.vertical, 8)
+            }
             Divider().opacity(0.4)
             doneBar
           }
@@ -1043,7 +1852,7 @@ struct ScannerPreviewView: View {
             .clipShape(RoundedRectangle(cornerRadius: 16))
         }
       }
-      .navigationTitle("Review \(coordinator.capturedPages.count) page\(coordinator.capturedPages.count == 1 ? "" : "s")")
+      .navigationTitle(navTitle)
       .navigationBarTitleDisplayMode(.inline)
       .toolbar {
         ToolbarItem(placement: .navigationBarLeading) {
@@ -1064,6 +1873,15 @@ struct ScannerPreviewView: View {
       }
     }
     .navigationViewStyle(.stack)
+    .task(id: coordinator.capturedPages.map { $0.id }) {
+      await runModePostProcess()
+    }
+  }
+
+  private var navTitle: String {
+    let mode = coordinator.currentMode
+    let count = coordinator.capturedPages.count
+    return "Review · \(mode.displayName) · \(count) page\(count == 1 ? "" : "s")"
   }
 
   private var emptyState: some View {
@@ -1099,19 +1917,17 @@ struct ScannerPreviewView: View {
             )
 
           VStack(alignment: .leading, spacing: 4) {
-            Text("Page \(idx + 1)")
+            Text(pageTitle(forIndex: idx, page: page))
               .font(.system(size: 15, weight: .semibold))
             Text(qualityLabel(for: page.blurScore))
               .font(.system(size: 12))
-              .foregroundColor(page.blurScore < 0.45
-                               ? .orange
-                               : .secondary)
+              .foregroundColor(page.blurScore < 0.45 ? .orange : .secondary)
           }
 
           Spacer()
 
           Menu {
-            ForEach(EnhancementMode.allCases) { mode in
+            ForEach(EnhancementMode.allCases, id: \.self) { mode in
               Button {
                 applyMode(mode, to: page)
               } label: {
@@ -1129,6 +1945,7 @@ struct ScannerPreviewView: View {
       .onDelete(perform: deletePages)
       .onMove(perform: movePages)
     }
+    .frame(minHeight: CGFloat(coordinator.capturedPages.count) * 110 + 40)
     .listStyle(.insetGrouped)
     .background(Color.brandCream)
     .environment(\.editMode, .constant(.active))
@@ -1136,10 +1953,12 @@ struct ScannerPreviewView: View {
 
   private var doneBar: some View {
     HStack(spacing: 12) {
-      Button(action: onBackToScanner) {
-        Image(systemName: "plus.circle.fill")
-          .font(.system(size: 28))
-          .foregroundColor(.brandTeal)
+      if coordinator.currentMode.supportsMultiPage {
+        Button(action: onBackToScanner) {
+          Image(systemName: "plus.circle.fill")
+            .font(.system(size: 28))
+            .foregroundColor(.brandTeal)
+        }
       }
 
       Button(action: build) {
@@ -1160,6 +1979,84 @@ struct ScannerPreviewView: View {
     .padding(.horizontal, 18)
     .padding(.vertical, 12)
     .background(Color.brandCream)
+  }
+
+  // MARK: - Mode-specific banners
+
+  @ViewBuilder
+  private func receiptBanner(_ meta: ScanMetadata) -> some View {
+    VStack(alignment: .leading, spacing: 6) {
+      HStack(spacing: 6) {
+        Image(systemName: "checkmark.circle.fill")
+          .foregroundColor(.brandSuccess)
+        Text("Extracted from receipt")
+          .font(.system(size: 13, weight: .semibold))
+      }
+      if let merchant = meta.extractedMerchant {
+        Text("Merchant: \(merchant)").font(.system(size: 12))
+      }
+      if let amount = meta.extractedAmount {
+        Text("Amount: \(meta.extractedCurrency ?? "USD") \(String(format: "%.2f", amount))")
+          .font(.system(size: 12))
+      }
+      if let date = meta.extractedDate {
+        Text("Date: \(date.formatted(date: .abbreviated, time: .omitted))")
+          .font(.system(size: 12))
+      }
+    }
+    .padding(12)
+    .frame(maxWidth: .infinity, alignment: .leading)
+    .background(Color.brandTealBg)
+    .clipShape(RoundedRectangle(cornerRadius: 10))
+    .padding(.horizontal, 18)
+  }
+
+  @ViewBuilder
+  private var idBanner: some View {
+    VStack(alignment: .leading, spacing: 8) {
+      HStack(spacing: 6) {
+        Image(systemName: "eye.slash.fill")
+          .foregroundColor(.brandWarning)
+        Text("Sensitive data detected")
+          .font(.system(size: 13, weight: .semibold))
+      }
+      Text("\(idRegions.count) field\(idRegions.count == 1 ? "" : "s") found:")
+        .font(.system(size: 12))
+      ForEach(Array(Set(idRegions.map { $0.field })), id: \.self) { field in
+        Text("• \(field.displayName)")
+          .font(.system(size: 12))
+      }
+      Button {
+        applyIDRedaction()
+      } label: {
+        Text(didApplyRedaction ? "Redacted ✓" : "Redact all")
+          .font(.system(size: 13, weight: .semibold))
+          .foregroundColor(.white)
+          .padding(.horizontal, 16)
+          .padding(.vertical, 8)
+          .background(didApplyRedaction ? Color.brandSuccess : Color.brandWarning)
+          .clipShape(Capsule())
+      }
+      .disabled(didApplyRedaction)
+    }
+    .padding(12)
+    .frame(maxWidth: .infinity, alignment: .leading)
+    .background(Color.brandWarning.opacity(0.1))
+    .clipShape(RoundedRectangle(cornerRadius: 10))
+    .padding(.horizontal, 18)
+  }
+
+  // MARK: - Helpers
+
+  private func pageTitle(forIndex idx: Int, page: ScannedPage) -> String {
+    if coordinator.currentMode == .card {
+      switch page.side {
+      case .front: return "Front side"
+      case .back: return "Back side"
+      case .none: return "Card"
+      }
+    }
+    return "Page \(idx + 1)"
   }
 
   private func qualityLabel(for score: Double) -> String {
@@ -1186,20 +2083,79 @@ struct ScannerPreviewView: View {
     coordinator.capturedPages.move(fromOffsets: offsets, toOffset: dest)
   }
 
+  // MARK: - Mode post-processing (OCR / receipt parse / ID detect)
+
+  /// Runs once when the page list stabilises. Receipt mode pulls OCR
+  /// + parser metadata so the banner shows immediately; ID mode runs
+  /// the text-region detector and surfaces the redact suggestion.
+  private func runModePostProcess() async {
+    guard !didRunModePostProcess, !coordinator.capturedPages.isEmpty
+    else { return }
+    didRunModePostProcess = true
+
+    let mode = coordinator.currentMode
+    let firstPage = coordinator.capturedPages[0].enhancedImage
+
+    if mode == .receipt {
+      let text = await OCRProcessor.recognizeText(in: firstPage)
+      let parsed = ReceiptParser.parse(text)
+      await MainActor.run { self.receiptMeta = parsed }
+    }
+
+    if mode == .id {
+      let regions = await OCRProcessor.detectTextRegions(in: firstPage)
+      let sensitive = IDRedactor.findSensitiveRegions(in: regions)
+      await MainActor.run { self.idRegions = sensitive }
+    }
+  }
+
+  private func applyIDRedaction() {
+    guard !didApplyRedaction, !idRegions.isEmpty else { return }
+    for (index, page) in coordinator.capturedPages.enumerated() {
+      let redacted = IDRedactor.redact(
+        image: page.enhancedImage,
+        regions: idRegions
+      )
+      coordinator.capturedPages[index].enhancedImage = redacted
+    }
+    didApplyRedaction = true
+  }
+
+  // MARK: - Build
+
   private func build() {
     let pages = coordinator.capturedPages
+    let mode = coordinator.currentMode
     guard !pages.isEmpty else { return }
     isBuilding = true
 
+    // Snapshot metadata destined for Dart. Receipt extracts populate
+    // the relevant fields; ID mode reports which field types we
+    // redacted; other modes leave nil/empty.
+    var outboundMeta: ScanMetadata? = nil
+    if mode == .receipt, let m = receiptMeta {
+      outboundMeta = m
+    }
+    if mode == .id, didApplyRedaction {
+      var m = ScanMetadata()
+      m.redactedFields = Array(Set(idRegions.map { $0.field.rawValue }))
+      outboundMeta = m
+    }
+
     Task.detached(priority: .userInitiated) {
-      let destination = PDFAssembler.makeTemporaryDestination()
-      let ok = PDFAssembler.writePDF(pages: pages, to: destination)
+      let data = PDFAssembler.assemble(pages: pages, mode: mode)
       await MainActor.run {
         isBuilding = false
-        if ok {
-          onDone(destination)
-        } else {
-          buildError = "PDF writer returned false."
+        guard let data = data else {
+          buildError = "PDF writer returned no data."
+          return
+        }
+        do {
+          let path = try PDFAssembler.writeToTemp(data: data)
+          let url = URL(fileURLWithPath: path)
+          onDone(url, outboundMeta)
+        } catch {
+          buildError = "Couldn't write PDF: \(error.localizedDescription)"
         }
       }
     }
@@ -1211,25 +2167,48 @@ struct ScannerPreviewView: View {
 // =============================================================================
 
 struct ScannerHostView: View {
-  let onDone: (URL) -> Void
+  let initialMode: ScanMode
+  let enableOCR: Bool
+  let onDone: (URL, ScanMetadata?) -> Void
   let onCancel: () -> Void
 
   @StateObject private var coordinator = ScannerCoordinator()
   @State private var showPreview = false
+  @State private var didSeedMode = false
 
   var body: some View {
-    if showPreview {
-      ScannerPreviewView(
-        coordinator: coordinator,
-        onBackToScanner: { showPreview = false },
-        onDone: onDone
-      )
-    } else {
-      ScannerView(
-        coordinator: coordinator,
-        onClose: onCancel,
-        onShowPreview: { showPreview = true }
-      )
+    Group {
+      if showPreview {
+        ScannerPreviewView(
+          coordinator: coordinator,
+          enableOCR: enableOCR,
+          onBackToScanner: { showPreview = false },
+          onDone: onDone
+        )
+      } else {
+        ScannerView(
+          coordinator: coordinator,
+          onClose: onCancel,
+          onShowPreview: { showPreview = true }
+        )
+      }
+    }
+    .onAppear {
+      // Seed the coordinator with the requested mode the very first
+      // time this host renders. After that, the user's mode pill
+      // selections drive `coordinator.currentMode` directly.
+      if !didSeedMode {
+        coordinator.setMode(initialMode)
+        didSeedMode = true
+      }
+    }
+    .onChange(of: coordinator.shouldShowPreview) { newValue in
+      // Card mode + the last receipt page auto-advance to preview;
+      // we listen here so the host's `showPreview` flips in sync.
+      if newValue {
+        showPreview = true
+        coordinator.shouldShowPreview = false
+      }
     }
   }
 }
@@ -1244,6 +2223,10 @@ class DocumentScannerBridge: NSObject, FlutterPlugin,
 
   private var pendingResult: FlutterResult?
   private var presentedHost: UIViewController?
+  /// Set when the VisionKit fallback is opened so the delegate
+  /// callbacks know which mode to assemble for. The custom path
+  /// doesn't need this — `ScannerHostView` carries its own mode.
+  private var pendingVisionKitMode: ScanMode?
 
   static func register(with registrar: FlutterPluginRegistrar) {
     let instance = DocumentScannerBridge()
@@ -1265,10 +2248,20 @@ class DocumentScannerBridge: NSObject, FlutterPlugin,
     case "scan":
       let args = call.arguments as? [String: Any]
       let useAppleVisionKit = args?["useAppleVisionKit"] as? Bool ?? false
+      let modeString = (args?["mode"] as? String) ?? "doc"
+      let enableOCR = args?["enableOCR"] as? Bool ?? false
+      guard let mode = ScanMode(rawValue: modeString) else {
+        result(FlutterError(
+          code: "mode_unsupported",
+          message: "Unknown scan mode: \(modeString)",
+          details: nil
+        ))
+        return
+      }
       if useAppleVisionKit {
-        scanWithVisionKit(result: result)
+        scanWithVisionKit(result: result, mode: mode)
       } else {
-        scanWithCustomUI(result: result)
+        scanWithCustomUI(result: result, mode: mode, enableOCR: enableOCR)
       }
 
     default:
@@ -1278,7 +2271,11 @@ class DocumentScannerBridge: NSObject, FlutterPlugin,
 
   // MARK: Custom AVFoundation scanner
 
-  private func scanWithCustomUI(result: @escaping FlutterResult) {
+  private func scanWithCustomUI(
+    result: @escaping FlutterResult,
+    mode: ScanMode,
+    enableOCR: Bool
+  ) {
     guard let root = Self.rootViewController() else {
       result(FlutterError(code: "no_presenter",
                           message: "Could not find a presenter.",
@@ -1294,11 +2291,13 @@ class DocumentScannerBridge: NSObject, FlutterPlugin,
     pendingResult = result
 
     let host = ScannerHostView(
-      onDone: { [weak self] url in
-        self?.finish(success: url.path)
+      initialMode: mode,
+      enableOCR: enableOCR,
+      onDone: { [weak self] url, metadata in
+        self?.finishSuccess(pdfPath: url.path, metadata: metadata)
       },
       onCancel: { [weak self] in
-        self?.finish(success: nil)
+        self?.finishCancel()
       }
     )
 
@@ -1308,16 +2307,58 @@ class DocumentScannerBridge: NSObject, FlutterPlugin,
     Self.topMost(from: root).present(hosting, animated: true)
   }
 
-  private func finish(success path: String?) {
+  /// Success path — returns a `Map` over the channel with the PDF path
+  /// and (for receipt / id modes) a metadata dictionary the Dart side
+  /// decodes into `ScanMetadata`.
+  private func finishSuccess(pdfPath: String, metadata: ScanMetadata?) {
     presentedHost?.dismiss(animated: true)
     presentedHost = nil
-    pendingResult?(path)
+
+    var payload: [String: Any] = ["pdfPath": pdfPath]
+    if let meta = metadata {
+      var dict: [String: Any] = [:]
+      if let date = meta.extractedDate {
+        dict["date"] = Int(date.timeIntervalSince1970 * 1000)
+      }
+      if let amount = meta.extractedAmount {
+        dict["amount"] = amount
+      }
+      if let currency = meta.extractedCurrency {
+        dict["currency"] = currency
+      }
+      if let merchant = meta.extractedMerchant {
+        dict["merchant"] = merchant
+      }
+      if !meta.redactedFields.isEmpty {
+        dict["redactedFields"] = meta.redactedFields
+      }
+      if let ocrText = meta.ocrText {
+        dict["ocrText"] = ocrText
+      }
+      if !dict.isEmpty {
+        payload["metadata"] = dict
+      }
+    }
+
+    pendingResult?(payload)
+    pendingResult = nil
+  }
+
+  /// Cancel path — returns nil so the Dart side reads it as user
+  /// cancellation, not an error.
+  private func finishCancel() {
+    presentedHost?.dismiss(animated: true)
+    presentedHost = nil
+    pendingResult?(nil)
     pendingResult = nil
   }
 
   // MARK: VisionKit fallback (debug toggle)
 
-  private func scanWithVisionKit(result: @escaping FlutterResult) {
+  private func scanWithVisionKit(
+    result: @escaping FlutterResult,
+    mode: ScanMode
+  ) {
     guard VNDocumentCameraViewController.isSupported else {
       result(FlutterError(code: "unsupported",
                           message: "VisionKit scanner needs a real camera.",
@@ -1338,6 +2379,7 @@ class DocumentScannerBridge: NSObject, FlutterPlugin,
     }
 
     pendingResult = result
+    pendingVisionKitMode = mode
     let scanner = VNDocumentCameraViewController()
     scanner.delegate = self
     scanner.modalPresentationStyle = .fullScreen
@@ -1354,15 +2396,39 @@ class DocumentScannerBridge: NSObject, FlutterPlugin,
       images.append(scan.imageOfPage(at: i))
     }
 
-    let destination = PDFAssembler.makeTemporaryDestination()
-    let ok = PDFAssembler.writePDF(images: images, to: destination)
+    let mode = pendingVisionKitMode ?? .doc
+    pendingVisionKitMode = nil
+
+    // VisionKit gives us plain UIImages without quad / blur metadata,
+    // so wrap them as ScannedPages with default-enhancement set to the
+    // mode's default and route through the mode-aware assembler so
+    // receipt / card layouts come out the same as the custom path.
+    let scannedPages: [ScannedPage] = images.map { img in
+      ScannedPage(
+        originalImage: img,
+        correctedImage: img,
+        enhancedImage: img,
+        quad: [],
+        enhancementMode: mode.defaultEnhancement,
+        blurScore: 1.0
+      )
+    }
+
     controller.dismiss(animated: true)
     presentedHost = nil
-    if ok {
-      pendingResult?(destination.path)
+
+    if let data = PDFAssembler.assemble(pages: scannedPages, mode: mode) {
+      do {
+        let path = try PDFAssembler.writeToTemp(data: data)
+        pendingResult?(["pdfPath": path])
+      } catch {
+        pendingResult?(FlutterError(code: "pdf_failed",
+                                    message: error.localizedDescription,
+                                    details: nil))
+      }
     } else {
       pendingResult?(FlutterError(code: "pdf_failed",
-                                  message: "Could not write PDF.",
+                                  message: "Could not assemble PDF.",
                                   details: nil))
     }
     pendingResult = nil
@@ -1373,6 +2439,7 @@ class DocumentScannerBridge: NSObject, FlutterPlugin,
   ) {
     controller.dismiss(animated: true)
     presentedHost = nil
+    pendingVisionKitMode = nil
     pendingResult?(nil)
     pendingResult = nil
   }
@@ -1383,6 +2450,7 @@ class DocumentScannerBridge: NSObject, FlutterPlugin,
   ) {
     controller.dismiss(animated: true)
     presentedHost = nil
+    pendingVisionKitMode = nil
     pendingResult?(FlutterError(code: "scan_failed",
                                 message: error.localizedDescription,
                                 details: nil))
