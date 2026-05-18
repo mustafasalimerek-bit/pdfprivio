@@ -5,7 +5,7 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>
-	<string>PDFPrivio Files</string>
+	<string>Privio Files</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
@@ -29,5 +29,12 @@
 		<key>NSExtensionPrincipalClass</key>
 		<string>$(PRODUCT_MODULE_NAME).FileProviderExtension</string>
 	</dict>
+	<!-- App Group identifier the File Provider extension reads/writes
+	     from. Apple requires this exact key on every File Provider
+	     extension bundle — without it the App Store validator rejects
+	     the build with a 409 "Missing Info.plist value" error. Value
+	     must match one of the groups in FileProviderExtension.entitlements. -->
+	<key>NSExtensionFileProviderDocumentGroup</key>
+	<string>group.com.erekstudio.pdfprivio</string>
 </dict>
 </plist>
