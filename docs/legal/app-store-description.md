@@ -124,22 +124,46 @@ About 3700 chars. Apple counts characters including spaces, line breaks, and bul
 ## Keywords (max 100 chars, comma-separated, no spaces between)
 
 ```
-signature,merge,split,compress,convert,jpg,word,document,receipt,watermark,offline,private,expense
+word,merge,split,document,offline,private,tracker,protect,print,reader,invoice,esign,scan
 ```
 
-98 chars. Live in App Store Connect since the initial metadata pass.
+89 chars. Second pass — replaces the initial keyword set after Apple
+Search Ads 5-dot popularity validation revealed 7 of the original 13
+terms were at the lowest tier (1 dot of 5), wasting characters. The
+new set is sorted by validated popularity, all entries ≥ 3 dots,
+zero overlap with App Name + Subtitle.
 
-Notes on the choices:
+Validation context: scores measured via Apple Ads' Add Keywords
+dialog against the developer's other app Squeezly as proxy (Privio
+not yet surfaced in Apple Ads because the binary is still in TestFlight
+processing). Category drift estimated 10-20% vs Privio's true context,
+but relative ordering preserved. Re-validate once Privio is live.
 
-- No word from the App Name ("scanner", "editor") or Subtitle ("sign", "ocr", "redact", "fill", "forms") — Apple treats name + subtitle + keywords as one index, so any duplicate burns characters for zero ranking benefit.
-- "convert" + "jpg" + "word" + "document" cover the PDF → other-format searches.
-- "signature" is the noun form (not "sign" → already in subtitle).
-- "offline" + "private" are the differentiator hooks.
-- "receipt" + "expense" lean into the CPA / freelancer wedge.
-- "watermark" catches a high-volume specialised search.
-- "compress" + "merge" + "split" are core PDF tool searches.
+Popularity per keyword (Apple's 5-dot scale, validated 2026-05-18):
 
-Excluded by Apple's rules: competitor names ("acrobat", "pdfelement", "wondershare") — Guideline 4.7 / 5.6.
+| Keyword | Popularity | Role |
+|---|---|---|
+| word | ●●●●○ (4) | Highest-value anchor — PDF→Word conversion intent |
+| merge | ●●●○○ (3) | Core PDF action |
+| split | ●●●○○ (3) | Core PDF action |
+| document | ●●●○○ (3) | Generic productivity anchor |
+| offline | ●●●○○ (3) | On-device differentiator |
+| private | ●●●○○ (3) | Privacy wedge |
+| tracker | ●●●○○ (3) | Expense / receipt tracker overlap |
+| protect | ●●●○○ (3) | Password / encryption intent |
+| print | ●●●○○ (3) | Print-to-PDF mobile intent |
+| reader | ●●●○○ (3) | PDF reader searches |
+| invoice | ●●●○○ (3) | Freelancer / SMB wedge |
+| esign | ●●●○○ (3) | Adobe alternative searches |
+| scan | ●●●○○ (3) | Apple-suggested adjacent to "scanner" in name |
+
+Dropped from v1 (all 1 dot of 5 — wasted characters):
+signature, compress, convert, jpg, receipt, watermark, expense.
+
+Excluded by Apple's rules: competitor names (acrobat, pdfelement,
+wondershare) — Guideline 4.7 / 5.6. Words already in App Name
+("scanner", "editor") or Subtitle ("sign", "ocr", "redact", "fill",
+"forms") — Apple indexes them once across name + subtitle + keywords.
 
 ---
 
