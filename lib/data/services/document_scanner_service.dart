@@ -4,8 +4,8 @@ import 'package:flutter/services.dart';
 
 import '../../core/utils/result.dart';
 
-/// Scanner mode — determines edge-detection parameters, default
-/// enhancement, OCR behaviour, and post-processing flow.
+/// Scanner mode — selects the native side's post-processing branch and
+/// the PDF assembler's page geometry (A4, tall receipt, CR80 card).
 ///
 /// Wire string values stay stable: passed over MethodChannel to the
 /// native scanner, which decodes them back into its own ScanMode enum.

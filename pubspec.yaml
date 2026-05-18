@@ -23,7 +23,6 @@ dependencies:
 
   # Image processing (image -> PDF, PDF -> image)
   image: ^4.1.7
-  flutter_image_compress: ^2.3.0
 
   # File handling
   file_picker: ^8.0.0+1
@@ -31,7 +30,6 @@ dependencies:
   path: ^1.9.0
   share_plus: ^12.0.0
   open_filex: ^4.4.0
-  permission_handler: ^11.3.1
 
   # Storage / preferences
   shared_preferences: ^2.2.3
@@ -57,7 +55,6 @@ dependencies:
   # UI
   cupertino_icons: ^1.0.8
   google_fonts: ^6.2.1
-  flutter_svg: ^2.0.10+1
   flutter_native_splash: ^2.4.0
   reorderable_grid_view: ^2.2.8
 

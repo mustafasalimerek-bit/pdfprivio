@@ -611,16 +611,7 @@ class DocumentScannerBridge: NSObject, FlutterPlugin,
     pendingResult = nil
   }
 
-  /// Cancel path — returns nil so the Dart side reads it as user
-  /// cancellation, not an error.
-  private func finishCancel() {
-    presentedHost?.dismiss(animated: true)
-    presentedHost = nil
-    pendingResult?(nil)
-    pendingResult = nil
-  }
-
-  // MARK: VisionKit fallback (debug toggle)
+  // MARK: VisionKit scanner
 
   private func scanWithVisionKit(
     result: @escaping FlutterResult,
