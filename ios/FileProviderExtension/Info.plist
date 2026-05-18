@@ -22,19 +22,23 @@
 	<string>$(CURRENT_PROJECT_VERSION)</string>
 	<key>NSExtension</key>
 	<dict>
-		<key>NSExtensionFileProviderSupportsEnumeration</key>
-		<true/>
 		<key>NSExtensionPointIdentifier</key>
 		<string>com.apple.fileprovider-nonui</string>
 		<key>NSExtensionPrincipalClass</key>
 		<string>$(PRODUCT_MODULE_NAME).FileProviderExtension</string>
 	</dict>
-	<!-- App Group identifier the File Provider extension reads/writes
-	     from. Apple requires this exact key on every File Provider
-	     extension bundle — without it the App Store validator rejects
-	     the build with a 409 "Missing Info.plist value" error. Value
-	     must match one of the groups in FileProviderExtension.entitlements. -->
+	<!-- File Provider extension keys live at the TOP level of Info.plist,
+	     NOT inside NSExtension. Per Apple's WWDC 2022 File Provider talk
+	     + the Replicated Extension docs:
+	         https://developer.apple.com/documentation/fileprovider/nsfileproviderreplicatedextension
+	     Putting NSExtensionFileProviderSupportsEnumeration inside the
+	     NSExtension dict (where most other extension keys live) causes
+	     Apple's validator to report NSExtensionFileProviderDocumentGroup
+	     as "missing" — the validator pre-flight rejects the bundle when
+	     the File Provider keys aren't at the level it expects. -->
 	<key>NSExtensionFileProviderDocumentGroup</key>
 	<string>group.com.erekstudio.pdfprivio</string>
+	<key>NSExtensionFileProviderSupportsEnumeration</key>
+	<true/>
 </dict>
 </plist>
