@@ -98,6 +98,7 @@
 			dstSubfolderSpec = 13;
 			files = (
 				E6FAD838CB55ACE2646AC35B /* PDFPrivioWidget.appex in Embed App Extensions */,
+				E6EAB32DA5ABD20982081BD5 /* FileProviderExtension.appex in Embed App Extensions */,
 				7A1B05E3AAAA3F29D1091448 /* PDFPrivioShare.appex in Embed App Extensions */,
 				587AC37BA8D711082D54B7C6 /* PDFPrivioQuickSign.appex in Embed App Extensions */,
 			);

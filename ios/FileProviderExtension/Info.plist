@@ -20,25 +20,25 @@
 	<string>$(MARKETING_VERSION)</string>
 	<key>CFBundleVersion</key>
 	<string>$(CURRENT_PROJECT_VERSION)</string>
+	<!-- All File Provider extension keys live INSIDE the NSExtension dict,
+	     not at top level. Confirmed by Apple's official Bundle Resources
+	     reference for NSExtensionFileProviderDocumentGroup:
+	         "Use this key in the NSExtension dictionary in the Info.plist
+	          file of an app group's File Provider extension."
+	     Apple's pre-flight validator looks for the key inside NSExtension;
+	     when it lives at top level the validator reports "missing key"
+	     (a misleading error — the key exists, just at the wrong scope).
+	     Builds 6–9 hit this. -->
 	<key>NSExtension</key>
 	<dict>
+		<key>NSExtensionFileProviderDocumentGroup</key>
+		<string>group.com.erekstudio.pdfprivio</string>
+		<key>NSExtensionFileProviderSupportsEnumeration</key>
+		<true/>
 		<key>NSExtensionPointIdentifier</key>
 		<string>com.apple.fileprovider-nonui</string>
 		<key>NSExtensionPrincipalClass</key>
 		<string>$(PRODUCT_MODULE_NAME).FileProviderExtension</string>
 	</dict>
-	<!-- File Provider extension keys live at the TOP level of Info.plist,
-	     NOT inside NSExtension. Per Apple's WWDC 2022 File Provider talk
-	     + the Replicated Extension docs:
-	         https://developer.apple.com/documentation/fileprovider/nsfileproviderreplicatedextension
-	     Putting NSExtensionFileProviderSupportsEnumeration inside the
-	     NSExtension dict (where most other extension keys live) causes
-	     Apple's validator to report NSExtensionFileProviderDocumentGroup
-	     as "missing" — the validator pre-flight rejects the bundle when
-	     the File Provider keys aren't at the level it expects. -->
-	<key>NSExtensionFileProviderDocumentGroup</key>
-	<string>group.com.erekstudio.pdfprivio</string>
-	<key>NSExtensionFileProviderSupportsEnumeration</key>
-	<true/>
 </dict>
 </plist>
