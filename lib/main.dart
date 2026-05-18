@@ -51,7 +51,7 @@ Future<void> main() async {
     // hot stream events are picked up by RootScaffold's listener.
     await ShareIntentService.instance.init();
     // Drain any AppIntent-triggered route ("Hey Siri, sign a PDF with
-    // PDFPrivio"). Cold-launch route comes through on init; warm
+    // Privio"). Cold-launch route comes through on init; warm
     // resumes re-poll from RootScaffold's lifecycle listener.
     await AppIntentService.instance.init();
 

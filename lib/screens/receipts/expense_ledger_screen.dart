@@ -67,7 +67,7 @@ class _ExpenseLedgerScreenState
     await SharePlus.instance.share(
       ShareParams(
         files: [XFile(file.path)],
-        subject: 'PDFPrivio expense ledger',
+        subject: 'Privio expense ledger',
       ),
     );
   }

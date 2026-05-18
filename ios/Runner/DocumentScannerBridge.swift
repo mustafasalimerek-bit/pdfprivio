@@ -77,7 +77,7 @@ struct ScannedPage: Identifiable {
 /// targeted redaction).
 enum OCRProcessor {
   /// Accurate level, language correction on, supports the languages
-  /// PDFPrivio's other OCR paths support. Runs ~1-2s per image on
+  /// Privio's other OCR paths support. Runs ~1-2s per image on
   /// iPhone 17 Pro Max — acceptable for post-capture, not realtime.
   static func recognizeText(in image: UIImage) async -> String {
     guard let cgImage = image.cgImage else { return "" }

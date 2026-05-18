@@ -1,7 +1,7 @@
 class AppConstants {
   AppConstants._();
 
-  static const String appName = 'PDFPrivio';
+  static const String appName = 'Privio';
   static const String appTagline = 'Offline PDF tools. No subscription.';
 
   // Legal URLs (will live under erekstudio-legal GitHub Pages once created)

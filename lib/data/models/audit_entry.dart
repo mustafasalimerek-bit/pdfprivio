@@ -1,6 +1,6 @@
 import 'package:hive/hive.dart';
 
-/// A single row in PDFPrivio's audit log — one persisted record of a
+/// A single row in Privio's audit log — one persisted record of a
 /// completed tool operation.
 ///
 /// What we record:

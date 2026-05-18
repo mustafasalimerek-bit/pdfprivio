@@ -51,23 +51,23 @@ import UIKit
     return super.application(app, open: url, options: options)
   }
 
-  /// Register the FileProvider domain so PDFPrivio appears as a
+  /// Register the FileProvider domain so Privio appears as a
   /// top-level location in the Files app sidebar. Idempotent —
   /// NSFileProviderManager.add returns success if already registered.
   /// iOS 16+ only; older devices still get the "On My iPhone >
-  /// PDFPrivio" entry via UIFileSharingEnabled + LSSupportsOpening
+  /// Privio" entry via UIFileSharingEnabled + LSSupportsOpening
   /// DocumentsInPlace in Info.plist.
   private func registerFileProviderDomain() {
     guard #available(iOS 16.0, *) else { return }
     let domain = NSFileProviderDomain(
       identifier: NSFileProviderDomainIdentifier(rawValue: "PDFPrivioInbox"),
-      displayName: "PDFPrivio"
+      displayName: "Privio"
     )
     NSFileProviderManager.add(domain) { error in
       if let error = error as NSError? {
         // Code 1 = "already exists" — that's fine.
         if error.code != 1 {
-          NSLog("[PDFPrivio] FileProvider domain add failed: \(error)")
+          NSLog("[Privio] FileProvider domain add failed: \(error)")
         }
       }
     }

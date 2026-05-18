@@ -19,7 +19,7 @@ class PdfPrivioApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'PDFPrivio',
+      title: 'Privio',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light(),
       home: const _BootGate(),
@@ -45,7 +45,7 @@ class PdfPrivioApp extends StatelessWidget {
 ///   1) first-launch onboarding (3-page welcome) if not yet seen
 ///   2) HomeScreen
 ///
-/// No consent / tracking step — PDFPrivio ships without third-party ads
+/// No consent / tracking step — Privio ships without third-party ads
 /// or analytics SDKs, so there's nothing to ask permission for.
 class _BootGate extends StatefulWidget {
   const _BootGate();

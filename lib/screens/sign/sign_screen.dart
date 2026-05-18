@@ -45,7 +45,7 @@ class _SignScreenState extends ConsumerState<SignScreen> {
   @override
   void initState() {
     super.initState();
-    // If the user got here from "Share to PDFPrivio" the action sheet
+    // If the user got here from "Share to Privio" the action sheet
     // already stashed the file. Skip the picker.
     final pending = PendingSharedFile.consume();
     if (pending != null) {
@@ -362,7 +362,7 @@ class _SignSetup extends StatelessWidget {
         ),
         const SizedBox(height: 14),
         const DisclaimerBanner(
-          message: 'PDFPrivio embeds a SHA-256 hash + UTC timestamp as an '
+          message: 'Privio embeds a SHA-256 hash + UTC timestamp as an '
               "audit footer, but it isn't a certified e-signature "
               'service. Legal binding depends on jurisdiction, the '
               'transaction type, and recipient acceptance. For '

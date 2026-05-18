@@ -79,7 +79,7 @@ class ScanOutcome {
   bool get isEmpty => pdfFile == null;
 }
 
-/// Bridges to the native PDFPrivio scanner via MethodChannel.
+/// Bridges to the native Privio scanner via MethodChannel.
 ///
 /// The native side opens `VNDocumentCameraViewController` — the same
 /// widget Apple Notes uses. ML-backed edge detection, perspective

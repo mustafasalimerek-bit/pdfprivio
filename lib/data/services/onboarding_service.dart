@@ -2,7 +2,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 /// Tracks whether the user has seen the welcome onboarding flow. The
 /// onboarding lives BEFORE the GDPR/ATT consent prompts so users can
-/// see what PDFPrivio is and why we ask for permissions, instead of
+/// see what Privio is and why we ask for permissions, instead of
 /// being launched straight into a tracking dialog.
 class OnboardingService {
   OnboardingService._();

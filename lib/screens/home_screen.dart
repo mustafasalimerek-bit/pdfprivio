@@ -44,7 +44,7 @@ class HomeScreen extends ConsumerWidget {
     final heroes = _heroSpecs();
     return Scaffold(
       // No AppBar — the greeting + status pill below replaces the
-      // "giant PDFPrivio title" that ate 1/8 of the screen. iOS HIG
+      // "giant Privio title" that ate 1/8 of the screen. iOS HIG
       // pattern: brand lives in the launcher icon, the app surface
       // belongs to the user's content.
       body: SafeArea(
@@ -640,7 +640,7 @@ class _TileShell extends StatelessWidget {
 }
 
 /// Time-of-day greeting + small day-of-week subtitle. Replaces the
-/// "giant PDFPrivio" title that ate the top of the screen. Brand
+/// "giant Privio" title that ate the top of the screen. Brand
 /// stays on the launcher icon; this surface belongs to the user.
 ///
 /// Time bands (per design spec):

@@ -67,7 +67,7 @@ class _ProScreenState extends State<ProScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text(
-          'PDFPrivio Pro',
+          'Privio Pro',
           style: TextStyle(fontWeight: FontWeight.w800),
         ),
       ),
@@ -530,7 +530,7 @@ class _Faq extends StatelessWidget {
     ),
     _FaqItem(
       q: 'How do I cancel a subscription?',
-      a: "Apple ID Settings → Subscriptions → PDFPrivio. We can't cancel "
+      a: "Apple ID Settings → Subscriptions → Privio. We can't cancel "
           'on your behalf — Apple handles all subscription management.',
     ),
   ];

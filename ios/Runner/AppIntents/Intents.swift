@@ -1,6 +1,6 @@
 //
 //  Intents.swift
-//  PDFPrivio
+//  Privio
 //
 //  AppIntent definitions surfaced to Siri + the Shortcuts app. Each
 //  intent opens the host app via `openAppWhenRun: true` and drops a

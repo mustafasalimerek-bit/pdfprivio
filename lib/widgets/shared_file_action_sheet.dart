@@ -8,7 +8,7 @@ import '../data/services/haptics_service.dart';
 import '../data/services/share_intent_service.dart';
 
 /// Bottom sheet shown when another app (Mail, WhatsApp, Files…) hands
-/// PDFPrivio a file via the Share Sheet. The user picks a tool; we copy
+/// Privio a file via the Share Sheet. The user picks a tool; we copy
 /// the file into our Inbox, stash it in [PendingSharedFile], and push
 /// the chosen tool's route — the tool reads the pending file in its
 /// own initState and skips its usual file picker.
@@ -121,7 +121,7 @@ class _Sheet extends StatelessWidget {
             ),
           ),
           const Text(
-            'Shared with PDFPrivio',
+            'Shared with Privio',
             style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
           ),
           const SizedBox(height: 4),
@@ -166,7 +166,7 @@ class _Sheet extends StatelessWidget {
                 HapticsService.instance.tap();
                 // Leave the file in Inbox — user can pick it from any
                 // tool's file picker later under "On My iPhone /
-                // PDFPrivio / Inbox" in the Files browser.
+                // Privio / Inbox" in the Files browser.
                 Navigator.of(context).pop();
               },
               child: const Text(

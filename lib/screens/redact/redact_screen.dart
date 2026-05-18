@@ -59,7 +59,7 @@ class _RedactScreenState extends ConsumerState<RedactScreen> {
     if (widget.initialSearches != null) {
       _searches.addAll(widget.initialSearches!.toSet());
     }
-    // Pre-load file handed in by "Share to PDFPrivio".
+    // Pre-load file handed in by "Share to Privio".
     if (_doc == null) {
       final pending = PendingSharedFile.consume();
       if (pending != null) {

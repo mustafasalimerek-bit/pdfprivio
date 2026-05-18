@@ -1,6 +1,6 @@
 //
 //  PDFPrivioAppShortcuts.swift
-//  PDFPrivio
+//  Privio
 //
 //  Declares the AppShortcuts iOS automatically surfaces in the
 //  Shortcuts app + as Siri voice triggers. The `phrases` list is what

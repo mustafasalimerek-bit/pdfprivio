@@ -57,7 +57,7 @@ class _AuditLogScreenState extends ConsumerState<AuditLogScreen> {
     await SharePlus.instance.share(
       ShareParams(
         files: [XFile(file.path)],
-        text: 'PDFPrivio audit log (CSV export)',
+        text: 'Privio audit log (CSV export)',
       ),
     );
   }

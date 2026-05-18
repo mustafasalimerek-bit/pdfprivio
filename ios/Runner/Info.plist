@@ -7,7 +7,7 @@
 		<key>CFBundleDevelopmentRegion</key>
 		<string>$(DEVELOPMENT_LANGUAGE)</string>
 		<key>CFBundleDisplayName</key>
-		<string>PDFPrivio</string>
+		<string>Privio</string>
 		<key>CFBundleExecutable</key>
 		<string>$(EXECUTABLE_NAME)</string>
 		<key>CFBundleIdentifier</key>
@@ -24,7 +24,7 @@
 		<string>????</string>
 		<key>CFBundleVersion</key>
 		<string>$(FLUTTER_BUILD_NUMBER)</string>
-		<!-- Document types we accept via "Open in PDFPrivio" / Share Sheet.
+		<!-- Document types we accept via "Open in Privio" / Share Sheet.
 		     Lets Mail, WhatsApp, Files, and any UTI-aware app hand off a
 		     PDF or an image to us without the user first opening this app
 		     and picking a file by hand. -->
@@ -58,7 +58,7 @@
 		<!-- URL schemes used to wake the host app from extensions:
 		     * ShareMedia-com.erekstudio.pdfprivio — receive_sharing_intent's
 		       legacy hook (kept so the CFBundleDocumentTypes path keeps
-		       working for "Copy to PDFPrivio").
+		       working for "Copy to Privio").
 		     * pdfprivio — our custom PDFPrivioShare Share Extension fires
 		       this after dropping a file in App Group/SharedExtensionDrop,
 		       and our AppDelegate routes it to ShareExtensionBridge so
@@ -75,9 +75,9 @@
 				</array>
 			</dict>
 		</array>
-		<!-- Surface PDFPrivio's Documents folder under "On My iPhone /
-		     PDFPrivio" in the Files app so the user can browse to shared
-		     PDFs we've imported, and so PDFPrivio-produced output (signed,
+		<!-- Surface Privio's Documents folder under "On My iPhone /
+		     Privio" in the Files app so the user can browse to shared
+		     PDFs we've imported, and so Privio-produced output (signed,
 		     redacted, etc.) is editable in place. -->
 		<key>UIFileSharingEnabled</key>
 		<true/>
@@ -85,7 +85,7 @@
 		<true/>
 		<key>LSRequiresIPhoneOS</key>
 		<true/>
-		<!-- Multi-scene ON — gives iPad users two PDFPrivio windows
+		<!-- Multi-scene ON — gives iPad users two Privio windows
 		     side by side under Stage Manager / Split View. The second
 		     window starts from the home screen; each window has its
 		     own navigator stack so a redact in window A doesn't reset
@@ -115,7 +115,7 @@
 		<!-- iPad: opt into "Requires full screen = NO" so Stage Manager,
 		     Split View, and Slide Over all work. Most app-store-ranked
 		     PDF tools have this on; without it iPad users can't park
-		     PDFPrivio next to Notes/Mail. -->
+		     Privio next to Notes/Mail. -->
 		<key>UIRequiresFullScreen</key>
 		<false/>
 		<key>UIApplicationSupportsIndirectInputEvents</key>
@@ -138,9 +138,9 @@
 			<string>UIInterfaceOrientationLandscapeRight</string>
 		</array>
 		<key>NSPhotoLibraryUsageDescription</key>
-		<string>PDFPrivio reads photos only when you pick images to turn into a PDF. Files never leave your device.</string>
+		<string>Privio reads photos only when you pick images to turn into a PDF. Files never leave your device.</string>
 		<key>NSCameraUsageDescription</key>
-		<string>PDFPrivio uses the camera when you scan a document or capture an image for a PDF. Captures stay on this device.</string>
+		<string>Privio uses the camera when you scan a document or capture an image for a PDF. Captures stay on this device.</string>
 		<key>UIStatusBarHidden</key>
 		<false/>
 	</dict>

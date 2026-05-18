@@ -143,7 +143,7 @@ class _BatchScreenState extends ConsumerState<BatchScreen> {
     await SharePlus.instance.share(
       ShareParams(
         files: successFiles,
-        text: 'PDFPrivio batch — ${outcome.operation.label}',
+        text: 'Privio batch — ${outcome.operation.label}',
       ),
     );
   }

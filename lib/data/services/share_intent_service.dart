@@ -170,7 +170,7 @@ class ShareIntentService {
   /// Copy the iOS-supplied file path into the app's Documents/Inbox
   /// so it persists past the share callback (iOS may purge the original
   /// temp file as soon as the extension finishes) and so the user can
-  /// also see it in the Files app under "On My iPhone / PDFPrivio /
+  /// also see it in the Files app under "On My iPhone / Privio /
   /// Inbox" if they ever need it again.
   static Future<File?> importToInbox(SharedMediaFile shared) async {
     try {

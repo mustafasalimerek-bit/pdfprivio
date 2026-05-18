@@ -81,7 +81,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       builder: (ctx) => AlertDialog(
         title: const Text('Appearance'),
         content: const Text(
-          "PDFPrivio currently matches your iPhone's system "
+          "Privio currently matches your iPhone's system "
           'appearance — light or dark. A per-app override (always '
           'light / always dark) is coming in v1.1.',
           style: TextStyle(fontSize: 13),
@@ -417,7 +417,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 const Padding(
                   padding: EdgeInsets.symmetric(horizontal: 4),
                   child: Text(
-                    'PDFPrivio is a tool, not legal, medical, financial, '
+                    'Privio is a tool, not legal, medical, financial, '
                     'or tax advice. Outputs are aids — not substitutes for '
                     'human review.',
                     style: TextStyle(
@@ -433,7 +433,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   child: Text(
                     info == null
                         ? ''
-                        : 'PDFPrivio ${info.version} (${info.buildNumber})',
+                        : 'Privio ${info.version} (${info.buildNumber})',
                     style: const TextStyle(
                       fontSize: 12,
                       color: AppColors.textTertiary,
@@ -583,7 +583,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         _RowSpec(
           icon: Icons.gavel_outlined,
           title: 'Terms of Service',
-          subtitle: 'The rules of using PDFPrivio',
+          subtitle: 'The rules of using Privio',
           onTap: () => _open(
               'https://mustafasalimerek-bit.github.io/pdfprivio/terms/'),
         ),
@@ -607,7 +607,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   List<Widget> _aboutRows() => _build([
         _RowSpec(
           icon: Icons.info_outline,
-          title: 'About PDFPrivio',
+          title: 'About Privio',
           subtitle: 'On-device PDF toolkit by Erek Studio',
           onTap: () =>
               _open('https://mustafasalimerek-bit.github.io/pdfprivio/'),
@@ -676,9 +676,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             'replaced by a configurable Action Button.\n\n'
             '1. Open the iOS Settings app.\n'
             '2. Action Button → swipe to "Shortcut".\n'
-            '3. Tap "Choose a Shortcut" → PDFPrivio → '
+            '3. Tap "Choose a Shortcut" → Privio → '
             '"Scan to PDF".\n\n'
-            'A press-and-hold now opens the scanner. Other PDFPrivio '
+            'A press-and-hold now opens the scanner. Other Privio '
             'shortcuts (Sign, Redact, OCR, Find sensitive data, '
             'Open Recent) are also available.',
           ),
@@ -701,7 +701,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         title: const Text('Lock Screen quick scan'),
         content: const SingleChildScrollView(
           child: Text(
-            'iOS 18 lets you put PDFPrivio\'s scanner on the Lock '
+            'iOS 18 lets you put Privio\'s scanner on the Lock '
             'Screen or in Control Center.\n\n'
             'Control Center:\n'
             '1. Swipe down from the top-right.\n'
