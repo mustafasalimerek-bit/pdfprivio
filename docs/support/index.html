@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="robots" content="index,follow" />
+  <meta name="theme-color" content="#0F766E" />
+  <title>Support · Privio</title>
+  <meta name="description" content="Privio support — get help, ask questions, report bugs. Solo indie developer, real human replies within 24 hours." />
+  <link rel="canonical" href="https://mustafasalimerek-bit.github.io/pdfprivio/support/" />
+  <style>
+    :root {
+      --bg: #f8fafc;
+      --surface: #ffffff;
+      --text: #0f172a;
+      --muted: #475569;
+      --tertiary: #94a3b8;
+      --primary: #0f766e;
+      --primary-light: #14b8a6;
+      --primary-dark: #0b5650;
+      --border: #e2e8f0;
+      --accent: #10b981;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0b1220;
+        --surface: #111a2c;
+        --text: #e6edf3;
+        --muted: #94a3b8;
+        --tertiary: #64748b;
+        --primary: #2dd4bf;
+        --primary-light: #14b8a6;
+        --primary-dark: #0f766e;
+        --border: #1e293b;
+      }
+    }
+    * { box-sizing: border-box; }
+    html { -webkit-text-size-adjust: 100%; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text",
+        "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      margin: 0;
+      padding: 32px 20px 64px;
+      line-height: 1.6;
+      font-size: 16px;
+      -webkit-font-smoothing: antialiased;
+    }
+    .container { max-width: 720px; margin: 0 auto; }
+    header.brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding-bottom: 18px;
+      margin-bottom: 28px;
+      border-bottom: 1px solid var(--border);
+    }
+    header.brand .mark {
+      width: 28px; height: 28px;
+      background: var(--primary);
+      border-radius: 7px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: 800;
+      font-size: 14px;
+      letter-spacing: 0.3px;
+    }
+    header.brand .name {
+      font-weight: 800;
+      font-size: 16px;
+      color: var(--text);
+      letter-spacing: -0.2px;
+    }
+    header.brand .right {
+      margin-left: auto;
+      font-size: 13px;
+      color: var(--muted);
+    }
+    header.brand .right a { color: var(--primary); text-decoration: none; }
+    header.brand .right a:hover { text-decoration: underline; }
+    h1 {
+      font-size: 32px;
+      font-weight: 800;
+      line-height: 1.2;
+      margin: 0 0 12px;
+      letter-spacing: -0.5px;
+    }
+    .lede {
+      font-size: 17px;
+      color: var(--muted);
+      margin: 0 0 32px;
+      line-height: 1.5;
+    }
+    h2 {
+      font-size: 20px;
+      font-weight: 800;
+      line-height: 1.3;
+      margin: 36px 0 12px;
+      color: var(--text);
+    }
+    h3 {
+      font-size: 16px;
+      font-weight: 700;
+      margin: 22px 0 6px;
+      color: var(--text);
+    }
+    p { margin: 0 0 14px; color: var(--text); }
+    a { color: var(--primary); text-decoration: underline; }
+    a:hover { color: var(--primary-light); }
+    ul, ol { padding-left: 22px; margin: 0 0 14px; }
+    li { margin-bottom: 6px; }
+    li::marker { color: var(--tertiary); }
+    strong { color: var(--text); }
+
+    .contact-card {
+      background: linear-gradient(
+        135deg,
+        rgba(15, 118, 110, 0.06),
+        rgba(20, 184, 166, 0.04)
+      );
+      border: 1px solid rgba(15, 118, 110, 0.25);
+      border-radius: 16px;
+      padding: 22px 24px;
+      margin: 0 0 32px;
+    }
+    .contact-card .label {
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 0.8px;
+      color: var(--primary);
+      text-transform: uppercase;
+      margin-bottom: 6px;
+    }
+    .contact-card .email {
+      font-size: 22px;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+    .contact-card .email a {
+      color: var(--text);
+      text-decoration: none;
+    }
+    .contact-card .email a:hover { color: var(--primary); }
+    .contact-card .turnaround {
+      font-size: 14px;
+      color: var(--muted);
+      margin: 0;
+    }
+
+    details {
+      border-bottom: 1px solid var(--border);
+      padding: 14px 0;
+    }
+    details:first-of-type { border-top: 1px solid var(--border); }
+    details summary {
+      cursor: pointer;
+      font-weight: 700;
+      font-size: 15px;
+      color: var(--text);
+      list-style: none;
+      padding-right: 24px;
+      position: relative;
+    }
+    details summary::-webkit-details-marker { display: none; }
+    details summary::after {
+      content: "+";
+      position: absolute;
+      right: 0;
+      top: 0;
+      color: var(--primary);
+      font-weight: 800;
+      font-size: 20px;
+      line-height: 1;
+      transition: transform 0.15s ease;
+    }
+    details[open] summary::after {
+      content: "−";
+    }
+    details[open] summary { color: var(--primary); }
+    details > p, details > ul {
+      margin-top: 10px;
+      color: var(--muted);
+      font-size: 14.5px;
+    }
+
+    footer.site {
+      margin-top: 56px;
+      padding-top: 24px;
+      border-top: 1px solid var(--border);
+      font-size: 13px;
+      color: var(--tertiary);
+      text-align: center;
+    }
+    footer.site a { color: var(--muted); }
+
+    @media (max-width: 480px) {
+      body { padding: 20px 16px 48px; }
+      h1 { font-size: 26px; }
+      h2 { font-size: 18px; margin-top: 28px; }
+      .contact-card { padding: 18px 18px; }
+      .contact-card .email { font-size: 18px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header class="brand">
+      <span class="mark">P</span>
+      <span class="name">Privio</span>
+      <span class="right">
+        <a href="../">Home</a> ·
+        <a href="../privacy/">Privacy</a> ·
+        <a href="../terms/">Terms</a>
+      </span>
+    </header>
+
+    <h1>Support</h1>
+    <p class="lede">
+      Privio is built by a solo indie developer. There is no support team,
+      no ticket queue, no chatbot — just one human reading every email.
+    </p>
+
+    <div class="contact-card">
+      <div class="label">Email</div>
+      <div class="email">
+        <a href="mailto:mustafasalimerek@gmail.com">mustafasalimerek@gmail.com</a>
+      </div>
+      <p class="turnaround">Typical reply window is under 24 hours, Istanbul time. Bug reports get the fastest turnaround — include the iOS version and which tool you were using.</p>
+    </div>
+
+    <h2>What to include in a support email</h2>
+    <ul>
+      <li><strong>What you were trying to do</strong> — which tool, which step.</li>
+      <li><strong>What you expected to happen</strong> versus what actually happened.</li>
+      <li><strong>iOS version + iPhone model</strong> (e.g. "iOS 26.4 on iPhone 15 Pro Max"). The in-app Contact Support button auto-fills the app version into the email for me.</li>
+      <li><strong>A screenshot</strong> if the issue is visual or there is an error message.</li>
+    </ul>
+    <p>Do <em>not</em> attach any PDF that contains sensitive information when filing a bug report. Privio runs on-device specifically so your documents stay private; please keep them off support email too.</p>
+
+    <h2>Common questions</h2>
+
+    <details>
+      <summary>How do I cancel my Pro subscription?</summary>
+      <p>iPhone Settings → tap your name at the top → Subscriptions → Privio → Cancel Subscription. You keep access until the current period ends. No questions, no retention dark patterns from our side.</p>
+    </details>
+
+    <details>
+      <summary>Where are my scanned and edited PDFs saved?</summary>
+      <p>Inside the Files app: <strong>On My iPhone → Privio</strong>. Everything Privio produces lives in its own sandbox folder; iOS encrypts it at rest as long as you have a passcode set. The files don't sync to iCloud unless you explicitly turn that on in the Files app settings.</p>
+    </details>
+
+    <details>
+      <summary>Does Privio upload my PDFs anywhere?</summary>
+      <p>No. Every operation — scan, OCR, redact, sign, summarise — runs on the iPhone's own hardware. There are no third-party servers in the loop, no analytics SDK, no crash-reporting SDK, no advertising SDK. You can verify this in Settings → Privacy &amp; Security → App Privacy Report. See the <a href="../privacy/">Privacy Policy</a> for the full statement.</p>
+    </details>
+
+    <details>
+      <summary>The scanner is asking for camera access. Why?</summary>
+      <p>Privio uses Apple's VisionKit document scanner. It needs the camera at the moment you tap "Scan to PDF" to capture pages. The frames are processed in memory and the finished PDF is saved to your sandbox; nothing is uploaded. If you decline the permission, the scanner is disabled but every other tool still works — you can import PDFs and images through the Files app or share sheet instead.</p>
+    </details>
+
+    <details>
+      <summary>I redacted a PDF. Is the text really gone?</summary>
+      <p>Yes — Privio's Redact tool removes the matched text from the data stream, rasterises the affected pages, and burns black bars on top. There is no "hidden" text layer to extract. That said, complex PDFs have many surfaces (embedded objects, attachments, prior revisions, comments), so before sharing a sensitive document externally, open the redacted PDF in a separate viewer to do a final eyeball check.</p>
+    </details>
+
+    <details>
+      <summary>Receipt scanner extracted the wrong total / date / vendor.</summary>
+      <p>Receipt parsing uses on-device OCR plus regex heuristics — fast and private, but it can miss things on unusual formats. Every field is editable before you tap Save, and the original PDF stays untouched. If a specific receipt format reliably fails for you, email a redacted screenshot and I will tune the parser for that format in the next update.</p>
+    </details>
+
+    <details>
+      <summary>How do I restore my Pro purchase on a new iPhone?</summary>
+      <p>Open Privio → Settings → tap <strong>Restore purchases</strong>. As long as you sign into the new iPhone with the same Apple ID you used to buy Pro, the purchase will come back. If it does not, email me and I will help — usually the issue is a different Apple ID by mistake.</p>
+    </details>
+
+    <details>
+      <summary>I want a feature that is not in the app.</summary>
+      <p>Send me the use case (one paragraph is plenty) and what you currently do without it. I read every request and tend to prioritise the ones that match the lawyer / accountant / pro wedge — Privio is intentionally not trying to be every PDF app for every user.</p>
+    </details>
+
+    <h2>App Store rating</h2>
+    <p>If Privio is genuinely helping you, leaving a quick rating on the App Store is the single most valuable thing you can do for a solo indie developer — it is how new users discover the app. The in-app prompt asks once after you have used a few tools; you can also leave a review any time by opening the App Store listing.</p>
+
+    <h2>Legal</h2>
+    <ul>
+      <li><a href="../privacy/">Privacy Policy</a> — what we collect (nothing), and how we prove it.</li>
+      <li><a href="../terms/">Terms of Service</a> — license, paid features, acceptable use, ESIGN notice, liability cap.</li>
+    </ul>
+
+    <footer class="site">
+      <p>© 2026 Erek Studio · <a href="../">Privio</a> · <a href="../privacy/">Privacy</a> · <a href="../terms/">Terms</a></p>
+    </footer>
+  </div>
+</body>
+</html>
