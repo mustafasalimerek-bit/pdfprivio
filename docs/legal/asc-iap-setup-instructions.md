@@ -1,6 +1,6 @@
 # Chrome Claude talimat: ASC'de 3 IAP product aç
 
-App Store Connect'te PDFPrivio için 3 in-app purchase product yaratacaksın.
+App Store Connect'te Privio için 3 in-app purchase product yaratacaksın.
 Bu doküman komut tarafına yapıştırılacak prompt'tur. **Sıralama
 kritik** — Subscription Group önce, ardından Monthly + Yearly aynı
 grup içinde, Lifetime ayrı non-consumable olarak.
@@ -10,7 +10,7 @@ grup içinde, Lifetime ayrı non-consumable olarak.
 # PROMPT (Claude in Chrome'a yapıştır)
 
 ```
-Görev: App Store Connect'te PDFPrivio (Apple ID 6769686204) için 3 in-app
+Görev: App Store Connect'te Privio (Apple ID 6769686204) için 3 in-app
 purchase product açmak.
 
 Ben Mustafa, ASC'de zaten login durumdayım. Sen browser otomasyonu
@@ -27,7 +27,7 @@ Memory dosyaları:
 Canonical değerler:
 - Apple App ID: `6769686204`
 - Bundle ID: `com.erekstudio.pdfprivio`
-- App adı: PDFPrivio
+- App adı: Privio
 - Studio: Erek Studio
 
 ## Başlangıç URL
@@ -50,7 +50,7 @@ URL: https://appstoreconnect.apple.com/apps/6769686204/distribution/subscription
 
 1. Pro group sayfasında "Create" / "Subscription" → "Auto-Renewable Subscription"
 2. Form:
-   - Reference Name: `PDFPrivio Pro Monthly`
+   - Reference Name: `Privio Pro Monthly`
    - Product ID: `com.erekstudio.pdfprivio.pro_monthly` ⚠️ aynen bu, değiştirme
 3. Create (henüz Submit değil — review için ekstra info ister)
 4. Açılan sayfada:
@@ -59,7 +59,7 @@ URL: https://appstoreconnect.apple.com/apps/6769686204/distribution/subscription
      "United States" → Price tier: `USD 4.99` (Tier 5 — Apple günceller)
      → Add → Save
    - **App Store Localization** (en-US):
-     - Subscription Display Name: `PDFPrivio Pro Monthly`
+     - Subscription Display Name: `Privio Pro Monthly`
      - Description: `Unlock the full toolkit — no daily limits, Form Fill,
        Bates numbering, Redact, and no ads. Auto-renews monthly until
        cancelled. Manage in Apple ID settings.`
@@ -82,14 +82,14 @@ URL: https://appstoreconnect.apple.com/apps/6769686204/distribution/subscription
 
 1. Aynı Pro group sayfasında "Create Subscription"
 2. Form:
-   - Reference Name: `PDFPrivio Pro Yearly`
+   - Reference Name: `Privio Pro Yearly`
    - Product ID: `com.erekstudio.pdfprivio.pro_yearly` ⚠️ aynen
 3. Create
 4. Açılan sayfada:
    - **Subscription Duration**: 1 Year
    - **Subscription Prices**: US base → `USD 39.99` (Apple tier'ını seç)
    - **Localization**:
-     - Display Name: `PDFPrivio Pro Yearly`
+     - Display Name: `Privio Pro Yearly`
      - Description: `Best value — unlock the full toolkit for a year and
        save vs monthly. No daily limits, Form Fill, Bates, Redact, no ads.
        Auto-renews yearly until cancelled. Manage in Apple ID settings.`
@@ -104,14 +104,14 @@ URL: https://appstoreconnect.apple.com/apps/6769686204/distribution/iap
 
 1. "Create" / "Non-Consumable" seç
 2. Form:
-   - Reference Name: `PDFPrivio Pro Lifetime`
+   - Reference Name: `Privio Pro Lifetime`
    - Product ID: `com.erekstudio.pdfprivio.pro_lifetime` ⚠️ aynen
 3. Create
 4. Açılan sayfada:
    - **Pricing**: US base → `USD 79.99` (Tier 80)
    - **App Store Localization** (en-US):
-     - Display Name: `PDFPrivio Pro Lifetime`
-     - Description: `Pay once, own it forever. Unlocks the full PDFPrivio
+     - Display Name: `Privio Pro Lifetime`
+     - Description: `Pay once, own it forever. Unlocks the full Privio
        toolkit on this Apple ID — no daily limits, Form Fill, Bates,
        Redact, no ads. No subscription, no renewal email, no surprise
        charge in a year. Restoring on this Apple ID after purchase

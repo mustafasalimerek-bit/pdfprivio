@@ -1,4 +1,4 @@
-# PDFPrivio
+# Privio
 
 23 on-device PDF tools for iOS. Scan, OCR, sign, redact, fill IRS / USCIS forms, compare versions, summarise with Apple Intelligence, capture receipts to a QuickBooks-friendly CSV — all on the iPhone, none of it in the cloud.
 
@@ -34,7 +34,7 @@
 - Control Center / Lock Screen scan control (iOS 18+)
 - Action Button binding via AppIntents (iPhone 15 Pro+)
 - Share Extension + Action Extension (Quick Sign in any app's share sheet)
-- Files Provider Extension (PDFPrivio surface in the Files app)
+- Files Provider Extension (Privio surface in the Files app)
 - iPad Stage Manager / Split View / Slide Over
 
 ## Development

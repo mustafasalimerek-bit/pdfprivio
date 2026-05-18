@@ -1,109 +1,60 @@
 # App Store Privacy "Nutrition Labels" — fill-in checklist
 
-Apple App Store Connect (App → App Privacy) requires every shipping app to declare what data it collects, in 14 categories. Below is exactly how to answer for PDFPrivio. **Verify each line before submitting — Apple Reviewers do not forgive incorrect labels.**
+Apple App Store Connect (App → App Privacy) requires every shipping app to declare what data it collects across 14 categories. **Privio is unusual: the answer is "nothing" for every category.** Here is how to fill the form.
 
-Console URL when ready: <https://appstoreconnect.apple.com/apps/{APPLE_ID}/distribution/privacy>
+Console URL: <https://appstoreconnect.apple.com/apps/{APPLE_ID}/distribution/privacy>
 
 ---
 
 ## Question 1: "Do you or your third-party partners collect data from this app?"
 
-**Answer: Yes.**
+**Answer: No.**
 
-(We don't collect anything about *the user's content*, but Crashlytics + Analytics + AdMob count as data collection per Apple's definition.)
+This is the truthful answer because:
 
----
+- Privio includes **zero analytics SDKs** (no Firebase Analytics, Mixpanel, Amplitude, PostHog, etc.).
+- Privio includes **zero crash-reporting SDKs** (no Crashlytics, Sentry, Bugsnag).
+- Privio includes **zero advertising SDKs** (no AdMob, AppLovin, Unity Ads).
+- Privio has **no account system**. No signup, no login, no user ID.
+- Privio has **no backend server**. There is no API call that leaves the device with user content.
+- Apple's StoreKit handles in-app purchases — that data sits inside Apple, not us. App Privacy explicitly excludes data Apple collects on Apple's own behalf during the purchase flow.
 
-## Question 2: Data types collected
-
-Apple lists 14 top-level categories. For each, we declare:
-
-| Category | Collected? | Notes |
-|---|---|---|
-| **Contact Info** (name, email, phone, address, other contact info) | **No** | We don't ask for any of these. |
-| **Health & Fitness** | **No** | |
-| **Financial Info** (payment info, credit info, other financial info) | **No** | Purchases handled by Apple; we never see the payment. |
-| **Location** (precise, coarse) | **No** | |
-| **Sensitive Info** (religion, sexual orientation, etc.) | **No** | |
-| **Contacts** | **No** | |
-| **User Content** (emails or text msgs, photos, videos, audio, gameplay, customer support, other content) | **No** ⚠️ | This is the **big one** for a PDF app. Make absolutely sure you select **No**. The user's PDFs are processed entirely on-device and never transmitted to us. Selecting "Yes" here would be incorrect and would also signal to lawyers/CPAs that we DO see their files — kills the wedge. |
-| **Browsing History** | **No** | |
-| **Search History** | **No** | |
-| **Identifiers** (user ID, device ID) | **Yes (one item: Device ID)** | Only when user grants ATT consent → AdMob receives IDFA. See section 3 below. |
-| **Purchases** (purchase history) | **No** | Apple handles; we don't store our own purchase records. |
-| **Usage Data** (product interaction, advertising data, other usage) | **Yes (two items)** | See section 3 below. |
-| **Diagnostics** (crash data, performance data, other diagnostic data) | **Yes (two items)** | See section 3 below. |
-| **Other Data** | **No** | |
+Once you select **No** here, the rest of the App Privacy form collapses — no further data-type questions, no per-type tracking disclosures, no ATT disclosure. Privio will appear in the App Store with the **"Data Not Collected"** label at the top of its privacy section, which is the single strongest visual signal a privacy-positive app can earn on the Store.
 
 ---
 
-## Question 3: For each collected data type, link details
+## Question 2: Privacy Policy URL
 
-Apple asks per-data-type: (a) collected? (b) linked to identity? (c) used for tracking? (d) purpose(s)?
-
-### 3.1 Device ID (IDFA, only when user opts in via Apple ATT)
-
-- Linked to user's identity? **No**
-- Used for tracking? **Yes**
-- Purposes: **Third-Party Advertising**
-
-> Apple defines "tracking" as linking a user's data with third-party data for ads or measurement, OR sharing IDFA with a data broker. AdMob receives IDFA only after the user accepts ATT → check this box honestly. If we set "Used for tracking? = No" we'd be lying to Apple and to users.
-
-### 3.2 Product Interaction (Firebase Analytics, only when user consents via UMP)
-
-- Linked to user's identity? **No**
-- Used for tracking? **No**
-- Purposes: **Analytics**
-
-### 3.3 Advertising Data (AdMob)
-
-- Linked to user's identity? **No**
-- Used for tracking? **Yes**
-- Purposes: **Third-Party Advertising**
-
-### 3.4 Crash Data (Firebase Crashlytics)
-
-- Linked to user's identity? **No**
-- Used for tracking? **No**
-- Purposes: **App Functionality**
-
-### 3.5 Performance Data (Firebase Crashlytics / Firebase Analytics)
-
-- Linked to user's identity? **No**
-- Used for tracking? **No**
-- Purposes: **App Functionality, Analytics**
-
----
-
-## Question 4: Privacy Policy URL
-
-Put `https://mustafasalimerek-bit.github.io/pdfprivio/privacy/` (once the page is up at that path).
+Put `https://mustafasalimerek-bit.github.io/pdfprivio/privacy/` (once the page is live at that path).
 
 Same URL goes into:
-- App Store Connect → App Privacy → Privacy Policy URL
-- App Store Connect → App Information → Privacy Policy URL (yes, two places)
-- Google Play Console → Policy → App content → Privacy policy
 
----
-
-## Question 5: Data not collected — the on-device wedge
-
-There is no Apple field for this, but in marketing copy / App Store description / app's privacy screen we should hammer:
-
-> *"All processing happens on this device. Your PDFs, your scans, your signatures, your redactions — never uploaded, never seen by us, never seen by anyone else. No account required."*
-
-This is the lawyer-wedge headline. Don't bury it.
+- App Store Connect → **App Privacy → Privacy Policy URL**
+- App Store Connect → **App Information → Privacy Policy URL** (yes, two places)
 
 ---
 
 ## When to re-check this file
 
-- Before every App Store submission (resubmissions reset the labels for review).
-- Whenever you add a new third-party SDK. Each SDK has its own data collection — add it here and to the categories above.
-- Whenever Apple changes the categories (rare, but happens). Check the App Privacy Details questions page in App Store Connect for any new questions.
+- **Before every App Store submission.** Apple's privacy labels reset for review on resubmission.
+- **The moment you add any third-party SDK.** If you ever wire in analytics, crash reporting, ads, or any framework that phones home, this form must be re-filled with the truthful new answer. Both this file and `privacy-policy.md` must change together — a mismatch between the binary, the App Privacy form, and the published policy is a Guideline 5.1.1 rejection.
+
+---
 
 ## Common reviewer rejections to pre-empt
 
-- **"We can see your app stores user content."** Often triggered by anything that backs up to iCloud. PDFPrivio's outputs go to the app sandbox and the user's Files via the share sheet — we don't initiate iCloud sync ourselves. If Apple flags this, point to our privacy policy section 4.
-- **"Tracking is enabled but ATT prompt is missing."** Make sure `NSUserTrackingUsageDescription` is in Info.plist (already added) and `ConsentService.gather()` runs at app start (already wired). If the reviewer is in a region where UMP returns "not required", they should still see ATT.
-- **"Privacy Policy URL inaccessible."** Test the URL from a private browser window 1 hour before submission. Apple Reviewers' IPs are often in California / Singapore / Cork — make sure your hosting doesn't geo-block.
+- **"We can see your app stores user content."** Often triggered by anything that backs up to iCloud automatically. Privio's outputs go to the app sandbox and into the user's Files via the iOS share sheet — Privio does not initiate iCloud sync. If Apple flags this, point to `privacy-policy.md` section 4.
+- **"Privacy Policy URL inaccessible."** Test the URL from a private browser window 1 hour before submission. Apple Reviewers' IPs are typically in California / Cork / Singapore — make sure GitHub Pages does not geo-block.
+- **"Mismatch between stated SDKs and binary scan."** Apple's automated SDK scan can detect bundled third-party frameworks. If a transitive dependency ever pulls one in, the binary will say "uses X" but App Privacy still says "No data collection". Run `otool -L Runner.app/Runner | grep -v System` before submission to see what is actually linked. Currently the only third-party frameworks are Apple's own (Flutter, VisionKit, PDFKit) and Apple-distributed helpers — no data collectors.
+
+---
+
+## Marketing copy reinforcement
+
+Apple gives you the "Data Not Collected" badge automatically once Question 1 is **No**, but you still need to hammer the message in places users look first: app description, screenshots, in-app onboarding.
+
+Suggested headline copy:
+
+> *"All processing happens on this iPhone. Your PDFs, scans, signatures, redactions — never uploaded, never seen by us, never seen by anyone else. No account, no analytics, no ads."*
+
+This is the lawyer-wedge headline. Do not bury it.
