@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="robots" content="index,follow" />
   <meta name="theme-color" content="#0F766E" />
-  <title>Privacy Policy · PDFPrivio</title>
-  <meta name="description" content="PDFPrivio Privacy Policy — on-device PDF processing, what we collect, what we never collect, your rights under GDPR and CCPA." />
+  <title>Privacy Policy · Privio</title>
+  <meta name="description" content="Privio Privacy Policy — Privio collects nothing. No analytics, no crash reporting, no ads, no tracking. Every PDF stays on your iPhone." />
   <link rel="canonical" href="https://mustafasalimerek-bit.github.io/pdfprivio/privacy/" />
   <style>
     :root {
@@ -158,6 +158,23 @@
       text-transform: uppercase;
     }
     .tldr ul { margin-bottom: 0; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 0 0 18px;
+      font-size: 14px;
+    }
+    table th, table td {
+      text-align: left;
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--border);
+      vertical-align: top;
+    }
+    table th {
+      background: var(--surface);
+      font-weight: 700;
+      color: var(--text);
+    }
     footer.site {
       margin-top: 56px;
       padding-top: 24px;
@@ -171,6 +188,7 @@
       body { padding: 20px 16px 48px; }
       h1 { font-size: 26px; }
       h2 { font-size: 18px; margin-top: 28px; }
+      table th, table td { padding: 8px 10px; font-size: 13px; }
     }
   </style>
 </head>
@@ -178,136 +196,126 @@
   <div class="container">
     <header class="brand">
       <span class="mark">P</span>
-      <span class="name">PDFPrivio</span>
+      <span class="name">Privio</span>
       <span class="right"><a href="../">Home</a> · <a href="../terms/">Terms</a></span>
     </header>
 
     <h1>Privacy Policy</h1>
 
     <div class="meta">
-      <div><strong>Last updated:</strong> 2026-05-15</div>
-      <div><strong>Effective date:</strong> 2026-05-15</div>
+      <div><strong>Last updated:</strong> 2026-05-18</div>
+      <div><strong>Effective date:</strong> 2026-05-18</div>
       <div><strong>Operator:</strong> Erek Studio (Mustafa Salim Erek, sole proprietor)</div>
       <div><strong>Contact:</strong> <a href="mailto:mustafasalimerek@gmail.com">mustafasalimerek@gmail.com</a></div>
-      <div><strong>App:</strong> PDFPrivio (iOS / Android), bundle id <code>com.erekstudio.pdfprivio</code></div>
+      <div><strong>App:</strong> Privio (iOS), bundle id <code>com.erekstudio.pdfprivio</code></div>
     </div>
 
-    <p>This policy describes what data PDFPrivio does and does not collect, why, and what choices you have. It is written to be readable; the short version is at the top.</p>
+    <p>This policy describes what data Privio does and does not collect. The short version is at the top.</p>
 
     <div class="tldr">
       <h2>TL;DR</h2>
-      <ul>
-        <li><strong>Your PDFs and the text inside them never leave your device.</strong> All processing — merge, split, scan, OCR, redaction, PII detection, signature, everything — runs locally on your iPhone or Android device. We never upload your documents to our servers, because we don't have servers that receive them.</li>
-        <li>We use <strong>Firebase Crashlytics</strong> to learn when the app crashes, and <strong>Firebase Analytics + Google AdMob</strong> for anonymous usage stats and to show ads to users on the Free tier.</li>
-        <li>We ask for your consent (GDPR / CCPA / Apple ATT) before turning on Analytics or personalized ads. You can decline; the app works the same.</li>
-        <li>We do <strong>not</strong> sell your data, ever.</li>
-      </ul>
+      <p>Privio collects nothing. There is no analytics, no crash reporting, no advertising, no tracking, no account, and no server to send anything to. Every PDF you scan, sign, redact, OCR, or convert stays on your iPhone. The app cannot read your files even if it wanted to — they never leave your device.</p>
+      <p>The only outbound activity that ever happens is what <em>you</em> explicitly tap: the iOS Share Sheet to send a finished PDF to another app, or an in-app purchase to Apple's App Store.</p>
     </div>
 
-    <h2>1. The data PDFPrivio <strong>does not</strong> collect</h2>
-    <p>We want to be very explicit about this because it's the centerpiece of the product:</p>
+    <h2>1. What Privio does not collect</h2>
+    <p>This is the centerpiece of the product. Privio does not collect, transmit, or have any access to:</p>
     <ul>
-      <li>The <strong>contents of your PDFs</strong> — text, images, signatures, tables, form fields, anything. Never transmitted off your device. Never stored on our servers.</li>
-      <li><strong>OCR text</strong> generated from your scans. Stays on your device.</li>
-      <li><strong>PII Scan results</strong> — SSNs, IBANs, account numbers, etc. that PDFPrivio detects in your documents. Detection runs locally; results are not transmitted.</li>
-      <li><strong>File names</strong> of the documents you open in PDFPrivio.</li>
-      <li><strong>Your contacts, photos, calendar, or location.</strong> PDFPrivio has no access to these except as you grant for a specific operation (e.g. the photo picker when you choose images to convert into a PDF), and any photos you pick are processed only in memory and never uploaded.</li>
+      <li>The <strong>contents of your PDFs</strong> — text, images, signatures, tables, form fields, anything.</li>
+      <li><strong>OCR text</strong> extracted from your scans.</li>
+      <li><strong>PII Scan results</strong> — SSNs, IBANs, account numbers, credit card numbers, or any other sensitive pattern Privio detects locally in your documents.</li>
+      <li><strong>File names</strong> of the documents you open.</li>
+      <li><strong>Your contacts, calendar, location, microphone, or any other system data</strong> outside of the explicit per-feature permissions described in section 3.</li>
+      <li><strong>Crash reports.</strong> Privio does not include any crash-reporting framework (Firebase Crashlytics, Sentry, Bugsnag, etc.).</li>
+      <li><strong>Analytics.</strong> Privio does not include any analytics framework (Firebase Analytics, Mixpanel, Amplitude, etc.). We do not know how often you open the app, which tools you use, or how long your sessions are.</li>
+      <li><strong>Advertising identifiers.</strong> Privio has no advertising SDK and never accesses your IDFA. iOS does not prompt you with an App Tracking Transparency dialog when you open Privio because we have nothing to track.</li>
+      <li><strong>Account data.</strong> Privio has no account system. You don't sign up, log in, or hand us any identifier.</li>
     </ul>
+    <p>There are no servers operated by Erek Studio that receive your data, because there are no servers in this product.</p>
 
-    <h2>2. The data PDFPrivio <strong>does</strong> collect</h2>
+    <h2>2. What Privio actually does collect</h2>
+    <p>Strictly limited to what is unavoidable for the app to function on Apple's platform:</p>
 
-    <h3>2.1 Crash reports (Firebase Crashlytics)</h3>
-    <p>When the app crashes we send an anonymized stack trace to Firebase Crashlytics so we can fix the bug. This includes:</p>
+    <h3>2.1 In-app purchases (Apple StoreKit)</h3>
+    <p>If you upgrade to Privio Pro, the transaction is processed entirely by Apple's App Store. Apple shares a receipt validation token with the app so Privio can unlock paid features locally on your device. We never see your payment method, credit card number, billing address, or Apple ID.</p>
+    <p>Apple's privacy policy covers any data Apple itself collects during the purchase: <a href="https://www.apple.com/legal/privacy/" rel="noopener">apple.com/legal/privacy</a>.</p>
+
+    <h3>2.2 Optional Apple-level diagnostic sharing (off by default)</h3>
+    <p>iOS offers a global toggle at <strong>Settings → Privacy &amp; Security → Analytics &amp; Improvements → Share with App Developers</strong>. If you have turned this on system-wide, Apple may forward anonymous crash reports for any app — including Privio — to its App Store Connect dashboard, where we can read them in aggregate.</p>
     <ul>
-      <li>The Dart / native stack trace</li>
-      <li>The model of your device (e.g. "iPhone 15 Pro")</li>
-      <li>OS version</li>
-      <li>App version</li>
-      <li>A randomly generated install ID</li>
+      <li>This is <strong>off by default</strong> on every iPhone.</li>
+      <li>We do not control whether you have it on; Apple does.</li>
+      <li>The reports never include your file contents, file names, or any identifier we could link back to you personally.</li>
+      <li>You can turn it off at any time in iOS Settings without affecting how Privio works.</li>
     </ul>
-    <p>This <strong>does not</strong> include the names of your files, the contents of any PDF, or any identifier that points back to you personally. Legal basis: legitimate interest in keeping the app stable.</p>
-    <p>You can opt out by not using the app; we do not currently expose a Crashlytics toggle.</p>
+    <p>That is the entire list. There is nothing else.</p>
 
-    <h3>2.2 Analytics (Firebase Analytics) — <strong>off by default</strong></h3>
-    <p>If, and only if, you give consent through the in-app prompt, PDFPrivio collects anonymous usage stats:</p>
-    <ul>
-      <li>Which screens you open and in what order (e.g. "Scan to PDF → Save")</li>
-      <li>Which features you use (e.g. "Sign PDF used", "OCR PDF run")</li>
-      <li>Approximate session length</li>
-      <li>Device and OS version</li>
-    </ul>
-    <p>We do <strong>not</strong> collect what's inside your documents, what you typed in search fields, or what files you operated on. Analytics is gated behind the Google UMP consent flow and disabled by default on every install.</p>
-
-    <h3>2.3 Advertising (Google AdMob) — Free tier only</h3>
-    <p>Free-tier users see banner / interstitial ads provided by Google AdMob. AdMob may use a device-level advertising identifier (IDFA on iOS, AAID on Android) to:</p>
-    <ul>
-      <li>Show you ads that are more relevant</li>
-      <li>Limit ad frequency</li>
-      <li>Measure ad performance</li>
-    </ul>
-    <p>On iOS we ask you with the Apple App Tracking Transparency prompt before AdMob receives IDFA. If you decline, you'll still see ads — just non-personalized ones.</p>
-    <p>Google AdMob's privacy practices are described at <a href="https://policies.google.com/technologies/partner-sites" rel="noopener">policies.google.com/technologies/partner-sites</a>.</p>
-    <p>Pro users see no ads and we don't share any identifier with AdMob.</p>
-
-    <h3>2.4 In-app purchases (Apple)</h3>
-    <p>If you upgrade to Pro, the transaction is processed entirely by Apple's App Store. PDFPrivio receives a receipt validation token from Apple so it can unlock features locally; we don't see your payment method, credit card, or address. Apple's privacy policy covers that data:</p>
-    <ul>
-      <li>Apple: <a href="https://www.apple.com/legal/privacy/" rel="noopener">apple.com/legal/privacy</a></li>
-    </ul>
-
-    <h2>3. Consent flow</h2>
-    <p>On first launch, you'll see (in order, where applicable):</p>
-    <ol>
-      <li><strong>GDPR/CCPA consent form</strong> (Google UMP) — shown automatically when your IP is in the EU, UK, Switzerland, certain US states, or other regulated regions. You can accept, reject, or customize what's used.</li>
-      <li><strong>Apple ATT prompt</strong> (iOS only) — Apple's "Allow PDFPrivio to track your activity across apps and websites?" prompt. iOS shows this regardless of UMP and lets you decline IDFA access.</li>
-    </ol>
-    <p>You can re-open the GDPR consent form any time from <strong>Settings → Privacy → Manage data preferences</strong> inside PDFPrivio.</p>
-    <p>If you decline both, PDFPrivio still works exactly the same — you just see fewer relevant ads and no anonymous usage telemetry flows to us.</p>
+    <h2>3. Permissions you may grant</h2>
+    <p>Privio asks for the following permissions only at the moment you use the relevant feature:</p>
+    <table>
+      <thead>
+        <tr><th>Permission</th><th>When asked</th><th>What we do with it</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Camera</strong></td>
+          <td>First time you open the document scanner</td>
+          <td>Capture pages in memory, hand them to iOS VisionKit for cropping and enhancement, write the finished PDF to your app sandbox. The camera is closed the moment the scan completes.</td>
+        </tr>
+        <tr>
+          <td><strong>Photo Library</strong></td>
+          <td>First time you pick photos for image-to-PDF</td>
+          <td>Read only the photos you select. iOS limits us to those specific images. They are processed in memory and the resulting PDF is written to your app sandbox. The originals stay untouched.</td>
+        </tr>
+      </tbody>
+    </table>
+    <p>If you decline either permission, the corresponding feature is disabled but the rest of the app works normally.</p>
+    <p>We do not request location, contacts, microphone, calendar, motion, or any other permission Privio does not need.</p>
 
     <h2>4. Storage on your device</h2>
-    <p>PDFPrivio saves the following files in its sandbox on your device (which only PDFPrivio and you can access):</p>
+    <p>Privio writes the following files inside its iOS sandbox (which only Privio and you, through the Files app, can read):</p>
     <ul>
-      <li>Output PDFs you generate (merged, signed, redacted, OCR'd, etc.) — kept until you delete them or uninstall the app.</li>
-      <li>Tool preferences (paper size, signature font, etc.) via <code>shared_preferences</code>.</li>
-      <li>A small Hive database for things like recent files. Tiny, plain.</li>
-      <li>Temporary cache of rasterized page images during OCR / redaction. Auto-cleared when you exit a tool.</li>
+      <li>Output PDFs you generate — kept until you delete them or uninstall the app.</li>
+      <li>Tool preferences (paper size, signature font, display name, theme, etc.) via iOS UserDefaults.</li>
+      <li>A small local database (Hive) for things like recent files and the optional audit log.</li>
+      <li>A temporary cache of rasterised page images during OCR / redaction, cleared automatically when you leave a tool.</li>
     </ul>
-    <p>None of this leaves your device unless you explicitly tap "Share" inside PDFPrivio (which uses the iOS / Android share sheet — sending the file goes to whichever app you pick).</p>
+    <p>None of these ever leave your device unless you explicitly tap <strong>Share</strong> inside Privio. The iOS Share Sheet then sends the file to whatever app you pick (Mail, Files, AirDrop, etc.). What that destination app does with the file is governed by that app's own privacy policy, not ours.</p>
 
     <h2>5. Children's privacy</h2>
-    <p>PDFPrivio is not directed at children under 13 (or the equivalent minimum age in your country). We do not knowingly collect personal information from children. If you believe a child has used PDFPrivio in a way that needed consent, contact us at <a href="mailto:mustafasalimerek@gmail.com">mustafasalimerek@gmail.com</a>.</p>
+    <p>Privio is not directed at children under 13. Because we collect no personal information at all, we have nothing to collect from a child either. If you believe a child has used Privio in a way that needs your attention, contact us at <a href="mailto:mustafasalimerek@gmail.com">mustafasalimerek@gmail.com</a>.</p>
 
-    <h2>6. Your rights</h2>
-    <p>Depending on where you live (EU/UK/Switzerland under GDPR, California under CCPA, etc.) you have the right to:</p>
+    <h2>6. Your rights (GDPR / CCPA / similar regimes)</h2>
+    <p>You have the right to:</p>
     <ul>
-      <li>Know what data we hold about you (basically: the install-scoped anonymized analytics/crash records, if you consented).</li>
-      <li>Ask us to delete it.</li>
-      <li>Withdraw consent at any time via the in-app Settings screen.</li>
-      <li>Lodge a complaint with your local data protection authority.</li>
+      <li>Know what personal data we hold about you. <strong>The answer is: none.</strong></li>
+      <li>Have us delete it. <strong>The answer is: there is nothing to delete.</strong></li>
+      <li>Withdraw consent. <strong>You did not give us any consent because we never asked for any.</strong></li>
+      <li>Lodge a complaint with your local data protection authority if you believe we are mishandling your data.</li>
     </ul>
-    <p>To exercise these rights, email <a href="mailto:mustafasalimerek@gmail.com">mustafasalimerek@gmail.com</a> from the email account you'd like the response sent to. We will respond within 30 days.</p>
+    <p>If you'd still like a written confirmation of "Privio holds no data about you" for your own records, email <a href="mailto:mustafasalimerek@gmail.com">mustafasalimerek@gmail.com</a> and we will respond in writing within 30 days.</p>
 
-    <h2>7. Data sales</h2>
-    <p>We do <strong>not</strong> sell personal information. Not now, not in any planned future version. This applies to "sale" as defined under the California CCPA (broader than the everyday meaning of "sale").</p>
+    <h2>7. Sale of data</h2>
+    <p>We do not sell personal information. We have no personal information to sell. This satisfies California CCPA's "Do Not Sell My Personal Information" requirement trivially.</p>
 
     <h2>8. International transfers</h2>
-    <p>The minimal data we do collect (crash reports if you crash, anonymous events if you consented to analytics) is processed by Google Firebase. Firebase processes data in the United States and other countries. EU/UK Standard Contractual Clauses apply per Google's terms.</p>
+    <p>Not applicable. Privio does not transfer any user data anywhere. Apple's separate handling of App Store purchase data is governed by Apple's privacy policy.</p>
 
     <h2>9. Security</h2>
-    <p>We don't store your documents on our servers, so the typical "data breach" risk for SaaS products doesn't apply to PDFPrivio's design. The data we do receive — Crashlytics stack traces, anonymous analytics events — is held by Google Firebase under their security controls (<a href="https://firebase.google.com/support/privacy" rel="noopener">firebase.google.com/support/privacy</a>).</p>
+    <p>There is no central database, no cloud backup of your PDFs, no server that could be breached, and no third party that holds your data. The standard SaaS data-breach risk does not apply to Privio's design.</p>
+    <p>Your files live in Privio's iOS app sandbox, which is encrypted by iOS as long as you have a passcode set on your iPhone. Set a passcode.</p>
 
     <h2>10. Changes to this policy</h2>
-    <p>If we update this policy in a way that meaningfully changes what we collect or how we use it, we will note the change in the in-app "What's New" of the next update and reset the "Last updated" date at the top. Continued use of the app after the change constitutes acceptance.</p>
+    <p>If we ever change Privio's data practices, we will rewrite this policy, post the new version under the same URL, and update the "Last updated" date at the top. Material changes will be noted in the in-app <strong>What's New</strong> of the next update.</p>
 
     <h2>11. Contact</h2>
     <ul>
       <li>Email: <a href="mailto:mustafasalimerek@gmail.com">mustafasalimerek@gmail.com</a></li>
-      <li>Erek Studio, Istanbul, Türkiye</li>
     </ul>
-    <p>We will respond to all good-faith privacy requests within 30 days.</p>
+    <p>We respond to all good-faith privacy questions within 30 days.</p>
 
     <footer class="site">
-      <p>© 2026 Erek Studio · <a href="../">PDFPrivio</a> · <a href="../terms/">Terms of Service</a></p>
+      <p>© 2026 Erek Studio · <a href="../">Privio</a> · <a href="../terms/">Terms of Service</a></p>
     </footer>
   </div>
 </body>
