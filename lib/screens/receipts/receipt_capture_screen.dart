@@ -81,8 +81,13 @@ class _ReceiptCaptureScreenState
 
   Future<void> _scan() async {
     HapticsService.instance.tap();
+    // extractMetadata: false — this screen runs the higher-fidelity,
+    // bounding-box aware Dart-side OCR pipeline below (OcrService +
+    // ReceiptExtractionService), so the native ReceiptParser pass
+    // would be wasted ~1-2s of OCR.
     final res = await DocumentScannerService.instance.scan(
       mode: ScanMode.receipt,
+      extractMetadata: false,
     );
     if (!mounted) return;
     switch (res) {

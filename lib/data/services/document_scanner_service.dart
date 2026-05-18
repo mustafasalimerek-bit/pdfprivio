@@ -107,13 +107,22 @@ class DocumentScannerService {
 
   /// Opens the native scanner in [mode]. Defaults to [ScanMode.doc].
   ///
+  /// [extractMetadata] toggles the post-capture OCR + parse step on the
+  /// native side. Default true — Receipt mode pulls date/amount/merchant
+  /// for the Expense Ledger prompt; ID mode runs sensitive-field
+  /// detection + redaction. Set to false when the caller will run its
+  /// own (higher-fidelity) OCR pipeline anyway — receipt_capture_screen
+  /// uses Dart-side `ReceiptExtractionService`, which is bounding-box
+  /// aware, so native OCR there is wasted cycles.
+  ///
   /// Returns:
   ///   Ok(ScanOutcome(pdfFile: …)) on success — metadata populated for
-  ///     receipt / id modes.
+  ///     receipt / id modes when [extractMetadata] is true.
   ///   Ok(ScanOutcome(pdfFile: null)) on cancel.
   ///   Err(unknown) on platform / native failure.
   Future<Result<ScanOutcome>> scan({
     ScanMode mode = ScanMode.doc,
+    bool extractMetadata = true,
   }) async {
     if (!Platform.isIOS) {
       return Err(FailureKind.unknown,
@@ -124,6 +133,7 @@ class DocumentScannerService {
       final result =
           await _channel.invokeMethod<Map<dynamic, dynamic>>('scan', {
         'mode': mode.name,
+        'extractMetadata': extractMetadata,
       });
 
       if (result == null) {

@@ -538,6 +538,12 @@ class DocumentScannerBridge: NSObject, FlutterPlugin,
   /// post-processing branch (OCR / Receipt / ID) and the PDF
   /// assembler know which layout to produce.
   private var pendingMode: ScanMode?
+  /// When false, the Receipt/ID post-processing branch skips OCR
+  /// entirely and the bridge returns only the PDF. Callers that run
+  /// their own (higher-fidelity, bounding-box aware) OCR pipeline
+  /// — currently just `receipt_capture_screen` — use this to avoid
+  /// double work.
+  private var pendingExtractMetadata: Bool = true
 
   static func register(with registrar: FlutterPluginRegistrar) {
     let instance = DocumentScannerBridge()
@@ -559,6 +565,7 @@ class DocumentScannerBridge: NSObject, FlutterPlugin,
     case "scan":
       let args = call.arguments as? [String: Any]
       let modeString = (args?["mode"] as? String) ?? "doc"
+      let extractMetadata = (args?["extractMetadata"] as? Bool) ?? true
       guard let mode = ScanMode(rawValue: modeString) else {
         result(FlutterError(
           code: "mode_unsupported",
@@ -567,7 +574,9 @@ class DocumentScannerBridge: NSObject, FlutterPlugin,
         ))
         return
       }
-      scanWithVisionKit(result: result, mode: mode)
+      scanWithVisionKit(
+        result: result, mode: mode, extractMetadata: extractMetadata
+      )
 
     default:
       result(FlutterMethodNotImplemented)
@@ -615,7 +624,8 @@ class DocumentScannerBridge: NSObject, FlutterPlugin,
 
   private func scanWithVisionKit(
     result: @escaping FlutterResult,
-    mode: ScanMode
+    mode: ScanMode,
+    extractMetadata: Bool
   ) {
     guard VNDocumentCameraViewController.isSupported else {
       result(FlutterError(code: "unsupported",
@@ -638,6 +648,7 @@ class DocumentScannerBridge: NSObject, FlutterPlugin,
 
     pendingResult = result
     pendingMode = mode
+    pendingExtractMetadata = extractMetadata
     let scanner = VNDocumentCameraViewController()
     scanner.delegate = self
     scanner.modalPresentationStyle = .fullScreen
@@ -655,7 +666,9 @@ class DocumentScannerBridge: NSObject, FlutterPlugin,
     }
 
     let mode = pendingMode ?? .doc
+    let extractMetadata = pendingExtractMetadata
     pendingMode = nil
+    pendingExtractMetadata = true
 
     controller.dismiss(animated: true)
     presentedHost = nil
@@ -664,7 +677,9 @@ class DocumentScannerBridge: NSObject, FlutterPlugin,
     // cropped + deskewed. Receipt extracts metadata so the Expense
     // Ledger prompt has values to pre-fill; ID detects sensitive
     // regions (SSN, card, DOB, license) and bakes black rectangles
-    // into the images before they hit the PDF assembler.
+    // into the images before they hit the PDF assembler. Receipt + ID
+    // both honour `extractMetadata = false` for callers that prefer to
+    // run their own OCR pass on the result PDF.
     Task { [weak self] in
       guard let self = self else { return }
 
@@ -677,7 +692,7 @@ class DocumentScannerBridge: NSObject, FlutterPlugin,
         metadata = nil
 
       case .receipt:
-        if let first = images.first {
+        if extractMetadata, let first = images.first {
           let text = await OCRProcessor.recognizeText(in: first)
           metadata = ReceiptParser.parse(text)
         } else {
@@ -686,6 +701,11 @@ class DocumentScannerBridge: NSObject, FlutterPlugin,
         processedImages = images
 
       case .id:
+        if !extractMetadata {
+          processedImages = images
+          metadata = nil
+          break
+        }
         var redacted: [UIImage] = []
         var redactedFields: Set<String> = []
         for image in images {
@@ -752,6 +772,7 @@ class DocumentScannerBridge: NSObject, FlutterPlugin,
     controller.dismiss(animated: true)
     presentedHost = nil
     pendingMode = nil
+    pendingExtractMetadata = true
     pendingResult?(nil)
     pendingResult = nil
   }
@@ -763,6 +784,7 @@ class DocumentScannerBridge: NSObject, FlutterPlugin,
     controller.dismiss(animated: true)
     presentedHost = nil
     pendingMode = nil
+    pendingExtractMetadata = true
     pendingResult?(FlutterError(code: "scan_failed",
                                 message: error.localizedDescription,
                                 details: nil))
