@@ -11,6 +11,7 @@ import 'data/services/audit_service.dart';
 import 'data/services/expense_ledger_service.dart';
 import 'data/services/promo_code_service.dart';
 import 'data/services/purchase_service.dart';
+import 'data/services/review_prompt_service.dart';
 import 'data/services/share_intent_service.dart';
 import 'data/services/usage_limits_service.dart';
 import 'data/services/widget_data_service.dart';
@@ -42,6 +43,12 @@ Future<void> main() async {
     await AuditService.instance.init();
     await ExpenseLedgerService.instance.init();
     await UsageLimitsService.instance.pruneOldEntries();
+    // Subscribes to AuditService.changes to count successful tool
+    // operations; surfaces SKStoreReviewController after 3 successes
+    // + 2 days since install, then sleeps for 90 days. Must init
+    // AFTER AuditService so the stream subscription has a live
+    // broadcaster to bind to.
+    await ReviewPromptService.instance.init();
     // Home Screen widget bridge — pushes recent files into the App
     // Group shared store so the iOS WidgetKit extension can render
     // them. No-op on Android (widget arrives in v1.1).

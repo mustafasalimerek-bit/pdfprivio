@@ -293,7 +293,23 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   Future<void> _emailSupport() async {
     HapticsService.instance.tap();
     const email = 'mustafasalimerek@gmail.com';
-    final uri = Uri.parse('mailto:$email');
+    // Pre-fill subject + a tiny diagnostic footer so support replies
+    // arrive with enough context (app version, build) to act on
+    // without an extra back-and-forth. Body uses a blank prompt area
+    // followed by the diagnostic block; the user types above the
+    // dashes, the dev reads below for context.
+    final info = _info;
+    final version = info != null
+        ? '${info.version} (${info.buildNumber})'
+        : 'unknown';
+    final uri = Uri(
+      scheme: 'mailto',
+      path: email,
+      queryParameters: {
+        'subject': 'Privio support · v$version',
+        'body': '\n\n---\nPrivio $version\niOS',
+      },
+    );
     if (await canLaunchUrl(uri)) {
       await launchUrl(uri);
       return;

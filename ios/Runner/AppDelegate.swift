@@ -32,6 +32,9 @@ import UIKit
     if let registrar = engineBridge.pluginRegistry.registrar(forPlugin: "QuickLookBridge") {
       QuickLookBridge.register(with: registrar)
     }
+    if let registrar = engineBridge.pluginRegistry.registrar(forPlugin: "ReviewBridge") {
+      ReviewBridge.register(with: registrar)
+    }
   }
 
   override func application(
