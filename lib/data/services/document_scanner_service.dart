@@ -1,7 +1,6 @@
 import 'dart:io';
 
 import 'package:flutter/services.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../core/utils/result.dart';
 
@@ -82,33 +81,17 @@ class ScanOutcome {
 
 /// Bridges to the native PDFPrivio scanner via MethodChannel.
 ///
-/// Two scanner backends are available:
-///   * **Apple VisionKit** (default) — `VNDocumentCameraViewController`,
-///     the same widget Apple Notes uses. ML-backed edge detection,
-///     perspective correction, multi-page, enhancement — all native.
-///     Mode-specific post-processing (Receipt OCR + parse, ID redaction)
-///     runs on the captured UIImages.
-///   * **Custom AVFoundation** (debug toggle) — our own capture pipeline,
-///     kept behind `Settings → DEBUG → Use custom scanner` for A/B
-///     comparison while we phase it out.
+/// The native side opens `VNDocumentCameraViewController` — the same
+/// widget Apple Notes uses. ML-backed edge detection, perspective
+/// correction, multi-page, and enhancement all run inside Apple's
+/// framework. Mode-specific post-processing (Receipt OCR + parse, ID
+/// redaction) runs on the captured UIImages before the PDF is written.
 class DocumentScannerService {
   DocumentScannerService._();
   static final DocumentScannerService instance = DocumentScannerService._();
 
   static const MethodChannel _channel =
       MethodChannel('com.erekstudio.pdfprivio/scanner');
-
-  /// Pref key for the hidden debug toggle. Treated as `false` when
-  /// missing — production users get the VisionKit scanner. When set to
-  /// true the legacy custom pipeline opens instead (dev-only).
-  static const String prefsUseCustomScanner =
-      'pdfprivio.debug.use_custom_scanner';
-
-  /// Legacy key name kept for migration — older builds wrote
-  /// `use_apple_scanner` with the opposite polarity. Read once at
-  /// boot and converted into [prefsUseCustomScanner].
-  static const String prefsLegacyUseAppleScanner =
-      'pdfprivio.debug.use_apple_scanner';
 
   /// True on iPhone/iPad with a rear camera. Always false on the
   /// iOS Simulator (no camera) and on iPads without a usable camera.
@@ -124,10 +107,6 @@ class DocumentScannerService {
 
   /// Opens the native scanner in [mode]. Defaults to [ScanMode.doc].
   ///
-  /// `enableOCR` is implicit-true for receipt + id modes (their
-  /// post-processing needs the recognised text); doc + card can opt
-  /// in if a caller needs the text body.
-  ///
   /// Returns:
   ///   Ok(ScanOutcome(pdfFile: …)) on success — metadata populated for
   ///     receipt / id modes.
@@ -135,30 +114,16 @@ class DocumentScannerService {
   ///   Err(unknown) on platform / native failure.
   Future<Result<ScanOutcome>> scan({
     ScanMode mode = ScanMode.doc,
-    bool enableOCR = false,
   }) async {
     if (!Platform.isIOS) {
       return Err(FailureKind.unknown,
           'Document Scanner is iOS-only right now — Android scanner is coming.');
     }
 
-    final prefs = await SharedPreferences.getInstance();
-    // Default: Apple VisionKit. Debug toggle inverts to custom pipeline.
-    final useCustom = prefs.getBool(prefsUseCustomScanner) ?? false;
-    final useAppleVisionKit = !useCustom;
-
-    // Receipt and ID always need OCR for their core feature; other
-    // modes ride on the caller's enableOCR flag.
-    final wantOcr = enableOCR ||
-        mode == ScanMode.receipt ||
-        mode == ScanMode.id;
-
     try {
       final result =
           await _channel.invokeMethod<Map<dynamic, dynamic>>('scan', {
-        'useAppleVisionKit': useAppleVisionKit,
         'mode': mode.name,
-        'enableOCR': wantOcr,
       });
 
       if (result == null) {

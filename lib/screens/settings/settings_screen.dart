@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:package_info_plus/package_info_plus.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../core/theme/colors.dart';
@@ -13,7 +12,6 @@ import '../../core/theme/layout.dart';
 import '../../core/utils/responsive.dart';
 import '../../data/services/audit_service.dart';
 import '../../data/services/display_name_service.dart';
-import '../../data/services/document_scanner_service.dart';
 import '../../data/services/haptics_service.dart';
 import '../../data/services/promo_code_service.dart';
 import '../../data/services/purchase_service.dart';
@@ -39,7 +37,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   bool _widgetShowsNames = true;
   String? _displayName;
   int _auditCount = 0;
-  bool _useCustomScanner = false;
   bool _hasPro = false;
   StreamSubscription<void>? _auditChangesSub;
 
@@ -51,7 +48,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     _loadWidgetPref();
     _loadDisplayName();
     _loadAuditCount();
-    _loadScannerPref();
     // Cache hasPro locally so _ProTopCard sees a stable parameter
     // across unrelated setState() calls — without this, every
     // setState (display name change, audit count refresh, etc.)
@@ -71,27 +67,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   void dispose() {
     _auditChangesSub?.cancel();
     super.dispose();
-  }
-
-  Future<void> _loadScannerPref() async {
-    final prefs = await SharedPreferences.getInstance();
-    if (!mounted) return;
-    setState(() {
-      _useCustomScanner =
-          prefs.getBool(DocumentScannerService.prefsUseCustomScanner) ?? false;
-    });
-  }
-
-  Future<void> _toggleCustomScanner() async {
-    HapticsService.instance.tap();
-    final next = !_useCustomScanner;
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool(
-      DocumentScannerService.prefsUseCustomScanner,
-      next,
-    );
-    if (!mounted) return;
-    setState(() => _useCustomScanner = next);
   }
 
   Future<void> _loadAuditCount() async {
@@ -514,20 +489,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             setState(() => _hasPro = PurchaseService.instance.hasPro);
           }
         },
-      ));
-      rows.add(_RowSpec(
-        icon: Icons.document_scanner_outlined,
-        title: 'DEBUG: Use custom scanner',
-        subtitle: _useCustomScanner
-            ? 'Custom AVFoundation pipeline (legacy)'
-            : 'Apple VisionKit — production default',
-        trailing: Switch.adaptive(
-          value: _useCustomScanner,
-          onChanged: (_) => _toggleCustomScanner(),
-          activeThumbColor: AppColors.primary,
-        ),
-        // No row-level onTap: the Switch's hit area covers the whole row
-        // visually but the row's InkWell would double-fire the toggle.
       ));
     }
     if (kDebugMode &&
