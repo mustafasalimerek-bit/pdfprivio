@@ -801,7 +801,7 @@ class _ProTopCard extends StatelessWidget {
                     ),
                     const SizedBox(width: 5),
                     Text(
-                      hasPro ? 'PDFPRIVIO PRO · ACTIVE' : 'PDFPRIVIO PRO',
+                      hasPro ? 'PRIVIO PRO · ACTIVE' : 'PRIVIO PRO',
                       style: const TextStyle(
                         fontSize: 10,
                         fontWeight: FontWeight.w700,

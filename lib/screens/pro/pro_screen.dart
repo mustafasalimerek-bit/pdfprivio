@@ -234,7 +234,7 @@ class _Hero extends StatelessWidget {
               borderRadius: BorderRadius.circular(99),
             ),
             child: const Text(
-              'PDFPRIVIO PRO',
+              'PRIVIO PRO',
               style: TextStyle(
                 fontSize: 10,
                 fontWeight: FontWeight.w800,
