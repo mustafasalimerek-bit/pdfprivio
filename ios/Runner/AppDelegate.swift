@@ -8,7 +8,16 @@ import UIKit
     _ application: UIApplication,
     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
   ) -> Bool {
-    registerFileProviderDomain()
+    // FileProvider extension is temporarily disabled for v1.0 submission
+    // due to a persistent App Store validation error on the extension's
+    // Info.plist (Apple's validator rejects despite the required key
+    // being present at the documented location). UIFileSharingEnabled +
+    // LSSupportsOpeningDocumentsInPlace in Info.plist already give the
+    // user a "On My iPhone > Privio" entry in the Files app; the Files
+    // Provider domain integration that this method registers is the
+    // additional iOS 16+ Files-sidebar surface, which we'll re-enable
+    // in v1.1 once the validation issue is root-caused.
+    // registerFileProviderDomain()
     return super.application(application, didFinishLaunchingWithOptions: launchOptions)
   }
 
