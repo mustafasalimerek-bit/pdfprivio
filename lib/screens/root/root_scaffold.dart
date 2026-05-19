@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:receive_sharing_intent/receive_sharing_intent.dart';
 
 import '../../core/theme/colors.dart';
+import '../../core/utils/responsive.dart';
 import '../../data/services/app_intent_service.dart';
 import '../../data/services/haptics_service.dart';
 import '../../data/services/share_intent_service.dart';
@@ -15,7 +16,16 @@ import '../pro/pro_screen.dart';
 import '../recent/recent_screen.dart';
 import '../settings/settings_screen.dart';
 
-/// Three-tab bottom nav shell: Tools / Recent / Settings.
+/// Three-destination nav shell: Tools / Recent / Settings.
+///
+/// On iPhone (and iPad in narrow Split View under 700pt) we use a
+/// bottom `NavigationBar` — the standard iOS pattern, thumb-reachable.
+/// On iPad once the width clears [Breakpoints.iPadCompact] we switch
+/// to a `NavigationRail` on the left edge — the iPad-native pattern
+/// per Apple HIG and the layout used by Mail, Notes, Files, Music,
+/// Settings, etc. The selected tab + IndexedStack behaviour is shared
+/// across both layouts so descendant code (tab switching, deep links,
+/// state retention) doesn't have to branch.
 ///
 /// Pro used to live as a fourth tab, but the upgrade pitch reads more
 /// natural as a hero card pinned to the top of Settings — the bottom
@@ -124,6 +134,62 @@ class _RootScaffoldState extends ConsumerState<RootScaffold>
   @override
   Widget build(BuildContext context) {
     final index = ref.watch(selectedTabProvider);
+    final useRail = Breakpoints.isWide(context);
+
+    if (useRail) {
+      return Scaffold(
+        body: SafeArea(
+          child: Row(
+            children: [
+              NavigationRail(
+                selectedIndex: index,
+                onDestinationSelected: _select,
+                labelType: NavigationRailLabelType.all,
+                backgroundColor: AppColors.surface,
+                indicatorColor: AppColors.primary.withValues(alpha: 0.14),
+                useIndicator: true,
+                minWidth: 88,
+                destinations: const [
+                  NavigationRailDestination(
+                    icon: Icon(Icons.grid_view_outlined),
+                    selectedIcon: Icon(
+                      Icons.grid_view,
+                      color: AppColors.primary,
+                    ),
+                    label: Text('Tools'),
+                  ),
+                  NavigationRailDestination(
+                    icon: Icon(Icons.history_outlined),
+                    selectedIcon: Icon(
+                      Icons.history,
+                      color: AppColors.primary,
+                    ),
+                    label: Text('Recent'),
+                  ),
+                  NavigationRailDestination(
+                    icon: Icon(Icons.settings_outlined),
+                    selectedIcon: Icon(
+                      Icons.settings,
+                      color: AppColors.primary,
+                    ),
+                    label: Text('Settings'),
+                  ),
+                ],
+              ),
+              const VerticalDivider(
+                thickness: 1,
+                width: 1,
+                color: AppColors.border,
+              ),
+              Expanded(
+                child: IndexedStack(index: index, children: _tabs),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
     return Scaffold(
       body: IndexedStack(index: index, children: _tabs),
       bottomNavigationBar: NavigationBar(
