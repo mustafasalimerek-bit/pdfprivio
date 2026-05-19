@@ -355,7 +355,7 @@ class _BusyState extends StatelessWidget {
             ),
             const SizedBox(height: 12),
             const Text(
-              'Running entirely on this device. Nothing leaves your iPhone.',
+              'Running entirely on this device. Nothing leaves it.',
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 11,

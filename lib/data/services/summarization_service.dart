@@ -24,8 +24,9 @@ extension SummarizationAvailabilityX on SummarizationAvailability {
       case SummarizationAvailability.available:
         return 'Ready';
       case SummarizationAvailability.deviceNotEligible:
-        return 'This iPhone does not support Apple Intelligence. AI '
-            'summarisation requires iPhone 15 Pro / 16 / 17 series.';
+        return 'This device does not support Apple Intelligence. AI '
+            'summarisation requires iPhone 15 Pro and later, or an '
+            'iPad with an M-series chip.';
       case SummarizationAvailability.notEnabled:
         return 'Apple Intelligence is turned off. Enable it in '
             'Settings → Apple Intelligence & Siri.';

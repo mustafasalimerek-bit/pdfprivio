@@ -52,15 +52,16 @@ class HomeScreen extends ConsumerWidget {
           maxWidth: 1200,
           child: LayoutBuilder(
             builder: (context, constraints) {
-              // iPad gets a slightly roomier grid (5 cols vs 4) but the
-              // structure is identical — header + status + hero + recent
-              // + 4×2 (or 5×2) tool grid + "More" cell.
+              // 4-column grid everywhere. With 8 promoted tools + 1
+              // "More" sheet entry, this fills exactly two rows on
+              // every device and never leaves a half-row stranded —
+              // the iPad's larger viewport just gets bigger tiles
+              // (~500pt instead of ~85pt), which reads more like an
+              // iPad-native bento than a stretched iPhone grid. The
+              // Recent row above + MaxWidthBody centring at 720pt
+              // keep the column hierarchy aligned across breakpoints.
               final w = constraints.maxWidth;
-              final gridColumns = w >= Breakpoints.iPadRegular
-                  ? 6
-                  : w >= Breakpoints.iPadCompact
-                      ? 5
-                      : 4;
+              final gridColumns = 4;
               // Recent row spans the full row width — same left edge
               // as grid cell 1, same right edge as the last grid
               // cell. With 3 cards (Scan / Sign / Edit slots) and
@@ -422,9 +423,19 @@ class _HeroToolGrid extends StatelessWidget {
         crossAxisCount: columns,
         mainAxisSpacing: 10,
         crossAxisSpacing: 10,
-        // Slightly taller than wide so two-line labels like
-        // "Compress PDF" don't clip on narrow iPhone width.
-        childAspectRatio: 0.82,
+        // Aspect ratio adapts to the available cell width. On iPhone
+        // the cell is narrow (~85pt) so we keep tiles slightly taller
+        // than wide (0.82) to fit two-line labels like "Compress PDF".
+        // On iPad the cell is much wider (~500pt) and 0.82 would
+        // produce ~610pt-tall tiles — visually bloated with a tiny
+        // icon adrift in the middle. Detecting cell width via
+        // LayoutBuilder above is over-engineered for the two
+        // breakpoints we care about; MediaQuery here is the simpler
+        // local check.
+        childAspectRatio:
+            MediaQuery.sizeOf(context).width >= Breakpoints.iPadCompact
+                ? 1.4
+                : 0.82,
       ),
       itemCount: cells.length,
       itemBuilder: (_, i) => cells[i],
@@ -769,7 +780,7 @@ class _OfflineStatusPill extends StatelessWidget {
           ),
           const SizedBox(width: 8),
           const Text(
-            'Working offline — nothing leaves your iPhone',
+            'Working offline — nothing leaves your device',
             style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w700,

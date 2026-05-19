@@ -278,7 +278,7 @@ class PrivacyFooter extends StatelessWidget {
         ),
         const SizedBox(width: 8),
         const Text(
-          'Stays on your iPhone',
+          'Stays on your device',
           style: TextStyle(
             fontSize: 12,
             color: AppColors.success,

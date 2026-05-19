@@ -242,7 +242,7 @@ class PrivacyPromiseView extends StatelessWidget {
         const Padding(
           padding: EdgeInsets.symmetric(horizontal: 32),
           child: Text(
-            'Everything happens on your iPhone.\nNothing goes to the cloud.',
+            'Everything happens on your device.\nNothing goes to the cloud.',
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 15,

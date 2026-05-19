@@ -10,7 +10,7 @@ import '../core/theme/layout.dart';
 class PrivacyPill extends StatelessWidget {
   final String text;
 
-  const PrivacyPill({super.key, this.text = 'Stays on your iPhone'});
+  const PrivacyPill({super.key, this.text = 'Stays on your device'});
 
   @override
   Widget build(BuildContext context) {

@@ -81,7 +81,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       builder: (ctx) => AlertDialog(
         title: const Text('Appearance'),
         content: const Text(
-          "Privio currently matches your iPhone's system "
+          "Privio currently matches your device's system "
           'appearance — light or dark. A per-app override (always '
           'light / always dark) is coming in v1.1.',
           style: TextStyle(fontSize: 13),
@@ -259,7 +259,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           children: [
             Text(
               'Open Settings → Apple ID → Subscriptions on your '
-              'iPhone, or visit:',
+              'device, or visit:',
               style: TextStyle(fontSize: 13),
             ),
             SizedBox(height: 10),

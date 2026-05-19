@@ -6,6 +6,7 @@ import 'package:share_plus/share_plus.dart';
 
 import '../../core/theme/colors.dart';
 import '../../core/utils/format_bytes.dart';
+import '../../core/utils/responsive.dart';
 import '../../data/services/haptics_service.dart';
 import '../../data/services/recent_files_service.dart';
 import '../../data/services/usage_limits_service.dart';
@@ -95,7 +96,8 @@ class _MergeResultScreenState extends State<MergeResultScreen> {
         title: const Text('Done'),
       ),
       body: SafeArea(
-        child: Padding(
+        child: MaxWidthBody(
+          child: Padding(
           padding: const EdgeInsets.all(20),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -163,6 +165,7 @@ class _MergeResultScreenState extends State<MergeResultScreen> {
               ),
             ],
           ),
+        ),
         ),
       ),
     );
