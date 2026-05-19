@@ -217,6 +217,7 @@ class HomeScreen extends ConsumerWidget {
           subtitle: 'Photos, receipts, screenshots → one PDF',
           toolId: 'image_to_pdf',
           builder: _buildImageToPdfScreen,
+          gridLabel: 'Images',
         ),
         _ToolSpec(
           icon: Icons.rotate_right_outlined,
@@ -224,6 +225,7 @@ class HomeScreen extends ConsumerWidget {
           subtitle: 'Fix sideways scans or flip a PDF',
           toolId: 'rotate',
           builder: _buildRotateScreen,
+          gridLabel: 'Rotate',
         ),
         _ToolSpec(
           icon: Icons.delete_sweep_outlined,
@@ -231,6 +233,7 @@ class HomeScreen extends ConsumerWidget {
           subtitle: 'Pick the pages to drop, keep the rest',
           toolId: 'delete_pages',
           builder: _buildDeletePagesScreen,
+          gridLabel: 'Delete',
         ),
         _ToolSpec(
           icon: Icons.draw_outlined,
@@ -253,6 +256,7 @@ class HomeScreen extends ConsumerWidget {
           subtitle: 'Page 1 of 20 — pick format and position',
           toolId: 'page_numbers',
           builder: _buildPageNumbersScreen,
+          gridLabel: 'Pages',
         ),
         _ToolSpec(
           icon: Icons.tag,
@@ -267,6 +271,7 @@ class HomeScreen extends ConsumerWidget {
           subtitle: 'AES-256 encrypt or unlock — pick auto-detects',
           toolId: 'password',
           builder: _buildPasswordScreen,
+          gridLabel: 'Password',
         ),
         _ToolSpec(
           icon: Icons.water_drop_outlined,
@@ -281,6 +286,7 @@ class HomeScreen extends ConsumerWidget {
           subtitle: 'Pull text out — born-digital PDFs only',
           toolId: 'extract_text',
           builder: _buildExtractTextScreen,
+          gridLabel: 'Extract',
         ),
         _ToolSpec(
           icon: Icons.compare_arrows,
@@ -288,6 +294,7 @@ class HomeScreen extends ConsumerWidget {
           subtitle: 'Redline two versions — added & removed text',
           toolId: 'compare',
           builder: _buildCompareScreen,
+          gridLabel: 'Compare',
         ),
         _ToolSpec(
           icon: Icons.menu_book_outlined,
@@ -317,6 +324,7 @@ class HomeScreen extends ConsumerWidget {
           subtitle: 'Compress / Watermark / Rotate many PDFs at once',
           toolId: 'batch',
           builder: _buildBatchScreen,
+          gridLabel: 'Batch',
         ),
         _ToolSpec(
           icon: Icons.receipt_long_outlined,
@@ -324,6 +332,7 @@ class HomeScreen extends ConsumerWidget {
           subtitle: 'Scan → auto-extract date/vendor/total → CSV for QuickBooks',
           toolId: 'receipt',
           builder: _buildReceiptScreen,
+          gridLabel: 'Receipts',
         ),
         _ToolSpec(
           icon: Icons.shield_outlined,
@@ -331,6 +340,7 @@ class HomeScreen extends ConsumerWidget {
           subtitle: 'Auto-detect SSN, EIN, credit cards, emails, phone numbers',
           toolId: 'pii_scan',
           builder: _buildPiiScanScreen,
+          gridLabel: 'PII scan',
         ),
         _ToolSpec(
           icon: Icons.format_color_fill,

@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/theme/colors.dart';
+import '../../core/utils/responsive.dart';
 import '../../core/utils/format_bytes.dart';
 import '../../core/utils/result.dart';
 import '../../data/models/pdf_document.dart';
@@ -212,108 +213,110 @@ class _PasswordScreenState extends ConsumerState<PasswordScreen> {
             ),
         ],
       ),
-      body: Stack(
-        children: [
-          SafeArea(
-            child: doc == null
-                ? _EmptyState(onPick: _pick, onScan: _scanPdf)
-                : Column(
-                    children: [
-                      Expanded(
-                        child: ListView(
-                          padding:
-                              const EdgeInsets.fromLTRB(16, 4, 16, 4),
-                          children: [
-                            _DocSummary(
-                              doc: doc,
-                              isEncrypted:
-                                  _mode == _PasswordMode.remove,
-                            ),
-                            const SizedBox(height: 14),
-                            if (_mode == _PasswordMode.add) ...[
-                              _PasswordField(
-                                controller: _password,
-                                obscure: _obscure,
-                                onToggleObscure: () => setState(
-                                  () => _obscure = !_obscure,
-                                ),
-                                label: 'New password',
-                              ),
-                              const SizedBox(height: 10),
-                              _PasswordField(
-                                controller: _confirm,
-                                obscure: _obscure,
-                                onToggleObscure: () => setState(
-                                  () => _obscure = !_obscure,
-                                ),
-                                label: 'Confirm',
+      body: MaxWidthBody(
+        child: Stack(
+          children: [
+            SafeArea(
+              child: doc == null
+                  ? _EmptyState(onPick: _pick, onScan: _scanPdf)
+                  : Column(
+                      children: [
+                        Expanded(
+                          child: ListView(
+                            padding:
+                                const EdgeInsets.fromLTRB(16, 4, 16, 4),
+                            children: [
+                              _DocSummary(
+                                doc: doc,
+                                isEncrypted:
+                                    _mode == _PasswordMode.remove,
                               ),
                               const SizedBox(height: 14),
-                              const Text(
-                                'Protection level',
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w700,
+                              if (_mode == _PasswordMode.add) ...[
+                                _PasswordField(
+                                  controller: _password,
+                                  obscure: _obscure,
+                                  onToggleObscure: () => setState(
+                                    () => _obscure = !_obscure,
+                                  ),
+                                  label: 'New password',
                                 ),
-                              ),
-                              const SizedBox(height: 6),
-                              for (final l in PdfProtectionLevel.values)
-                                _LevelCard(
-                                  level: l,
-                                  selected: l == _level,
-                                  onTap: () {
-                                    HapticsService.instance.select();
-                                    setState(() => _level = l);
-                                  },
+                                const SizedBox(height: 10),
+                                _PasswordField(
+                                  controller: _confirm,
+                                  obscure: _obscure,
+                                  onToggleObscure: () => setState(
+                                    () => _obscure = !_obscure,
+                                  ),
+                                  label: 'Confirm',
                                 ),
-                            ] else ...[
-                              _PasswordField(
-                                controller: _password,
-                                obscure: _obscure,
-                                onToggleObscure: () => setState(
-                                  () => _obscure = !_obscure,
+                                const SizedBox(height: 14),
+                                const Text(
+                                  'Protection level',
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w700,
+                                  ),
                                 ),
-                                label: 'Password',
-                                hint: 'Enter the existing password',
-                              ),
-                              const SizedBox(height: 8),
-                              const Text(
-                                'We need the existing password to read '
-                                'the PDF before we can strip protection.',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: AppColors.textTertiary,
+                                const SizedBox(height: 6),
+                                for (final l in PdfProtectionLevel.values)
+                                  _LevelCard(
+                                    level: l,
+                                    selected: l == _level,
+                                    onTap: () {
+                                      HapticsService.instance.select();
+                                      setState(() => _level = l);
+                                    },
+                                  ),
+                              ] else ...[
+                                _PasswordField(
+                                  controller: _password,
+                                  obscure: _obscure,
+                                  onToggleObscure: () => setState(
+                                    () => _obscure = !_obscure,
+                                  ),
+                                  label: 'Password',
+                                  hint: 'Enter the existing password',
                                 ),
-                              ),
+                                const SizedBox(height: 8),
+                                const Text(
+                                  'We need the existing password to read '
+                                  'the PDF before we can strip protection.',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: AppColors.textTertiary,
+                                  ),
+                                ),
+                              ],
                             ],
-                          ],
-                        ),
-                      ),
-                      if (!_busy)
-                        Padding(
-                          padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-                          child: ToolPrimaryButton(
-                            label: _mode == _PasswordMode.add
-                                ? 'Protect PDF'
-                                : 'Remove password',
-                            icon: _mode == _PasswordMode.add
-                                ? Icons.lock
-                                : Icons.lock_open,
-                            onTap: _run,
                           ),
                         ),
-                    ],
-                  ),
-          ),
-          if (_busy)
-            ProgressOverlay(
-              title: _mode == _PasswordMode.add
-                  ? 'Encrypting'
-                  : 'Removing password',
-              subtitle: 'Processing on this device — no upload',
-              progress: null,
+                        if (!_busy)
+                          Padding(
+                            padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+                            child: ToolPrimaryButton(
+                              label: _mode == _PasswordMode.add
+                                  ? 'Protect PDF'
+                                  : 'Remove password',
+                              icon: _mode == _PasswordMode.add
+                                  ? Icons.lock
+                                  : Icons.lock_open,
+                              onTap: _run,
+                            ),
+                          ),
+                      ],
+                    ),
             ),
-        ],
+            if (_busy)
+              ProgressOverlay(
+                title: _mode == _PasswordMode.add
+                    ? 'Encrypting'
+                    : 'Removing password',
+                subtitle: 'Processing on this device — no upload',
+                progress: null,
+              ),
+          ],
+        ),
       ),
     );
   }

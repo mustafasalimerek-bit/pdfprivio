@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/theme/colors.dart';
+import '../../core/utils/responsive.dart';
 import '../../core/utils/cancellation_token.dart';
 import '../../core/utils/format_bytes.dart';
 import '../../core/utils/result.dart';
@@ -163,90 +164,92 @@ class _CompareScreenState extends ConsumerState<CompareScreen> {
             ),
         ],
       ),
-      body: Stack(
-        children: [
-          SafeArea(
-            child: bothEmpty
-                ? ToolEmptyState(
-                    heroIcon: Icons.compare_arrows,
-                    title: 'Compare two PDFs',
-                    subtitle: 'Redline added & removed text',
-                    primaryLabel: 'Pick first PDF',
-                    onPrimary: () => _pick(true),
-                  )
-                : Column(
-                    children: [
-                      Expanded(
-                        child: ListView(
-                          padding: const EdgeInsets.fromLTRB(16, 4, 16, 4),
-                          children: [
-                            const DisclaimerBanner(
-                              message: 'Compares text content only. Image '
-                                  'differences, visual layout changes, font '
-                                  "swaps, and annotations aren't detected. "
-                                  'Use as a starting point — verify visually '
-                                  'for decisions that depend on appearance.',
-                            ),
-                            const SizedBox(height: 12),
-                            _Slot(
-                              label: 'Left (original)',
-                              doc: _left,
-                              onPick: () => _pick(true),
-                              onClear: () =>
-                                  setState(() => _left = null),
-                            ),
-                            const SizedBox(height: 10),
-                            Center(
-                              child: TextButton.icon(
-                                onPressed: _left != null && _right != null
-                                    ? _swap
-                                    : null,
-                                icon: const Icon(Icons.swap_vert, size: 16),
-                                label: const Text('Swap'),
+      body: MaxWidthBody(
+        child: Stack(
+          children: [
+            SafeArea(
+              child: bothEmpty
+                  ? ToolEmptyState(
+                      heroIcon: Icons.compare_arrows,
+                      title: 'Compare two PDFs',
+                      subtitle: 'Redline added & removed text',
+                      primaryLabel: 'Pick first PDF',
+                      onPrimary: () => _pick(true),
+                    )
+                  : Column(
+                      children: [
+                        Expanded(
+                          child: ListView(
+                            padding: const EdgeInsets.fromLTRB(16, 4, 16, 4),
+                            children: [
+                              const DisclaimerBanner(
+                                message: 'Compares text content only. Image '
+                                    'differences, visual layout changes, font '
+                                    "swaps, and annotations aren't detected. "
+                                    'Use as a starting point — verify visually '
+                                    'for decisions that depend on appearance.',
                               ),
-                            ),
-                            const SizedBox(height: 10),
-                            _Slot(
-                              label: 'Right (compared to)',
-                              doc: _right,
-                              onPick: () => _pick(false),
-                              onClear: () =>
-                                  setState(() => _right = null),
-                            ),
-                            if (_left != null && _right != null) ...[
-                              const SizedBox(height: 16),
-                              _Hint(
-                                left: _left!,
-                                right: _right!,
+                              const SizedBox(height: 12),
+                              _Slot(
+                                label: 'Left (original)',
+                                doc: _left,
+                                onPick: () => _pick(true),
+                                onClear: () =>
+                                    setState(() => _left = null),
                               ),
+                              const SizedBox(height: 10),
+                              Center(
+                                child: TextButton.icon(
+                                  onPressed: _left != null && _right != null
+                                      ? _swap
+                                      : null,
+                                  icon: const Icon(Icons.swap_vert, size: 16),
+                                  label: const Text('Swap'),
+                                ),
+                              ),
+                              const SizedBox(height: 10),
+                              _Slot(
+                                label: 'Right (compared to)',
+                                doc: _right,
+                                onPick: () => _pick(false),
+                                onClear: () =>
+                                    setState(() => _right = null),
+                              ),
+                              if (_left != null && _right != null) ...[
+                                const SizedBox(height: 16),
+                                _Hint(
+                                  left: _left!,
+                                  right: _right!,
+                                ),
+                              ],
                             ],
-                          ],
-                        ),
-                      ),
-                      if (_progress == null)
-                        Padding(
-                          padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-                          child: ToolPrimaryButton(
-                            label: canRun
-                                ? 'Compare text'
-                                : 'Pick the other PDF',
-                            icon: Icons.compare_arrows,
-                            enabled: canRun,
-                            onTap: _run,
                           ),
                         ),
-                    ],
-                  ),
-          ),
-          if (_progress != null)
-            ProgressOverlay(
-              progress: _progress,
-              title: 'Comparing PDFs',
-              subtitle:
-                  _status ?? 'Processing on this device — no upload',
-              onCancel: () => _cancel?.cancel(),
+                        if (_progress == null)
+                          Padding(
+                            padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+                            child: ToolPrimaryButton(
+                              label: canRun
+                                  ? 'Compare text'
+                                  : 'Pick the other PDF',
+                              icon: Icons.compare_arrows,
+                              enabled: canRun,
+                              onTap: _run,
+                            ),
+                          ),
+                      ],
+                    ),
             ),
-        ],
+            if (_progress != null)
+              ProgressOverlay(
+                progress: _progress,
+                title: 'Comparing PDFs',
+                subtitle:
+                    _status ?? 'Processing on this device — no upload',
+                onCancel: () => _cancel?.cancel(),
+              ),
+          ],
+        ),
       ),
     );
   }

@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/theme/colors.dart';
+import '../../core/utils/responsive.dart';
 import '../../core/utils/format_bytes.dart';
 import '../../core/utils/result.dart';
 import '../../data/models/pdf_document.dart';
@@ -200,53 +201,55 @@ class _SignScreenState extends ConsumerState<SignScreen> {
             ),
         ],
       ),
-      body: Stack(
-        children: [
-          SafeArea(
-            child: doc == null
-                ? _EmptyState(onPick: _pickPdf, onScan: _scanPdf)
-                : Column(
-                    children: [
-                      Expanded(
-                        child: _SignSetup(
-                          doc: doc,
-                          signature: _signature,
-                          pageIndex: _pageIndex,
-                          position: _position,
-                          signerName: _signerName,
-                          onPageIndex: (i) {
-                            HapticsService.instance.select();
-                            setState(() => _pageIndex = i);
-                          },
-                          onPosition: (p) {
-                            HapticsService.instance.select();
-                            setState(() => _position = p);
-                          },
-                          onDrawSignature: _drawSignature,
-                        ),
-                      ),
-                      if (!_busy)
-                        Padding(
-                          padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-                          child: ToolPrimaryButton(
-                            label: _signature == null
-                                ? 'Draw signature first'
-                                : 'Sign page ${_pageIndex + 1}',
-                            icon: Icons.draw,
-                            enabled: canSign,
-                            onTap: _sign,
+      body: MaxWidthBody(
+        child: Stack(
+          children: [
+            SafeArea(
+              child: doc == null
+                  ? _EmptyState(onPick: _pickPdf, onScan: _scanPdf)
+                  : Column(
+                      children: [
+                        Expanded(
+                          child: _SignSetup(
+                            doc: doc,
+                            signature: _signature,
+                            pageIndex: _pageIndex,
+                            position: _position,
+                            signerName: _signerName,
+                            onPageIndex: (i) {
+                              HapticsService.instance.select();
+                              setState(() => _pageIndex = i);
+                            },
+                            onPosition: (p) {
+                              HapticsService.instance.select();
+                              setState(() => _position = p);
+                            },
+                            onDrawSignature: _drawSignature,
                           ),
                         ),
-                    ],
-                  ),
-          ),
-          if (_busy)
-            const ProgressOverlay(
-              title: 'Adding signature',
-              subtitle: 'Processing on this device — no upload',
-              progress: null,
+                        if (!_busy)
+                          Padding(
+                            padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+                            child: ToolPrimaryButton(
+                              label: _signature == null
+                                  ? 'Draw signature first'
+                                  : 'Sign page ${_pageIndex + 1}',
+                              icon: Icons.draw,
+                              enabled: canSign,
+                              onTap: _sign,
+                            ),
+                          ),
+                      ],
+                    ),
             ),
-        ],
+            if (_busy)
+              const ProgressOverlay(
+                title: 'Adding signature',
+                subtitle: 'Processing on this device — no upload',
+                progress: null,
+              ),
+          ],
+        ),
       ),
     );
   }

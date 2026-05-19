@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/theme/colors.dart';
+import '../../core/utils/responsive.dart';
 import '../../core/utils/cancellation_token.dart';
 import '../../core/utils/format_bytes.dart';
 import '../../core/utils/result.dart';
@@ -161,35 +162,37 @@ class _PiiScanScreenState extends ConsumerState<PiiScanScreen> {
             ),
         ],
       ),
-      body: Stack(
-        children: [
-          SafeArea(
-            child: doc == null
-                ? _EmptyState(onPick: _pick, onTrySample: _trySample)
-                : Column(
-                    children: [
-                      Expanded(child: _DocReady(doc: doc)),
-                      if (_progress == null)
-                        Padding(
-                          padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-                          child: ToolPrimaryButton(
-                            label: 'Scan ${doc.pageCount} '
-                                'page${doc.pageCount == 1 ? '' : 's'} for PII',
-                            icon: Icons.shield_outlined,
-                            onTap: _run,
+      body: MaxWidthBody(
+        child: Stack(
+          children: [
+            SafeArea(
+              child: doc == null
+                  ? _EmptyState(onPick: _pick, onTrySample: _trySample)
+                  : Column(
+                      children: [
+                        Expanded(child: _DocReady(doc: doc)),
+                        if (_progress == null)
+                          Padding(
+                            padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+                            child: ToolPrimaryButton(
+                              label: 'Scan ${doc.pageCount} '
+                                  'page${doc.pageCount == 1 ? '' : 's'} for PII',
+                              icon: Icons.shield_outlined,
+                              onTap: _run,
+                            ),
                           ),
-                        ),
-                    ],
-                  ),
-          ),
-          if (_progress != null)
-            ProgressOverlay(
-              progress: _progress,
-              title: 'Scanning for sensitive data',
-              subtitle: _status ?? 'On this device — no upload',
-              onCancel: () => _cancel?.cancel(),
+                      ],
+                    ),
             ),
-        ],
+            if (_progress != null)
+              ProgressOverlay(
+                progress: _progress,
+                title: 'Scanning for sensitive data',
+                subtitle: _status ?? 'On this device — no upload',
+                onCancel: () => _cancel?.cancel(),
+              ),
+          ],
+        ),
       ),
     );
   }

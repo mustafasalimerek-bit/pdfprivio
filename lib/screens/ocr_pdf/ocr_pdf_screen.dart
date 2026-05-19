@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/theme/colors.dart';
+import '../../core/utils/responsive.dart';
 import '../../core/utils/cancellation_token.dart';
 import '../../core/utils/format_bytes.dart';
 import '../../core/utils/result.dart';
@@ -252,41 +253,43 @@ class _OcrPdfScreenState extends ConsumerState<OcrPdfScreen> {
             ),
         ],
       ),
-      body: Stack(
-        children: [
-          SafeArea(
-            child: doc == null
-                ? _EmptyState(onPick: _pick, onScan: _scanPdf)
-                : Column(
-                    children: [
-                      Expanded(
-                        child: _DocReady(
-                          doc: doc,
-                          level: _level,
-                          onLevel: (l) => setState(() => _level = l),
-                        ),
-                      ),
-                      if (_progress == null)
-                        Padding(
-                          padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-                          child: ToolPrimaryButton(
-                            label: 'Make searchable · ${doc.pageCount} '
-                                'page${doc.pageCount == 1 ? '' : 's'}',
-                            icon: Icons.find_in_page_outlined,
-                            onTap: _run,
+      body: MaxWidthBody(
+        child: Stack(
+          children: [
+            SafeArea(
+              child: doc == null
+                  ? _EmptyState(onPick: _pick, onScan: _scanPdf)
+                  : Column(
+                      children: [
+                        Expanded(
+                          child: _DocReady(
+                            doc: doc,
+                            level: _level,
+                            onLevel: (l) => setState(() => _level = l),
                           ),
                         ),
-                    ],
-                  ),
-          ),
-          if (_progress != null)
-            ProgressOverlay(
-              progress: _progress,
-              title: 'OCR running',
-              subtitle: _status ?? 'On-device — no upload',
-              onCancel: () => _cancel?.cancel(),
+                        if (_progress == null)
+                          Padding(
+                            padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+                            child: ToolPrimaryButton(
+                              label: 'Make searchable · ${doc.pageCount} '
+                                  'page${doc.pageCount == 1 ? '' : 's'}',
+                              icon: Icons.find_in_page_outlined,
+                              onTap: _run,
+                            ),
+                          ),
+                      ],
+                    ),
             ),
-        ],
+            if (_progress != null)
+              ProgressOverlay(
+                progress: _progress,
+                title: 'OCR running',
+                subtitle: _status ?? 'On-device — no upload',
+                onCancel: () => _cancel?.cancel(),
+              ),
+          ],
+        ),
       ),
     );
   }

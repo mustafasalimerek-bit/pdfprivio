@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io' show Platform;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -62,9 +63,23 @@ Future<void> main() async {
     // resumes re-poll from RootScaffold's lifecycle listener.
     await AppIntentService.instance.init();
 
-    await SystemChrome.setPreferredOrientations([
-      DeviceOrientation.portraitUp,
-    ]);
+    // iPhone stays portrait-locked — the tool screens are vertical
+    // forms and rotating them helps nobody. iPad gets all four
+    // orientations so Magic-Keyboard-default landscape and Stage
+    // Manager rotation work as users expect. Display API (over the
+    // window-relative physicalSize) keeps the classification correct
+    // even if the app is restored into a Split View pane.
+    final firstView =
+        WidgetsBinding.instance.platformDispatcher.views.first;
+    final display = firstView.display;
+    final shortestSidePt =
+        display.size.shortestSide / display.devicePixelRatio;
+    final isIPadDevice = Platform.isIOS && shortestSidePt >= 600;
+    await SystemChrome.setPreferredOrientations(
+      isIPadDevice
+          ? const <DeviceOrientation>[] // [] = all orientations allowed
+          : const [DeviceOrientation.portraitUp],
+    );
 
     runApp(
       const ProviderScope(

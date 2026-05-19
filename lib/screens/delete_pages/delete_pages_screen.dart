@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/theme/colors.dart';
+import '../../core/utils/responsive.dart';
 import '../../core/utils/cancellation_token.dart';
 import '../../core/utils/result.dart';
 import '../../data/models/pdf_document.dart';
@@ -168,87 +169,89 @@ class _DeletePagesScreenState extends ConsumerState<DeletePagesScreen> {
             ),
         ],
       ),
-      body: Stack(
-        children: [
-          SafeArea(
-            child: doc == null
-                ? _EmptyState(onPick: _pick, onScan: _scanPdf)
-                : Column(
-                    children: [
-                      Expanded(
-                        child: _Picker(
-                          doc: doc,
-                          selected: _selected,
-                          onToggle: (index) {
-                            HapticsService.instance.select();
-                            setState(() {
-                              if (_selected.contains(index)) {
-                                _selected.remove(index);
-                              } else {
-                                _selected.add(index);
-                              }
-                            });
-                          },
-                          onSelectAll: () {
-                            HapticsService.instance.tap();
-                            setState(() {
-                              if (_selected.length == doc.pageCount) {
-                                _selected.clear();
-                              } else {
-                                _selected
-                                  ..clear()
-                                  ..addAll(
-                                    List.generate(doc.pageCount, (i) => i),
-                                  );
-                              }
-                            });
-                          },
+      body: MaxWidthBody(
+        child: Stack(
+          children: [
+            SafeArea(
+              child: doc == null
+                  ? _EmptyState(onPick: _pick, onScan: _scanPdf)
+                  : Column(
+                      children: [
+                        Expanded(
+                          child: _Picker(
+                            doc: doc,
+                            selected: _selected,
+                            onToggle: (index) {
+                              HapticsService.instance.select();
+                              setState(() {
+                                if (_selected.contains(index)) {
+                                  _selected.remove(index);
+                                } else {
+                                  _selected.add(index);
+                                }
+                              });
+                            },
+                            onSelectAll: () {
+                              HapticsService.instance.tap();
+                              setState(() {
+                                if (_selected.length == doc.pageCount) {
+                                  _selected.clear();
+                                } else {
+                                  _selected
+                                    ..clear()
+                                    ..addAll(
+                                      List.generate(doc.pageCount, (i) => i),
+                                    );
+                                }
+                              });
+                            },
+                          ),
                         ),
-                      ),
-                      if (_progress == null && _selected.isNotEmpty)
-                        Padding(
-                          padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-                          child: SizedBox(
-                            width: double.infinity,
-                            child: FilledButton.icon(
-                              onPressed: _selected.length >= doc.pageCount
-                                  ? null
-                                  : _delete,
-                              icon: const Icon(Icons.delete_sweep, size: 20),
-                              label: Text(
-                                _selected.length >= doc.pageCount
-                                    ? "Can't delete every page"
-                                    : 'Delete ${_selected.length} '
-                                        'page${_selected.length == 1 ? '' : 's'}',
-                                style: const TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w800,
+                        if (_progress == null && _selected.isNotEmpty)
+                          Padding(
+                            padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+                            child: SizedBox(
+                              width: double.infinity,
+                              child: FilledButton.icon(
+                                onPressed: _selected.length >= doc.pageCount
+                                    ? null
+                                    : _delete,
+                                icon: const Icon(Icons.delete_sweep, size: 20),
+                                label: Text(
+                                  _selected.length >= doc.pageCount
+                                      ? "Can't delete every page"
+                                      : 'Delete ${_selected.length} '
+                                          'page${_selected.length == 1 ? '' : 's'}',
+                                  style: const TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w800,
+                                  ),
                                 ),
-                              ),
-                              style: FilledButton.styleFrom(
-                                backgroundColor: AppColors.error,
-                                disabledBackgroundColor:
-                                    AppColors.error.withValues(alpha: 0.35),
-                                padding:
-                                    const EdgeInsets.symmetric(vertical: 16),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(99),
+                                style: FilledButton.styleFrom(
+                                  backgroundColor: AppColors.error,
+                                  disabledBackgroundColor:
+                                      AppColors.error.withValues(alpha: 0.35),
+                                  padding:
+                                      const EdgeInsets.symmetric(vertical: 16),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(99),
+                                  ),
                                 ),
                               ),
                             ),
                           ),
-                        ),
-                    ],
-                  ),
-          ),
-          if (_progress != null)
-            ProgressOverlay(
-              progress: _progress,
-              title: 'Rebuilding PDF',
-              subtitle: 'Processing on this device — no upload',
-              onCancel: () => _cancel?.cancel(),
+                      ],
+                    ),
             ),
-        ],
+            if (_progress != null)
+              ProgressOverlay(
+                progress: _progress,
+                title: 'Rebuilding PDF',
+                subtitle: 'Processing on this device — no upload',
+                onCancel: () => _cancel?.cancel(),
+              ),
+          ],
+        ),
       ),
     );
   }

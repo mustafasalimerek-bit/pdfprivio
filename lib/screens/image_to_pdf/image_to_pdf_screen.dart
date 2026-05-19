@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/theme/colors.dart';
+import '../../core/utils/responsive.dart';
 import '../../core/utils/cancellation_token.dart';
 import '../../core/utils/result.dart';
 import '../../data/services/haptics_service.dart';
@@ -136,43 +137,45 @@ class _ImageToPdfScreenState extends ConsumerState<ImageToPdfScreen> {
             ),
         ],
       ),
-      body: Stack(
-        children: [
-          SafeArea(
-            child: _images.isEmpty
-                ? _EmptyState(onPick: _pickImages)
-                : Column(
-                    children: [
-                      Expanded(
-                        child: _Picker(
-                          images: _images,
-                          paperSize: _paperSize,
-                          onPaperSize: (s) {
-                            HapticsService.instance.select();
-                            setState(() => _paperSize = s);
-                          },
-                          onAddMore: _pickImages,
-                          onReorder: _reorder,
-                          onRemove: _remove,
+      body: MaxWidthBody(
+        child: Stack(
+          children: [
+            SafeArea(
+              child: _images.isEmpty
+                  ? _EmptyState(onPick: _pickImages)
+                  : Column(
+                      children: [
+                        Expanded(
+                          child: _Picker(
+                            images: _images,
+                            paperSize: _paperSize,
+                            onPaperSize: (s) {
+                              HapticsService.instance.select();
+                              setState(() => _paperSize = s);
+                            },
+                            onAddMore: _pickImages,
+                            onReorder: _reorder,
+                            onRemove: _remove,
+                          ),
                         ),
-                      ),
-                      if (_progress == null)
-                        _Button(
-                          label: 'Build PDF from ${_images.length} '
-                              'image${_images.length == 1 ? '' : 's'}',
-                          onTap: _convert,
-                        ),
-                    ],
-                  ),
-          ),
-          if (_progress != null)
-            ProgressOverlay(
-              progress: _progress,
-              title: 'Building PDF',
-              subtitle: 'Processing on this device — no upload',
-              onCancel: () => _cancel?.cancel(),
+                        if (_progress == null)
+                          _Button(
+                            label: 'Build PDF from ${_images.length} '
+                                'image${_images.length == 1 ? '' : 's'}',
+                            onTap: _convert,
+                          ),
+                      ],
+                    ),
             ),
-        ],
+            if (_progress != null)
+              ProgressOverlay(
+                progress: _progress,
+                title: 'Building PDF',
+                subtitle: 'Processing on this device — no upload',
+                onCancel: () => _cancel?.cancel(),
+              ),
+          ],
+        ),
       ),
     );
   }

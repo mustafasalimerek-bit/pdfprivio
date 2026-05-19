@@ -8,6 +8,7 @@ import 'package:open_filex/open_filex.dart';
 import 'package:share_plus/share_plus.dart';
 
 import '../../core/theme/colors.dart';
+import '../../core/utils/responsive.dart';
 import '../../core/utils/cancellation_token.dart';
 import '../../core/utils/format_bytes.dart';
 import '../../core/utils/result.dart';
@@ -233,239 +234,241 @@ class _RedactScreenState extends ConsumerState<RedactScreen> {
             ),
         ],
       ),
-      body: Stack(
-        children: [
-          SafeArea(
-            child: doc == null
-                ? _EmptyState(onPick: _pick, onScan: _scanPdf)
-                : Column(
-                    children: [
-                      Expanded(
-                        child: ListView(
-                          padding:
-                              const EdgeInsets.fromLTRB(16, 4, 16, 4),
-                          children: [
-                            _DocSummary(doc: doc),
-                            const SizedBox(height: 14),
-                            const Text(
-                              "Texts to redact",
-                              style: TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w700,
+      body: MaxWidthBody(
+        child: Stack(
+          children: [
+            SafeArea(
+              child: doc == null
+                  ? _EmptyState(onPick: _pick, onScan: _scanPdf)
+                  : Column(
+                      children: [
+                        Expanded(
+                          child: ListView(
+                            padding:
+                                const EdgeInsets.fromLTRB(16, 4, 16, 4),
+                            children: [
+                              _DocSummary(doc: doc),
+                              const SizedBox(height: 14),
+                              const Text(
+                                "Texts to redact",
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w700,
+                                ),
                               ),
-                            ),
-                            const SizedBox(height: 6),
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: TextField(
-                                    controller: _input,
-                                    onSubmitted: (_) => _addSearch(),
-                                    decoration: InputDecoration(
-                                      hintText: 'Name, account #, address…',
-                                      filled: true,
-                                      fillColor: AppColors.surface,
-                                      contentPadding:
-                                          const EdgeInsets.symmetric(
-                                        horizontal: 14,
-                                        vertical: 12,
-                                      ),
-                                      border: OutlineInputBorder(
-                                        borderRadius:
-                                            BorderRadius.circular(10),
-                                        borderSide: const BorderSide(
-                                          color: AppColors.border,
+                              const SizedBox(height: 6),
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: TextField(
+                                      controller: _input,
+                                      onSubmitted: (_) => _addSearch(),
+                                      decoration: InputDecoration(
+                                        hintText: 'Name, account #, address…',
+                                        filled: true,
+                                        fillColor: AppColors.surface,
+                                        contentPadding:
+                                            const EdgeInsets.symmetric(
+                                          horizontal: 14,
+                                          vertical: 12,
                                         ),
-                                      ),
-                                      enabledBorder: OutlineInputBorder(
-                                        borderRadius:
-                                            BorderRadius.circular(10),
-                                        borderSide: const BorderSide(
-                                          color: AppColors.border,
+                                        border: OutlineInputBorder(
+                                          borderRadius:
+                                              BorderRadius.circular(10),
+                                          borderSide: const BorderSide(
+                                            color: AppColors.border,
+                                          ),
                                         ),
-                                      ),
-                                      focusedBorder: OutlineInputBorder(
-                                        borderRadius:
-                                            BorderRadius.circular(10),
-                                        borderSide: const BorderSide(
-                                          color: AppColors.primary,
+                                        enabledBorder: OutlineInputBorder(
+                                          borderRadius:
+                                              BorderRadius.circular(10),
+                                          borderSide: const BorderSide(
+                                            color: AppColors.border,
+                                          ),
+                                        ),
+                                        focusedBorder: OutlineInputBorder(
+                                          borderRadius:
+                                              BorderRadius.circular(10),
+                                          borderSide: const BorderSide(
+                                            color: AppColors.primary,
+                                          ),
                                         ),
                                       ),
                                     ),
                                   ),
-                                ),
-                                const SizedBox(width: 8),
-                                FilledButton(
-                                  onPressed: _addSearch,
-                                  style: FilledButton.styleFrom(
-                                    backgroundColor: AppColors.primary,
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 16,
-                                      vertical: 14,
+                                  const SizedBox(width: 8),
+                                  FilledButton(
+                                    onPressed: _addSearch,
+                                    style: FilledButton.styleFrom(
+                                      backgroundColor: AppColors.primary,
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 16,
+                                        vertical: 14,
+                                      ),
                                     ),
+                                    child: const Icon(Icons.add, size: 20),
                                   ),
-                                  child: const Icon(Icons.add, size: 20),
+                                ],
+                              ),
+                              const SizedBox(height: 10),
+                              if (_searches.isEmpty)
+                                Container(
+                                  padding: const EdgeInsets.all(12),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.background,
+                                    borderRadius: BorderRadius.circular(10),
+                                    border: Border.all(color: AppColors.border),
+                                  ),
+                                  child: const Row(
+                                    children: [
+                                      Icon(
+                                        Icons.info_outline,
+                                        size: 16,
+                                        color: AppColors.textTertiary,
+                                      ),
+                                      SizedBox(width: 8),
+                                      Expanded(
+                                        child: Text(
+                                          "Add one or more strings. We'll find "
+                                          "every line containing them and "
+                                          'cover it with a black rectangle.',
+                                          style: TextStyle(
+                                            fontSize: 12,
+                                            color: AppColors.textTertiary,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                )
+                              else
+                                Wrap(
+                                  spacing: 6,
+                                  runSpacing: 6,
+                                  children: [
+                                    for (var i = 0; i < _searches.length; i++)
+                                      InputChip(
+                                        label: Text(
+                                          _searches[i],
+                                          style: const TextStyle(
+                                            fontSize: 12,
+                                          ),
+                                        ),
+                                        onDeleted: () => _removeSearch(i),
+                                        backgroundColor: AppColors.surface,
+                                        side: const BorderSide(
+                                          color: AppColors.border,
+                                        ),
+                                        deleteIconColor: AppColors.error,
+                                      ),
+                                  ],
                                 ),
-                              ],
-                            ),
-                            const SizedBox(height: 10),
-                            if (_searches.isEmpty)
+                              const SizedBox(height: 14),
+                              SwitchListTile(
+                                title: const Text(
+                                  'Case-sensitive',
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                                subtitle: const Text(
+                                  'Off: "John" matches "JOHN" and "john"',
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    color: AppColors.textTertiary,
+                                  ),
+                                ),
+                                value: _caseSensitive,
+                                onChanged: (v) {
+                                  HapticsService.instance.select();
+                                  setState(() => _caseSensitive = v);
+                                },
+                                activeThumbColor: AppColors.primary,
+                                contentPadding: EdgeInsets.zero,
+                              ),
+                              const SizedBox(height: 6),
                               Container(
                                 padding: const EdgeInsets.all(12),
                                 decoration: BoxDecoration(
-                                  color: AppColors.background,
+                                  color: AppColors.success
+                                      .withValues(alpha: 0.08),
                                   borderRadius: BorderRadius.circular(10),
-                                  border: Border.all(color: AppColors.border),
+                                  border: Border.all(
+                                    color: AppColors.success
+                                        .withValues(alpha: 0.3),
+                                  ),
                                 ),
                                 child: const Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Icon(
-                                      Icons.info_outline,
+                                      Icons.verified_outlined,
                                       size: 16,
-                                      color: AppColors.textTertiary,
+                                      color: AppColors.success,
                                     ),
                                     SizedBox(width: 8),
                                     Expanded(
                                       child: Text(
-                                        "Add one or more strings. We'll find "
-                                        "every line containing them and "
-                                        'cover it with a black rectangle.',
+                                        "Real redaction: matched words are "
+                                        "rasterized into the page and the "
+                                        "original text layer is removed. "
+                                        "Copy-paste, Cmd+F, and PDF parsers "
+                                        "all see only black bars.",
                                         style: TextStyle(
-                                          fontSize: 12,
-                                          color: AppColors.textTertiary,
+                                          fontSize: 11,
+                                          color: AppColors.success,
                                         ),
                                       ),
                                     ),
                                   ],
                                 ),
-                              )
-                            else
-                              Wrap(
-                                spacing: 6,
-                                runSpacing: 6,
-                                children: [
-                                  for (var i = 0; i < _searches.length; i++)
-                                    InputChip(
-                                      label: Text(
-                                        _searches[i],
-                                        style: const TextStyle(
-                                          fontSize: 12,
-                                        ),
-                                      ),
-                                      onDeleted: () => _removeSearch(i),
-                                      backgroundColor: AppColors.surface,
-                                      side: const BorderSide(
-                                        color: AppColors.border,
-                                      ),
-                                      deleteIconColor: AppColors.error,
-                                    ),
-                                ],
                               ),
-                            const SizedBox(height: 14),
-                            SwitchListTile(
-                              title: const Text(
-                                'Case-sensitive',
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w600,
-                                ),
+                              const SizedBox(height: 10),
+                              _SearchableToggle(
+                                value: _makeSearchable,
+                                onChanged: (v) {
+                                  HapticsService.instance.select();
+                                  setState(() => _makeSearchable = v);
+                                },
                               ),
-                              subtitle: const Text(
-                                'Off: "John" matches "JOHN" and "john"',
-                                style: TextStyle(
-                                  fontSize: 11,
-                                  color: AppColors.textTertiary,
-                                ),
+                              const SizedBox(height: 10),
+                              const DisclaimerBanner(
+                                message: 'Redactions cover the matching '
+                                    'words on each page. Embedded objects, '
+                                    'attached files, metadata, and prior '
+                                    'versions are not touched — open the '
+                                    'output in another viewer to verify '
+                                    'before sending externally.',
                               ),
-                              value: _caseSensitive,
-                              onChanged: (v) {
-                                HapticsService.instance.select();
-                                setState(() => _caseSensitive = v);
-                              },
-                              activeThumbColor: AppColors.primary,
-                              contentPadding: EdgeInsets.zero,
-                            ),
-                            const SizedBox(height: 6),
-                            Container(
-                              padding: const EdgeInsets.all(12),
-                              decoration: BoxDecoration(
-                                color: AppColors.success
-                                    .withValues(alpha: 0.08),
-                                borderRadius: BorderRadius.circular(10),
-                                border: Border.all(
-                                  color: AppColors.success
-                                      .withValues(alpha: 0.3),
-                                ),
-                              ),
-                              child: const Row(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Icon(
-                                    Icons.verified_outlined,
-                                    size: 16,
-                                    color: AppColors.success,
-                                  ),
-                                  SizedBox(width: 8),
-                                  Expanded(
-                                    child: Text(
-                                      "Real redaction: matched words are "
-                                      "rasterized into the page and the "
-                                      "original text layer is removed. "
-                                      "Copy-paste, Cmd+F, and PDF parsers "
-                                      "all see only black bars.",
-                                      style: TextStyle(
-                                        fontSize: 11,
-                                        color: AppColors.success,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            const SizedBox(height: 10),
-                            _SearchableToggle(
-                              value: _makeSearchable,
-                              onChanged: (v) {
-                                HapticsService.instance.select();
-                                setState(() => _makeSearchable = v);
-                              },
-                            ),
-                            const SizedBox(height: 10),
-                            const DisclaimerBanner(
-                              message: 'Redactions cover the matching '
-                                  'words on each page. Embedded objects, '
-                                  'attached files, metadata, and prior '
-                                  'versions are not touched — open the '
-                                  'output in another viewer to verify '
-                                  'before sending externally.',
-                            ),
-                          ],
-                        ),
-                      ),
-                      if (_progress == null)
-                        Padding(
-                          padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-                          child: ToolPrimaryButton(
-                            label: _searches.isEmpty
-                                ? 'Add at least one search text'
-                                : 'Redact ${_searches.length} term'
-                                    '${_searches.length == 1 ? '' : 's'}',
-                            icon: Icons.format_color_fill,
-                            enabled: _searches.isNotEmpty,
-                            onTap: _run,
+                            ],
                           ),
                         ),
-                    ],
-                  ),
-          ),
-          if (_progress != null)
-            ProgressOverlay(
-              progress: _progress,
-              title: 'Redacting',
-              subtitle: _status ?? 'Processing on this device — no upload',
-              onCancel: () => _cancel?.cancel(),
+                        if (_progress == null)
+                          Padding(
+                            padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+                            child: ToolPrimaryButton(
+                              label: _searches.isEmpty
+                                  ? 'Add at least one search text'
+                                  : 'Redact ${_searches.length} term'
+                                      '${_searches.length == 1 ? '' : 's'}',
+                              icon: Icons.format_color_fill,
+                              enabled: _searches.isNotEmpty,
+                              onTap: _run,
+                            ),
+                          ),
+                      ],
+                    ),
             ),
-        ],
+            if (_progress != null)
+              ProgressOverlay(
+                progress: _progress,
+                title: 'Redacting',
+                subtitle: _status ?? 'Processing on this device — no upload',
+                onCancel: () => _cancel?.cancel(),
+              ),
+          ],
+        ),
       ),
     );
   }

@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/theme/colors.dart';
+import '../../core/utils/responsive.dart';
 import '../../core/utils/cancellation_token.dart';
 import '../../core/utils/format_bytes.dart';
 import '../../core/utils/result.dart';
@@ -187,27 +188,29 @@ class _SplitScreenState extends ConsumerState<SplitScreen> {
             ),
         ],
       ),
-      body: Stack(
-        children: [
-          SafeArea(
-            child: doc == null
-                ? _EmptyState(onPick: _pickFile, onScan: _scanPdf)
-                : Column(
-                    children: [
-                      Expanded(child: _Picker(doc: doc, mode: mode)),
-                      if (progress == null)
-                        _SplitButton(mode: mode, onTap: _split),
-                    ],
-                  ),
-          ),
-          if (progress != null)
-            ProgressOverlay(
-              progress: progress,
-              title: 'Splitting PDF',
-              subtitle: 'Processing on this device — no upload',
-              onCancel: () => _activeCancel?.cancel(),
+      body: MaxWidthBody(
+        child: Stack(
+          children: [
+            SafeArea(
+              child: doc == null
+                  ? _EmptyState(onPick: _pickFile, onScan: _scanPdf)
+                  : Column(
+                      children: [
+                        Expanded(child: _Picker(doc: doc, mode: mode)),
+                        if (progress == null)
+                          _SplitButton(mode: mode, onTap: _split),
+                      ],
+                    ),
             ),
-        ],
+            if (progress != null)
+              ProgressOverlay(
+                progress: progress,
+                title: 'Splitting PDF',
+                subtitle: 'Processing on this device — no upload',
+                onCancel: () => _activeCancel?.cancel(),
+              ),
+          ],
+        ),
       ),
     );
   }

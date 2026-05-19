@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/utils/cancellation_token.dart';
+import '../../core/utils/responsive.dart';
 import '../../core/utils/result.dart';
 import '../../data/models/receipt.dart';
 import '../../data/services/document_scanner_service.dart';
@@ -250,23 +251,25 @@ class _ScanScreenState extends ConsumerState<ScanScreen> {
         title: const Text('Scan to PDF'),
         centerTitle: true,
       ),
-      body: Stack(
-        children: [
-          SafeArea(
-            child: _EmptyState(
-              scannerAvailable: _scannerAvailable,
-              onScan: _scan,
-              onPickPhotos: _pickPhotosFallback,
+      body: MaxWidthBody(
+        child: Stack(
+          children: [
+            SafeArea(
+              child: _EmptyState(
+                scannerAvailable: _scannerAvailable,
+                onScan: _scan,
+                onPickPhotos: _pickPhotosFallback,
+              ),
             ),
-          ),
-          if (_progress != null)
-            ProgressOverlay(
-              progress: _progress,
-              title: 'Building PDF',
-              subtitle: _status ?? 'On this device — no upload',
-              onCancel: () => _cancel?.cancel(),
-            ),
-        ],
+            if (_progress != null)
+              ProgressOverlay(
+                progress: _progress,
+                title: 'Building PDF',
+                subtitle: _status ?? 'On this device — no upload',
+                onCancel: () => _cancel?.cancel(),
+              ),
+          ],
+        ),
       ),
     );
   }

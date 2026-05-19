@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/theme/colors.dart';
+import '../../core/utils/responsive.dart';
 import '../../core/utils/cancellation_token.dart';
 import '../../core/utils/format_bytes.dart';
 import '../../core/utils/result.dart';
@@ -166,160 +167,162 @@ class _WatermarkScreenState extends ConsumerState<WatermarkScreen> {
             ),
         ],
       ),
-      body: Stack(
-        children: [
-          SafeArea(
-            child: doc == null
-                ? _EmptyState(onPick: _pick, onScan: _scanPdf)
-                : Column(
-                    children: [
-                      Expanded(
-                        child: ListView(
-                          padding: const EdgeInsets.fromLTRB(16, 4, 16, 4),
-                          children: [
-                            _DocSummary(doc: doc),
-                            const SizedBox(height: 14),
-                            _PreviewCard(
-                              text: _text.text.toUpperCase(),
-                              opacity: _opacity,
-                              layout: _layout,
-                            ),
-                            const SizedBox(height: 14),
-                            TextField(
-                              controller: _text,
-                              onChanged: (_) => setState(() {}),
-                              textCapitalization:
-                                  TextCapitalization.characters,
-                              decoration: InputDecoration(
-                                labelText: 'Watermark text',
-                                hintText: 'CONFIDENTIAL · DRAFT · '
-                                    'INTERNAL USE',
-                                filled: true,
-                                fillColor: AppColors.surface,
-                                contentPadding: const EdgeInsets.symmetric(
-                                  horizontal: 14,
-                                  vertical: 12,
-                                ),
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(10),
-                                  borderSide: const BorderSide(
-                                    color: AppColors.border,
+      body: MaxWidthBody(
+        child: Stack(
+          children: [
+            SafeArea(
+              child: doc == null
+                  ? _EmptyState(onPick: _pick, onScan: _scanPdf)
+                  : Column(
+                      children: [
+                        Expanded(
+                          child: ListView(
+                            padding: const EdgeInsets.fromLTRB(16, 4, 16, 4),
+                            children: [
+                              _DocSummary(doc: doc),
+                              const SizedBox(height: 14),
+                              _PreviewCard(
+                                text: _text.text.toUpperCase(),
+                                opacity: _opacity,
+                                layout: _layout,
+                              ),
+                              const SizedBox(height: 14),
+                              TextField(
+                                controller: _text,
+                                onChanged: (_) => setState(() {}),
+                                textCapitalization:
+                                    TextCapitalization.characters,
+                                decoration: InputDecoration(
+                                  labelText: 'Watermark text',
+                                  hintText: 'CONFIDENTIAL · DRAFT · '
+                                      'INTERNAL USE',
+                                  filled: true,
+                                  fillColor: AppColors.surface,
+                                  contentPadding: const EdgeInsets.symmetric(
+                                    horizontal: 14,
+                                    vertical: 12,
                                   ),
-                                ),
-                                enabledBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(10),
-                                  borderSide: const BorderSide(
-                                    color: AppColors.border,
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(10),
+                                    borderSide: const BorderSide(
+                                      color: AppColors.border,
+                                    ),
                                   ),
-                                ),
-                                focusedBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(10),
-                                  borderSide: const BorderSide(
-                                    color: AppColors.primary,
+                                  enabledBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(10),
+                                    borderSide: const BorderSide(
+                                      color: AppColors.border,
+                                    ),
+                                  ),
+                                  focusedBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(10),
+                                    borderSide: const BorderSide(
+                                      color: AppColors.primary,
+                                    ),
                                   ),
                                 ),
                               ),
-                            ),
-                            const SizedBox(height: 14),
-                            const Text(
-                              'Layout',
-                              style: TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w700,
+                              const SizedBox(height: 14),
+                              const Text(
+                                'Layout',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w700,
+                                ),
                               ),
-                            ),
-                            const SizedBox(height: 6),
-                            Wrap(
-                              spacing: 8,
-                              runSpacing: 8,
-                              children: [
-                                for (final l in WatermarkLayout.values)
-                                  ChoiceChip(
-                                    label: Text(l.label),
-                                    selected: l == _layout,
-                                    onSelected: (_) {
-                                      HapticsService.instance.select();
-                                      setState(() => _layout = l);
-                                    },
-                                    selectedColor: AppColors.primary,
-                                    labelStyle: TextStyle(
-                                      color: l == _layout
-                                          ? Colors.white
-                                          : AppColors.textPrimary,
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w600,
+                              const SizedBox(height: 6),
+                              Wrap(
+                                spacing: 8,
+                                runSpacing: 8,
+                                children: [
+                                  for (final l in WatermarkLayout.values)
+                                    ChoiceChip(
+                                      label: Text(l.label),
+                                      selected: l == _layout,
+                                      onSelected: (_) {
+                                        HapticsService.instance.select();
+                                        setState(() => _layout = l);
+                                      },
+                                      selectedColor: AppColors.primary,
+                                      labelStyle: TextStyle(
+                                        color: l == _layout
+                                            ? Colors.white
+                                            : AppColors.textPrimary,
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                      backgroundColor: AppColors.surface,
+                                      side: BorderSide(
+                                        color: l == _layout
+                                            ? AppColors.primary
+                                            : AppColors.border,
+                                      ),
                                     ),
-                                    backgroundColor: AppColors.surface,
-                                    side: BorderSide(
-                                      color: l == _layout
-                                          ? AppColors.primary
-                                          : AppColors.border,
-                                    ),
-                                  ),
-                              ],
-                            ),
-                            const SizedBox(height: 14),
-                            const Text(
-                              'Opacity',
-                              style: TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w700,
+                                ],
                               ),
-                            ),
-                            const SizedBox(height: 6),
-                            Wrap(
-                              spacing: 8,
-                              children: [
-                                for (final o in WatermarkOpacity.values)
-                                  ChoiceChip(
-                                    label: Text(o.label),
-                                    selected: o == _opacity,
-                                    onSelected: (_) {
-                                      HapticsService.instance.select();
-                                      setState(() => _opacity = o);
-                                    },
-                                    selectedColor: AppColors.primary,
-                                    labelStyle: TextStyle(
-                                      color: o == _opacity
-                                          ? Colors.white
-                                          : AppColors.textPrimary,
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w600,
+                              const SizedBox(height: 14),
+                              const Text(
+                                'Opacity',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                              const SizedBox(height: 6),
+                              Wrap(
+                                spacing: 8,
+                                children: [
+                                  for (final o in WatermarkOpacity.values)
+                                    ChoiceChip(
+                                      label: Text(o.label),
+                                      selected: o == _opacity,
+                                      onSelected: (_) {
+                                        HapticsService.instance.select();
+                                        setState(() => _opacity = o);
+                                      },
+                                      selectedColor: AppColors.primary,
+                                      labelStyle: TextStyle(
+                                        color: o == _opacity
+                                            ? Colors.white
+                                            : AppColors.textPrimary,
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                      backgroundColor: AppColors.surface,
+                                      side: BorderSide(
+                                        color: o == _opacity
+                                            ? AppColors.primary
+                                            : AppColors.border,
+                                      ),
                                     ),
-                                    backgroundColor: AppColors.surface,
-                                    side: BorderSide(
-                                      color: o == _opacity
-                                          ? AppColors.primary
-                                          : AppColors.border,
-                                    ),
-                                  ),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
-                      if (_progress == null)
-                        Padding(
-                          padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-                          child: ToolPrimaryButton(
-                            label: 'Watermark ${doc.pageCount} '
-                                'page${doc.pageCount == 1 ? '' : 's'}',
-                            icon: Icons.water_drop,
-                            enabled: _text.text.trim().isNotEmpty,
-                            onTap: _stamp,
+                                ],
+                              ),
+                            ],
                           ),
                         ),
-                    ],
-                  ),
-          ),
-          if (_progress != null)
-            ProgressOverlay(
-              progress: _progress,
-              title: 'Adding watermark',
-              subtitle: 'Processing on this device — no upload',
-              onCancel: () => _cancel?.cancel(),
+                        if (_progress == null)
+                          Padding(
+                            padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+                            child: ToolPrimaryButton(
+                              label: 'Watermark ${doc.pageCount} '
+                                  'page${doc.pageCount == 1 ? '' : 's'}',
+                              icon: Icons.water_drop,
+                              enabled: _text.text.trim().isNotEmpty,
+                              onTap: _stamp,
+                            ),
+                          ),
+                      ],
+                    ),
             ),
-        ],
+            if (_progress != null)
+              ProgressOverlay(
+                progress: _progress,
+                title: 'Adding watermark',
+                subtitle: 'Processing on this device — no upload',
+                onCancel: () => _cancel?.cancel(),
+              ),
+          ],
+        ),
       ),
     );
   }

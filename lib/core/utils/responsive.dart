@@ -21,10 +21,19 @@ class Breakpoints {
   /// User-facing name for the device the app is running on. Lets copy
   /// like "Stays on your iPhone" / "Stays on your iPad" adapt to the
   /// actual hardware instead of falling back to the generic "device".
-  /// Threshold mirrors UIKit's regular horizontal size class: any iPad
-  /// has shortestSide ≥ 600, every iPhone is below.
-  static String deviceNoun(BuildContext context) =>
-      MediaQuery.sizeOf(context).shortestSide >= 600 ? 'iPad' : 'iPhone';
+  ///
+  /// Uses [View.of] + [FlutterView.display] (the physical screen) rather
+  /// than [MediaQuery.sizeOf] (the window). In iPad Split View / Slide
+  /// Over the window can shrink to phone-sized widths, but the user is
+  /// still on an iPad — saying "Stays on your iPhone" in that pane
+  /// would read wrong. Threshold mirrors UIKit's regular horizontal
+  /// size class: every iPad has shortestSide ≥ 600 in points, every
+  /// iPhone is below.
+  static String deviceNoun(BuildContext context) {
+    final display = View.of(context).display;
+    final shortest = display.size.shortestSide / display.devicePixelRatio;
+    return shortest >= 600 ? 'iPad' : 'iPhone';
+  }
 }
 
 /// Centred max-width body. Drop-in replacement for plain `body:` —

@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/theme/colors.dart';
+import '../../core/utils/responsive.dart';
 import '../../core/utils/cancellation_token.dart';
 import '../../core/utils/format_bytes.dart';
 import '../../core/utils/result.dart';
@@ -228,45 +229,47 @@ class _MergeScreenState extends ConsumerState<MergeScreen> {
             ),
         ],
       ),
-      body: Stack(
-        children: [
-          SafeArea(
-            child: docs.isEmpty
-                ? _EmptyState(onAdd: _pickFiles, onScan: _scanPdf)
-                : Column(
-                    children: [
-                      Expanded(
-                        child: _DocList(
-                          docs: docs,
-                          totalPages: totalPages,
-                          customPageCount: hasCustom ? pageRefs.length : null,
-                          onAdd: _pickFiles,
-                          onCustomize:
-                              docs.length >= 2 ? _customizePages : null,
+      body: MaxWidthBody(
+        child: Stack(
+          children: [
+            SafeArea(
+              child: docs.isEmpty
+                  ? _EmptyState(onAdd: _pickFiles, onScan: _scanPdf)
+                  : Column(
+                      children: [
+                        Expanded(
+                          child: _DocList(
+                            docs: docs,
+                            totalPages: totalPages,
+                            customPageCount: hasCustom ? pageRefs.length : null,
+                            onAdd: _pickFiles,
+                            onCustomize:
+                                docs.length >= 2 ? _customizePages : null,
+                          ),
                         ),
-                      ),
-                      if (canMerge)
-                        _MergeButton(
-                          count: docs.length,
-                          customPageCount:
-                              hasCustom ? pageRefs.length : null,
-                          onTap: _merge,
-                        ),
-                    ],
-                  ),
-          ),
-          if (progress != null)
-            ProgressOverlay(
-              progress: progress,
-              title: hasCustom
-                  ? 'Merging ${pageRefs.length} pages'
-                  : 'Merging ${docs.length} PDFs',
-              subtitle: 'Processing on this device — no upload',
-              onCancel: () {
-                _activeCancel?.cancel();
-              },
+                        if (canMerge)
+                          _MergeButton(
+                            count: docs.length,
+                            customPageCount:
+                                hasCustom ? pageRefs.length : null,
+                            onTap: _merge,
+                          ),
+                      ],
+                    ),
             ),
-        ],
+            if (progress != null)
+              ProgressOverlay(
+                progress: progress,
+                title: hasCustom
+                    ? 'Merging ${pageRefs.length} pages'
+                    : 'Merging ${docs.length} PDFs',
+                subtitle: 'Processing on this device — no upload',
+                onCancel: () {
+                  _activeCancel?.cancel();
+                },
+              ),
+          ],
+        ),
       ),
     );
   }

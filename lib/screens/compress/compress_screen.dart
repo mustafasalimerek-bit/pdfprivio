@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/theme/colors.dart';
+import '../../core/utils/responsive.dart';
 import '../../core/utils/cancellation_token.dart';
 import '../../core/utils/format_bytes.dart';
 import '../../core/utils/result.dart';
@@ -162,41 +163,43 @@ class _CompressScreenState extends ConsumerState<CompressScreen> {
             ),
         ],
       ),
-      body: Stack(
-        children: [
-          SafeArea(
-            child: doc == null
-                ? _EmptyState(onPick: _pickFile, onScan: _scanPdf)
-                : Column(
-                    children: [
-                      Expanded(
-                        child: _Picker(
-                          doc: doc,
-                          selectedLevel: level,
-                          onSelect: (lvl) {
-                            HapticsService.instance.select();
-                            ref.read(compressLevelProvider.notifier).state =
-                                lvl;
-                          },
+      body: MaxWidthBody(
+        child: Stack(
+          children: [
+            SafeArea(
+              child: doc == null
+                  ? _EmptyState(onPick: _pickFile, onScan: _scanPdf)
+                  : Column(
+                      children: [
+                        Expanded(
+                          child: _Picker(
+                            doc: doc,
+                            selectedLevel: level,
+                            onSelect: (lvl) {
+                              HapticsService.instance.select();
+                              ref.read(compressLevelProvider.notifier).state =
+                                  lvl;
+                            },
+                          ),
                         ),
-                      ),
-                      if (progress == null)
-                        _CompressButton(
-                          estimatedBytes:
-                              (doc.sizeBytes * level.heuristicRatio).round(),
-                          onTap: _compress,
-                        ),
-                    ],
-                  ),
-          ),
-          if (progress != null)
-            ProgressOverlay(
-              progress: progress,
-              title: 'Compressing PDF',
-              subtitle: status ?? 'Processing on this device — no upload',
-              onCancel: () => _activeCancel?.cancel(),
+                        if (progress == null)
+                          _CompressButton(
+                            estimatedBytes:
+                                (doc.sizeBytes * level.heuristicRatio).round(),
+                            onTap: _compress,
+                          ),
+                      ],
+                    ),
             ),
-        ],
+            if (progress != null)
+              ProgressOverlay(
+                progress: progress,
+                title: 'Compressing PDF',
+                subtitle: status ?? 'Processing on this device — no upload',
+                onCancel: () => _activeCancel?.cancel(),
+              ),
+          ],
+        ),
       ),
     );
   }

@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/theme/colors.dart';
+import '../../core/utils/responsive.dart';
 import '../../core/utils/cancellation_token.dart';
 import '../../core/utils/format_bytes.dart';
 import '../../core/utils/result.dart';
@@ -183,181 +184,183 @@ class _PageNumbersScreenState extends ConsumerState<PageNumbersScreen> {
             ),
         ],
       ),
-      body: Stack(
-        children: [
-          SafeArea(
-            child: doc == null
-                ? _EmptyState(onPick: _pick, onScan: _scanPdf)
-                : Column(
-                    children: [
-                      Expanded(
-                        child: ListView(
-                          padding: const EdgeInsets.fromLTRB(16, 4, 16, 4),
-                          children: [
-                            _DocSummary(doc: doc),
-                            const SizedBox(height: 14),
-                            _PreviewCard(
-                              first: firstExample,
-                              last: lastExample,
-                              total: doc.pageCount,
-                              skip: skip,
-                            ),
-                            const SizedBox(height: 14),
-                            const Text(
-                              'Format',
-                              style: TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w700,
+      body: MaxWidthBody(
+        child: Stack(
+          children: [
+            SafeArea(
+              child: doc == null
+                  ? _EmptyState(onPick: _pick, onScan: _scanPdf)
+                  : Column(
+                      children: [
+                        Expanded(
+                          child: ListView(
+                            padding: const EdgeInsets.fromLTRB(16, 4, 16, 4),
+                            children: [
+                              _DocSummary(doc: doc),
+                              const SizedBox(height: 14),
+                              _PreviewCard(
+                                first: firstExample,
+                                last: lastExample,
+                                total: doc.pageCount,
+                                skip: skip,
                               ),
-                            ),
-                            const SizedBox(height: 6),
-                            for (final f in PageNumberFormat.values)
-                              _RadioCard<PageNumberFormat>(
-                                value: f,
-                                groupValue: _format,
-                                label: f.label,
-                                onTap: () {
-                                  HapticsService.instance.select();
-                                  setState(() => _format = f);
-                                },
-                              ),
-                            const SizedBox(height: 14),
-                            const Text(
-                              'Position',
-                              style: TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                            const SizedBox(height: 6),
-                            Wrap(
-                              spacing: 8,
-                              runSpacing: 8,
-                              children: [
-                                for (final p in PageNumberPosition.values)
-                                  ChoiceChip(
-                                    label: Text(p.label),
-                                    selected: p == _position,
-                                    onSelected: (_) {
-                                      HapticsService.instance.select();
-                                      setState(() => _position = p);
-                                    },
-                                    selectedColor: AppColors.primary,
-                                    labelStyle: TextStyle(
-                                      color: p == _position
-                                          ? Colors.white
-                                          : AppColors.textPrimary,
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                    backgroundColor: AppColors.surface,
-                                    side: BorderSide(
-                                      color: p == _position
-                                          ? AppColors.primary
-                                          : AppColors.border,
-                                    ),
-                                  ),
-                              ],
-                            ),
-                            const SizedBox(height: 14),
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: TextField(
-                                    controller: _startNumber,
-                                    keyboardType: TextInputType.number,
-                                    inputFormatters: [
-                                      FilteringTextInputFormatter.digitsOnly,
-                                    ],
-                                    onChanged: (_) => setState(() {}),
-                                    decoration: InputDecoration(
-                                      labelText: 'Start at',
-                                      filled: true,
-                                      fillColor: AppColors.surface,
-                                      contentPadding:
-                                          const EdgeInsets.symmetric(
-                                        horizontal: 14,
-                                        vertical: 12,
-                                      ),
-                                      border: OutlineInputBorder(
-                                        borderRadius:
-                                            BorderRadius.circular(10),
-                                        borderSide: const BorderSide(
-                                          color: AppColors.border,
-                                        ),
-                                      ),
-                                      enabledBorder: OutlineInputBorder(
-                                        borderRadius:
-                                            BorderRadius.circular(10),
-                                        borderSide: const BorderSide(
-                                          color: AppColors.border,
-                                        ),
-                                      ),
-                                      focusedBorder: OutlineInputBorder(
-                                        borderRadius:
-                                            BorderRadius.circular(10),
-                                        borderSide: const BorderSide(
-                                          color: AppColors.primary,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
+                              const SizedBox(height: 14),
+                              const Text(
+                                'Format',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w700,
                                 ),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: SwitchListTile(
-                                    title: const Text(
-                                      'Skip cover',
-                                      style: TextStyle(
-                                        fontSize: 13,
+                              ),
+                              const SizedBox(height: 6),
+                              for (final f in PageNumberFormat.values)
+                                _RadioCard<PageNumberFormat>(
+                                  value: f,
+                                  groupValue: _format,
+                                  label: f.label,
+                                  onTap: () {
+                                    HapticsService.instance.select();
+                                    setState(() => _format = f);
+                                  },
+                                ),
+                              const SizedBox(height: 14),
+                              const Text(
+                                'Position',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                              const SizedBox(height: 6),
+                              Wrap(
+                                spacing: 8,
+                                runSpacing: 8,
+                                children: [
+                                  for (final p in PageNumberPosition.values)
+                                    ChoiceChip(
+                                      label: Text(p.label),
+                                      selected: p == _position,
+                                      onSelected: (_) {
+                                        HapticsService.instance.select();
+                                        setState(() => _position = p);
+                                      },
+                                      selectedColor: AppColors.primary,
+                                      labelStyle: TextStyle(
+                                        color: p == _position
+                                            ? Colors.white
+                                            : AppColors.textPrimary,
+                                        fontSize: 12,
                                         fontWeight: FontWeight.w600,
                                       ),
-                                    ),
-                                    subtitle: const Text(
-                                      'First page stays blank',
-                                      style: TextStyle(
-                                        fontSize: 10,
-                                        color: AppColors.textTertiary,
+                                      backgroundColor: AppColors.surface,
+                                      side: BorderSide(
+                                        color: p == _position
+                                            ? AppColors.primary
+                                            : AppColors.border,
                                       ),
                                     ),
-                                    value: _skipCover,
-                                    onChanged: doc.pageCount > 1
-                                        ? (v) {
-                                            HapticsService.instance.select();
-                                            setState(() => _skipCover = v);
-                                          }
-                                        : null,
-                                    activeThumbColor: AppColors.primary,
-                                    contentPadding: EdgeInsets.zero,
+                                ],
+                              ),
+                              const SizedBox(height: 14),
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: TextField(
+                                      controller: _startNumber,
+                                      keyboardType: TextInputType.number,
+                                      inputFormatters: [
+                                        FilteringTextInputFormatter.digitsOnly,
+                                      ],
+                                      onChanged: (_) => setState(() {}),
+                                      decoration: InputDecoration(
+                                        labelText: 'Start at',
+                                        filled: true,
+                                        fillColor: AppColors.surface,
+                                        contentPadding:
+                                            const EdgeInsets.symmetric(
+                                          horizontal: 14,
+                                          vertical: 12,
+                                        ),
+                                        border: OutlineInputBorder(
+                                          borderRadius:
+                                              BorderRadius.circular(10),
+                                          borderSide: const BorderSide(
+                                            color: AppColors.border,
+                                          ),
+                                        ),
+                                        enabledBorder: OutlineInputBorder(
+                                          borderRadius:
+                                              BorderRadius.circular(10),
+                                          borderSide: const BorderSide(
+                                            color: AppColors.border,
+                                          ),
+                                        ),
+                                        focusedBorder: OutlineInputBorder(
+                                          borderRadius:
+                                              BorderRadius.circular(10),
+                                          borderSide: const BorderSide(
+                                            color: AppColors.primary,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
                                   ),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
-                      if (_progress == null)
-                        Padding(
-                          padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-                          child: ToolPrimaryButton(
-                            label: 'Number $totalNumbered '
-                                'page${totalNumbered == 1 ? '' : 's'}',
-                            icon: Icons.format_list_numbered,
-                            enabled: totalNumbered > 0,
-                            onTap: _stamp,
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: SwitchListTile(
+                                      title: const Text(
+                                        'Skip cover',
+                                        style: TextStyle(
+                                          fontSize: 13,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                      subtitle: const Text(
+                                        'First page stays blank',
+                                        style: TextStyle(
+                                          fontSize: 10,
+                                          color: AppColors.textTertiary,
+                                        ),
+                                      ),
+                                      value: _skipCover,
+                                      onChanged: doc.pageCount > 1
+                                          ? (v) {
+                                              HapticsService.instance.select();
+                                              setState(() => _skipCover = v);
+                                            }
+                                          : null,
+                                      activeThumbColor: AppColors.primary,
+                                      contentPadding: EdgeInsets.zero,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
                           ),
                         ),
-                    ],
-                  ),
-          ),
-          if (_progress != null)
-            ProgressOverlay(
-              progress: _progress,
-              title: 'Numbering pages',
-              subtitle: 'Processing on this device — no upload',
-              onCancel: () => _cancel?.cancel(),
+                        if (_progress == null)
+                          Padding(
+                            padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+                            child: ToolPrimaryButton(
+                              label: 'Number $totalNumbered '
+                                  'page${totalNumbered == 1 ? '' : 's'}',
+                              icon: Icons.format_list_numbered,
+                              enabled: totalNumbered > 0,
+                              onTap: _stamp,
+                            ),
+                          ),
+                      ],
+                    ),
             ),
-        ],
+            if (_progress != null)
+              ProgressOverlay(
+                progress: _progress,
+                title: 'Numbering pages',
+                subtitle: 'Processing on this device — no upload',
+                onCancel: () => _cancel?.cancel(),
+              ),
+          ],
+        ),
       ),
     );
   }

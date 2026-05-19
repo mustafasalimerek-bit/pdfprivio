@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/theme/colors.dart';
+import '../../core/utils/responsive.dart';
 import '../../core/utils/cancellation_token.dart';
 import '../../core/utils/format_bytes.dart';
 import '../../core/utils/result.dart';
@@ -158,35 +159,37 @@ class _ExtractTextScreenState extends ConsumerState<ExtractTextScreen> {
             ),
         ],
       ),
-      body: Stack(
-        children: [
-          SafeArea(
-            child: doc == null
-                ? _EmptyState(onPick: _pick, onScan: _scanPdf)
-                : Column(
-                    children: [
-                      Expanded(child: _DocReady(doc: doc)),
-                      if (_progress == null)
-                        Padding(
-                          padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-                          child: ToolPrimaryButton(
-                            label: 'Extract text from ${doc.pageCount} '
-                                'page${doc.pageCount == 1 ? '' : 's'}',
-                            icon: Icons.text_snippet_outlined,
-                            onTap: _run,
+      body: MaxWidthBody(
+        child: Stack(
+          children: [
+            SafeArea(
+              child: doc == null
+                  ? _EmptyState(onPick: _pick, onScan: _scanPdf)
+                  : Column(
+                      children: [
+                        Expanded(child: _DocReady(doc: doc)),
+                        if (_progress == null)
+                          Padding(
+                            padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+                            child: ToolPrimaryButton(
+                              label: 'Extract text from ${doc.pageCount} '
+                                  'page${doc.pageCount == 1 ? '' : 's'}',
+                              icon: Icons.text_snippet_outlined,
+                              onTap: _run,
+                            ),
                           ),
-                        ),
-                    ],
-                  ),
-          ),
-          if (_progress != null)
-            ProgressOverlay(
-              progress: _progress,
-              title: 'Extracting text',
-              subtitle: _status ?? 'Processing on this device — no upload',
-              onCancel: () => _cancel?.cancel(),
+                      ],
+                    ),
             ),
-        ],
+            if (_progress != null)
+              ProgressOverlay(
+                progress: _progress,
+                title: 'Extracting text',
+                subtitle: _status ?? 'Processing on this device — no upload',
+                onCancel: () => _cancel?.cancel(),
+              ),
+          ],
+        ),
       ),
     );
   }
