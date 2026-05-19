@@ -41,7 +41,12 @@ class HomeScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final heroes = _heroSpecs();
+    // iPad surfaces 19 tools + More (5×4 grid). Phone keeps the
+    // curated 7 + More (4×2 grid). The expanded list reaches into
+    // the same catalogue the More sheet uses — taps from either
+    // entry point land on the same tool screen.
+    final isWide = Breakpoints.isWide(context);
+    final heroes = _heroSpecs(expanded: isWide);
     return Scaffold(
       // No AppBar — the greeting + status pill below replaces the
       // "giant Privio title" that ate 1/8 of the screen. iOS HIG
@@ -52,16 +57,12 @@ class HomeScreen extends ConsumerWidget {
           maxWidth: 1200,
           child: LayoutBuilder(
             builder: (context, constraints) {
-              // 4-column grid everywhere. With 8 promoted tools + 1
-              // "More" sheet entry, this fills exactly two rows on
-              // every device and never leaves a half-row stranded —
-              // the iPad's larger viewport just gets bigger tiles
-              // (~500pt instead of ~85pt), which reads more like an
-              // iPad-native bento than a stretched iPhone grid. The
-              // Recent row above + MaxWidthBody centring at 720pt
-              // keep the column hierarchy aligned across breakpoints.
+              // Grid columns adapt to the expanded vs compact hero
+              // set. Phone (compact, 7 + More = 8): 4 cols × 2 rows.
+              // iPad (expanded, 19 + More = 20): 5 cols × 4 rows.
+              // Both layouts close out their last row symmetrically.
               final w = constraints.maxWidth;
-              final gridColumns = 4;
+              final gridColumns = isWide ? 5 : 4;
               // Recent row spans the full row width — same left edge
               // as grid cell 1, same right edge as the last grid
               // cell. With 3 cards (Scan / Sign / Edit slots) and
@@ -123,13 +124,11 @@ class HomeScreen extends ConsumerWidget {
     );
   }
 
-  /// The 7 tools that earn home-screen real estate. Chosen for the
-  /// lawyer/CPA wedge: OCR + Sign + Fill form + Redact = legal/tax
-  /// daily ops; Merge + Compress + Split = universal PDF utility.
-  /// Everything else lives one tap deeper behind "More" — same
-  /// discovery hop as iOS Settings sub-pages, which Apple sees as a
-  /// premium pattern rather than a friction.
-  static const _heroToolIds = <String>{
+  /// Phone home grid — 7 tools + "More" = 4×2 tile layout. Chosen for
+  /// the lawyer/CPA wedge: OCR + Sign + Fill form + Redact = legal/tax
+  /// daily ops; Merge + Summarize + Split = universal PDF utility.
+  /// Everything else lives one tap deeper behind "More".
+  static const _heroToolIdsCompact = <String>{
     'ocr_pdf',
     'sign',
     'form_fill',
@@ -137,6 +136,39 @@ class HomeScreen extends ConsumerWidget {
     'merge',
     'summarize',
     'split',
+  };
+
+  /// iPad home grid — 19 tools + "More" = 5×4 tile layout. The iPad's
+  /// 13" viewport has the headroom to surface most of the catalogue
+  /// without the secondary sheet. Only 4 tools stay behind "More":
+  /// Scan (already pinned to the Quick Action hero above the grid),
+  /// Bates numbering + Bookmarks/TOC (legal-niche, low daily use), and
+  /// Live Text view (overlaps with OCR for the same intent).
+  static const _heroToolIdsExpanded = <String>{
+    // Row 1
+    'ocr_pdf',
+    'sign',
+    'form_fill',
+    'redact',
+    'merge',
+    // Row 2
+    'summarize',
+    'split',
+    'compress',
+    'image_to_pdf',
+    'rotate',
+    // Row 3
+    'delete_pages',
+    'password',
+    'watermark',
+    'page_numbers',
+    'extract_text',
+    // Row 4 (last row has 4 tools + More)
+    'compare',
+    'pii_scan',
+    'receipt',
+    'batch',
+    // … then "More" cell closes the row.
   };
 
   List<_ToolSpec> _specs() => const [
@@ -310,10 +342,15 @@ class HomeScreen extends ConsumerWidget {
       ];
 
   /// Build heroes in hero-id order, plus a "More" cell at the end —
-  /// what shows in the 4×2 grid on the home screen.
-  List<_ToolSpec> _heroSpecs() {
+  /// Filters the full catalogue down to whichever hero set applies
+  /// for the current viewport. Phone gets the compact 7-tool list,
+  /// iPad gets the 19-tool expanded list. Returned in the iteration
+  /// order of the source Set so the grid lays out left-to-right,
+  /// top-to-bottom in the order curated above.
+  List<_ToolSpec> _heroSpecs({required bool expanded}) {
     final all = _specs();
-    return _heroToolIds
+    final ids = expanded ? _heroToolIdsExpanded : _heroToolIdsCompact;
+    return ids
         .map((id) => all.firstWhere((s) => s.toolId == id))
         .toList();
   }
@@ -423,18 +460,16 @@ class _HeroToolGrid extends StatelessWidget {
         crossAxisCount: columns,
         mainAxisSpacing: 10,
         crossAxisSpacing: 10,
-        // Aspect ratio adapts to the available cell width. On iPhone
-        // the cell is narrow (~85pt) so we keep tiles slightly taller
-        // than wide (0.82) to fit two-line labels like "Compress PDF".
-        // On iPad the cell is much wider (~500pt) and 0.82 would
-        // produce ~610pt-tall tiles — visually bloated with a tiny
-        // icon adrift in the middle. Detecting cell width via
-        // LayoutBuilder above is over-engineered for the two
-        // breakpoints we care about; MediaQuery here is the simpler
-        // local check.
+        // Aspect ratio mirrors the column count + viewport pair so
+        // each tile sits at a sensible scale:
+        //   - Phone (4 cols, ~85pt cells): taller than wide (0.82)
+        //     so two-line labels like "Compress PDF" fit cleanly.
+        //   - iPad (5 cols, ~360pt cells): square-ish (1.0) so the
+        //     19-tool grid fills four rows of substantial bento
+        //     tiles instead of stretched-flat cards.
         childAspectRatio:
             MediaQuery.sizeOf(context).width >= Breakpoints.iPadCompact
-                ? 1.4
+                ? 1.0
                 : 0.82,
       ),
       itemCount: cells.length,
