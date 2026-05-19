@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../core/theme/colors.dart';
+import '../core/utils/responsive.dart';
 
 /// Shared chrome for the editorial tool-screen pattern. Every tool
 /// screen has two states — empty (first open) and populated (file
@@ -258,8 +259,8 @@ class ToolAltSource {
   });
 }
 
-/// "Stays on your iPhone" footer — pinned green dot + privacy
-/// tagline. Lives at the bottom of empty states.
+/// "Stays on your iPhone" / "Stays on your iPad" footer — pinned
+/// green dot + privacy tagline. Lives at the bottom of empty states.
 class PrivacyFooter extends StatelessWidget {
   const PrivacyFooter({super.key});
 
@@ -277,9 +278,9 @@ class PrivacyFooter extends StatelessWidget {
           ),
         ),
         const SizedBox(width: 8),
-        const Text(
-          'Stays on your device',
-          style: TextStyle(
+        Text(
+          'Stays on your ${Breakpoints.deviceNoun(context)}',
+          style: const TextStyle(
             fontSize: 12,
             color: AppColors.success,
             fontWeight: FontWeight.w700,

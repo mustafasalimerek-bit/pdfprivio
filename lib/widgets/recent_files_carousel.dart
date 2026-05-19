@@ -3,6 +3,7 @@ import 'package:open_filex/open_filex.dart';
 import 'package:share_plus/share_plus.dart';
 
 import '../core/theme/colors.dart';
+import '../core/utils/responsive.dart';
 import '../data/models/recent_file.dart';
 import '../data/services/haptics_service.dart';
 import '../data/services/recent_files_service.dart';
@@ -123,9 +124,9 @@ class _RecentFilesCarouselState extends State<RecentFilesCarousel> {
                   'Remove from recents',
                   style: TextStyle(color: AppColors.error),
                 ),
-                subtitle: const Text(
-                  "The PDF stays on your device — only this shortcut is removed.",
-                  style: TextStyle(fontSize: 11),
+                subtitle: Text(
+                  "The PDF stays on your ${Breakpoints.deviceNoun(context)} — only this shortcut is removed.",
+                  style: const TextStyle(fontSize: 11),
                 ),
                 onTap: () {
                   Navigator.of(sheetContext).pop();

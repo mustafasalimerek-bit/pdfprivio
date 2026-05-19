@@ -814,9 +814,9 @@ class _OfflineStatusPill extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 8),
-          const Text(
-            'Working offline — nothing leaves your device',
-            style: TextStyle(
+          Text(
+            'Working offline — nothing leaves your ${Breakpoints.deviceNoun(context)}',
+            style: const TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w700,
               color: AppColors.success,

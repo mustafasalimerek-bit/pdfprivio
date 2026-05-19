@@ -354,10 +354,10 @@ class _BusyState extends StatelessWidget {
               minHeight: 6,
             ),
             const SizedBox(height: 12),
-            const Text(
-              'Running entirely on this device. Nothing leaves it.',
+            Text(
+              'Running entirely on this ${Breakpoints.deviceNoun(context)}. Nothing leaves it.',
               textAlign: TextAlign.center,
-              style: TextStyle(
+              style: const TextStyle(
                 fontSize: 11,
                 color: AppColors.textSecondary,
               ),

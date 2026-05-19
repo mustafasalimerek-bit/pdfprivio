@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../core/constants/price_fallbacks.dart';
+import '../../core/utils/responsive.dart';
 import '../../data/services/haptics_service.dart';
 import '../../data/services/onboarding_service.dart';
 import '../../data/services/purchase_service.dart';
@@ -239,12 +240,12 @@ class PrivacyPromiseView extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 10),
-        const Padding(
-          padding: EdgeInsets.symmetric(horizontal: 32),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 32),
           child: Text(
-            'Everything happens on your device.\nNothing goes to the cloud.',
+            'Everything happens on your ${Breakpoints.deviceNoun(context)}.\nNothing goes to the cloud.',
             textAlign: TextAlign.center,
-            style: TextStyle(
+            style: const TextStyle(
               fontSize: 15,
               fontWeight: FontWeight.w400,
               color: _OnboardingScreenState._textSecondary,

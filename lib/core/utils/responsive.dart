@@ -17,6 +17,14 @@ class Breakpoints {
 
   static bool isExtraWide(BuildContext context) =>
       MediaQuery.sizeOf(context).width >= iPadRegular;
+
+  /// User-facing name for the device the app is running on. Lets copy
+  /// like "Stays on your iPhone" / "Stays on your iPad" adapt to the
+  /// actual hardware instead of falling back to the generic "device".
+  /// Threshold mirrors UIKit's regular horizontal size class: any iPad
+  /// has shortestSide ≥ 600, every iPhone is below.
+  static String deviceNoun(BuildContext context) =>
+      MediaQuery.sizeOf(context).shortestSide >= 600 ? 'iPad' : 'iPhone';
 }
 
 /// Centred max-width body. Drop-in replacement for plain `body:` —

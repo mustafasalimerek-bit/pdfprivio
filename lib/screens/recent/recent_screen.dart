@@ -779,10 +779,10 @@ class _SwipeToDeleteRow extends StatelessWidget {
           context: context,
           builder: (ctx) => AlertDialog(
             title: const Text('Remove from recents?'),
-            content: const Text(
-              'The PDF stays on your device. Only the shortcut here is '
-              'removed.',
-              style: TextStyle(fontSize: 13),
+            content: Text(
+              'The PDF stays on your ${Breakpoints.deviceNoun(context)}. '
+              'Only the shortcut here is removed.',
+              style: const TextStyle(fontSize: 13),
             ),
             actions: [
               TextButton(

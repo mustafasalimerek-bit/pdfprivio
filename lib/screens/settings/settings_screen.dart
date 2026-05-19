@@ -253,17 +253,17 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text('Manage subscription'),
-        content: const Column(
+        content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
               'Open Settings → Apple ID → Subscriptions on your '
-              'device, or visit:',
-              style: TextStyle(fontSize: 13),
+              '${Breakpoints.deviceNoun(context)}, or visit:',
+              style: const TextStyle(fontSize: 13),
             ),
-            SizedBox(height: 10),
-            SelectableText(
+            const SizedBox(height: 10),
+            const SelectableText(
               'apps.apple.com/account/subscriptions',
               style: TextStyle(
                 fontSize: 13,
