@@ -14,7 +14,6 @@
 //  side-by-side.
 //
 
-import MobileCoreServices
 import Social
 import UIKit
 import UniformTypeIdentifiers
@@ -289,27 +288,36 @@ class QuickSignViewController: UIViewController {
     private func saveDataToTemp(_ data: Data) -> URL? {
         let url = FileManager.default.temporaryDirectory
             .appendingPathComponent("\(UUID().uuidString).pdf")
-        try? data.write(to: url)
-        return url
+        do {
+            try data.write(to: url)
+            return url
+        } catch {
+            NSLog("[PDFPrivioQuickSign] saveDataToTemp failed: \(error)")
+            return nil
+        }
     }
 
     private func copyToAppGroup(_ src: URL) -> URL? {
         guard let container = FileManager.default
             .containerURL(forSecurityApplicationGroupIdentifier: appGroupId)
         else {
+            NSLog("[PDFPrivioQuickSign] App Group containerURL is nil — entitlement may be stripped by TestFlight re-sign")
             return nil
         }
         let drop = container.appendingPathComponent(dropFolderName, isDirectory: true)
-        try? FileManager.default.createDirectory(
-            at: drop,
-            withIntermediateDirectories: true
-        )
+        do {
+            try FileManager.default.createDirectory(
+                at: drop, withIntermediateDirectories: true)
+        } catch {
+            NSLog("[PDFPrivioQuickSign] createDirectory failed for \(drop.path): \(error)")
+        }
         let stamp = Int(Date().timeIntervalSince1970 * 1000)
         let dest = drop.appendingPathComponent("\(stamp)_\(src.lastPathComponent)")
         do {
             try FileManager.default.copyItem(at: src, to: dest)
             return dest
         } catch {
+            NSLog("[PDFPrivioQuickSign] copyItem failed \(src.path) -> \(dest.path): \(error)")
             return nil
         }
     }

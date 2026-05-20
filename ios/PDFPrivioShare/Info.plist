@@ -24,13 +24,15 @@
 	<dict>
 		<key>NSExtensionAttributes</key>
 		<dict>
+			<!-- PDF or image only. The legacy dict format with
+			     SupportsFileWithMaxCount accepts ANY UTI, so Privio
+			     was appearing in the share sheet for .txt, .csv, .zip
+			     and every other random file type — users tapped it
+			     and got "No PDF found". An NSPredicate string lets us
+			     restrict to com.adobe.pdf + public.image (covers the
+			     Image-to-PDF tool entry). -->
 			<key>NSExtensionActivationRule</key>
-			<dict>
-				<key>NSExtensionActivationSupportsFileWithMaxCount</key>
-				<integer>10</integer>
-				<key>NSExtensionActivationSupportsImageWithMaxCount</key>
-				<integer>10</integer>
-			</dict>
+			<string>SUBQUERY(extensionItems, $item, SUBQUERY($item.attachments, $a, ANY $a.registeredTypeIdentifiers UTI-CONFORMS-TO &quot;com.adobe.pdf&quot; OR ANY $a.registeredTypeIdentifiers UTI-CONFORMS-TO &quot;public.image&quot;).@count &gt; 0).@count &gt; 0</string>
 		</dict>
 		<key>NSExtensionMainStoryboard</key>
 		<string>MainInterface</string>

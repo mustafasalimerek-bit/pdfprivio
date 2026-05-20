@@ -24,11 +24,12 @@
 	<dict>
 		<key>NSExtensionAttributes</key>
 		<dict>
+			<!-- PDF only. Quick Sign is a sign-PDF action; it has no
+			     meaning for images or other file types. NSPredicate
+			     limits the Edit-Actions-row entry to PDFs so the user
+			     doesn't see "Quick Sign" against a text file. -->
 			<key>NSExtensionActivationRule</key>
-			<dict>
-				<key>NSExtensionActivationSupportsFileWithMaxCount</key>
-				<integer>1</integer>
-			</dict>
+			<string>SUBQUERY(extensionItems, $item, SUBQUERY($item.attachments, $a, ANY $a.registeredTypeIdentifiers UTI-CONFORMS-TO &quot;com.adobe.pdf&quot;).@count &gt; 0).@count &gt; 0</string>
 			<key>NSExtensionServiceAllowsFinderPreviewItem</key>
 			<true/>
 		</dict>

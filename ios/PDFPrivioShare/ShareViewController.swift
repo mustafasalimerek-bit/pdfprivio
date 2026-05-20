@@ -16,7 +16,6 @@
 //  what kept the receive_sharing_intent-based attempt from building.
 //
 
-import MobileCoreServices
 import Social
 import UIKit
 import UniformTypeIdentifiers
@@ -371,34 +370,50 @@ class ShareViewController: UIViewController {
         guard let data = image.jpegData(compressionQuality: 0.92) else { return nil }
         let url = FileManager.default.temporaryDirectory
             .appendingPathComponent("\(UUID().uuidString).jpg")
-        try? data.write(to: url)
-        return url
+        do {
+            try data.write(to: url)
+            return url
+        } catch {
+            NSLog("[PDFPrivioShare] saveImageToTemp failed: \(error)")
+            return nil
+        }
     }
 
     private func saveDataToTemp(_ data: Data, ext: String) -> URL? {
         let url = FileManager.default.temporaryDirectory
             .appendingPathComponent("\(UUID().uuidString).\(ext)")
-        try? data.write(to: url)
-        return url
+        do {
+            try data.write(to: url)
+            return url
+        } catch {
+            NSLog("[PDFPrivioShare] saveDataToTemp failed: \(error)")
+            return nil
+        }
     }
 
     private func copyToAppGroup(_ src: URL) -> URL? {
         guard let container = FileManager.default
             .containerURL(forSecurityApplicationGroupIdentifier: appGroupId)
         else {
+            NSLog("[PDFPrivioShare] App Group containerURL is nil — entitlement may be stripped by TestFlight re-sign")
             return nil
         }
         let drop = container.appendingPathComponent(dropFolderName, isDirectory: true)
-        try? FileManager.default.createDirectory(
-            at: drop,
-            withIntermediateDirectories: true
-        )
+        do {
+            try FileManager.default.createDirectory(
+                at: drop, withIntermediateDirectories: true)
+        } catch {
+            // Inbox bug pattern — if the directory create fails silently
+            // we lose all signal about why the drop folder is empty later.
+            NSLog("[PDFPrivioShare] createDirectory failed for \(drop.path): \(error)")
+        }
         let stamp = Int(Date().timeIntervalSince1970 * 1000)
         let dest = drop.appendingPathComponent("\(stamp)_\(src.lastPathComponent)")
         do {
             try FileManager.default.copyItem(at: src, to: dest)
             return dest
         } catch {
+            NSLog("[PDFPrivioShare] copyItem failed \(src.path) -> \(dest.path): \(error)")
             return nil
         }
     }

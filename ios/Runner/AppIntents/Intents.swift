@@ -18,9 +18,24 @@ import Foundation
 
 enum PDFPrivioIntentRoute {
     static let defaultsKey = "pdfprivio.pendingIntentRoute"
+    static let appGroupId = "group.com.erekstudio.pdfprivio"
 
+    /// Write the pending route to BOTH the standard UserDefaults
+    /// domain AND the App Group container. The widget-side copy of
+    /// these intents (in PDFPrivioWidget.swift) already does this
+    /// dual-write because widgets run out-of-process. The host-side
+    /// intents historically only wrote to `standard`, which works
+    /// today because `openAppWhenRun: true` runs the intent in the
+    /// host process — but Apple has been moving AppIntent execution
+    /// out-of-process incrementally (Action Button on iOS 17.4+
+    /// already does it for some intents). Mirroring both keeps the
+    /// route reachable from either side, so AppIntentBridge.consume
+    /// can find it on cold launch regardless of which process iOS
+    /// chose to run the intent in.
     static func enqueue(_ route: String) {
         UserDefaults.standard.set(route, forKey: defaultsKey)
+        UserDefaults(suiteName: appGroupId)?
+            .set(route, forKey: defaultsKey)
     }
 }
 

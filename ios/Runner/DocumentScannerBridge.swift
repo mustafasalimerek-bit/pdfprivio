@@ -286,24 +286,24 @@ enum IDRedactor {
     regions: [(field: RedactField, bounds: CGRect)]
   ) -> UIImage {
     let size = image.size
-    UIGraphicsBeginImageContextWithOptions(size, true, image.scale)
-    defer { UIGraphicsEndImageContext() }
-    image.draw(in: CGRect(origin: .zero, size: size))
-    guard let context = UIGraphicsGetCurrentContext() else { return image }
-    context.setFillColor(UIColor.black.cgColor)
-
-    for region in regions {
-      let bounds = region.bounds
-      let rect = CGRect(
-        x: bounds.minX * size.width,
-        y: (1 - bounds.maxY) * size.height,
-        width: bounds.width * size.width,
-        height: bounds.height * size.height
-      )
-      let padded = rect.insetBy(dx: -4, dy: -2)
-      context.fill(padded)
+    let format = UIGraphicsImageRendererFormat.default()
+    format.opaque = true
+    format.scale = image.scale
+    let renderer = UIGraphicsImageRenderer(size: size, format: format)
+    return renderer.image { ctx in
+      image.draw(in: CGRect(origin: .zero, size: size))
+      ctx.cgContext.setFillColor(UIColor.black.cgColor)
+      for region in regions {
+        let bounds = region.bounds
+        let rect = CGRect(
+          x: bounds.minX * size.width,
+          y: (1 - bounds.maxY) * size.height,
+          width: bounds.width * size.width,
+          height: bounds.height * size.height
+        )
+        ctx.cgContext.fill(rect.insetBy(dx: -4, dy: -2))
+      }
     }
-    return UIGraphicsGetImageFromCurrentImageContext() ?? image
   }
 }
 
@@ -454,21 +454,23 @@ enum PDFAssembler {
       $0 + ($1.size.height * (targetWidth / $1.size.width))
     }
     let canvasSize = CGSize(width: targetWidth, height: totalHeight)
-    UIGraphicsBeginImageContextWithOptions(canvasSize, true, 0)
-    defer { UIGraphicsEndImageContext() }
-    UIColor.white.setFill()
-    UIRectFill(CGRect(origin: .zero, size: canvasSize))
-    var yOffset: CGFloat = 0
-    for image in images {
-      let scaledHeight = image.size.height * (targetWidth / image.size.width)
-      image.draw(in: CGRect(
-        x: 0, y: yOffset,
-        width: targetWidth,
-        height: scaledHeight
-      ))
-      yOffset += scaledHeight
+    let format = UIGraphicsImageRendererFormat.default()
+    format.opaque = true
+    let renderer = UIGraphicsImageRenderer(size: canvasSize, format: format)
+    return renderer.image { _ in
+      UIColor.white.setFill()
+      UIRectFill(CGRect(origin: .zero, size: canvasSize))
+      var yOffset: CGFloat = 0
+      for image in images {
+        let scaledHeight = image.size.height * (targetWidth / image.size.width)
+        image.draw(in: CGRect(
+          x: 0, y: yOffset,
+          width: targetWidth,
+          height: scaledHeight
+        ))
+        yOffset += scaledHeight
+      }
     }
-    return UIGraphicsGetImageFromCurrentImageContext()
   }
 
   /// Composites the two card faces side-by-side on a white canvas so
@@ -485,17 +487,19 @@ enum PDFAssembler {
     let gap: CGFloat = 40
     let totalWidth = fScaled.size.width + bScaled.size.width + gap
     let canvasSize = CGSize(width: totalWidth, height: targetHeight)
-    UIGraphicsBeginImageContextWithOptions(canvasSize, true, 0)
-    defer { UIGraphicsEndImageContext() }
-    UIColor.white.setFill()
-    UIRectFill(CGRect(origin: .zero, size: canvasSize))
-    fScaled.draw(in: CGRect(x: 0, y: 0,
-                            width: fScaled.size.width,
-                            height: targetHeight))
-    bScaled.draw(in: CGRect(x: fScaled.size.width + gap, y: 0,
-                            width: bScaled.size.width,
-                            height: targetHeight))
-    return UIGraphicsGetImageFromCurrentImageContext()
+    let format = UIGraphicsImageRendererFormat.default()
+    format.opaque = true
+    let renderer = UIGraphicsImageRenderer(size: canvasSize, format: format)
+    return renderer.image { _ in
+      UIColor.white.setFill()
+      UIRectFill(CGRect(origin: .zero, size: canvasSize))
+      fScaled.draw(in: CGRect(x: 0, y: 0,
+                              width: fScaled.size.width,
+                              height: targetHeight))
+      bScaled.draw(in: CGRect(x: fScaled.size.width + gap, y: 0,
+                              width: bScaled.size.width,
+                              height: targetHeight))
+    }
   }
 
   private static func scaleImage(
@@ -504,10 +508,12 @@ enum PDFAssembler {
     let ratio = height / image.size.height
     let newWidth = image.size.width * ratio
     let newSize = CGSize(width: newWidth, height: height)
-    UIGraphicsBeginImageContextWithOptions(newSize, false, 0)
-    defer { UIGraphicsEndImageContext() }
-    image.draw(in: CGRect(origin: .zero, size: newSize))
-    return UIGraphicsGetImageFromCurrentImageContext()
+    let format = UIGraphicsImageRendererFormat.default()
+    format.opaque = false
+    let renderer = UIGraphicsImageRenderer(size: newSize, format: format)
+    return renderer.image { _ in
+      image.draw(in: CGRect(origin: .zero, size: newSize))
+    }
   }
 
   /// Writes [data] to a tmp file and returns its path. Used by the
