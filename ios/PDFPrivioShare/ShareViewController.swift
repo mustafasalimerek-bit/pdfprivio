@@ -36,6 +36,8 @@ class ShareViewController: UIViewController {
     private let statusLabel = UILabel()
     private let detailLabel = UILabel()
     private let iconView = UIImageView()
+    private let openButton = UIButton(type: .system)
+    private var pendingOpenURL: URL?
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -71,10 +73,32 @@ class ShareViewController: UIViewController {
         detailLabel.translatesAutoresizingMaskIntoConstraints = false
         detailLabel.numberOfLines = 0
 
-        let stack = UIStackView(arrangedSubviews: [iconView, statusLabel, detailLabel])
+        // Filled teal "Open Privio →" button. Hidden until finish() flips
+        // it on once the save succeeds, so we never offer a tap that
+        // would lead to a half-finished state. Apple blocks the URL
+        // open for programmatic calls from extensions on iOS 17+, but
+        // user-initiated taps from inside the extension's own UI are
+        // still honoured — which is the whole point of this button.
+        openButton.translatesAutoresizingMaskIntoConstraints = false
+        openButton.setTitle("Open Privio  →", for: .normal)
+        openButton.titleLabel?.font = .systemFont(ofSize: 16, weight: .semibold)
+        openButton.setTitleColor(.white, for: .normal)
+        openButton.backgroundColor = UIColor(
+            red: 0.06, green: 0.46, blue: 0.43, alpha: 1)
+        openButton.layer.cornerRadius = 14
+        openButton.contentEdgeInsets = UIEdgeInsets(
+            top: 12, left: 22, bottom: 12, right: 22)
+        openButton.isHidden = true
+        openButton.addTarget(self,
+                             action: #selector(openButtonTapped),
+                             for: .touchUpInside)
+
+        let stack = UIStackView(
+            arrangedSubviews: [iconView, statusLabel, detailLabel, openButton])
         stack.axis = .vertical
         stack.alignment = .center
         stack.spacing = 10
+        stack.setCustomSpacing(16, after: detailLabel)
         stack.translatesAutoresizingMaskIntoConstraints = false
         card.addSubview(stack)
 
@@ -88,6 +112,21 @@ class ShareViewController: UIViewController {
             stack.trailingAnchor.constraint(equalTo: card.trailingAnchor, constant: -22),
             iconView.heightAnchor.constraint(equalToConstant: 40),
         ])
+    }
+
+    @objc private func openButtonTapped() {
+        guard let url = pendingOpenURL else {
+            extensionContext?.completeRequest(
+                returningItems: nil, completionHandler: nil)
+            return
+        }
+        // User tapped — programmatic restriction lifted, fire the URL
+        // via the responder chain and then dismiss the extension. iOS
+        // routes the URL to the host app, the resume drain there picks
+        // up the file we just saved, and the action sheet auto-shows.
+        openHostApp(url)
+        extensionContext?.completeRequest(
+            returningItems: nil, completionHandler: nil)
     }
 
     private func updateStatus(success: Bool?, title: String, detail: String) {
@@ -241,24 +280,26 @@ class ShareViewController: UIViewController {
         } else {
             success = true
             title = "Saved to Privio"
-            detail = "Open Privio to keep going."
+            detail = "Tap below to keep going."
         }
         updateStatus(success: success, title: title, detail: detail)
 
-        if success, let url = URL(string:
-            "\(self.wakeUpScheme)://\(self.wakeUpHost)") {
-            // Best-effort wake-up — iOS 17+ usually blocks programmatic
-            // host-app launches from share extensions, so we don't rely
-            // on it. The card above tells the user to switch to Privio
-            // manually; the file is already in the App Group so the
-            // host app's resume-drain catches it either way.
-            openHostApp(url)
+        if success,
+           let url = URL(string: "\(wakeUpScheme)://\(wakeUpHost)") {
+            // Show the Open button. Tapping it counts as user-initiated,
+            // which is the only category of URL open that iOS 17+ still
+            // honours from share extensions.
+            pendingOpenURL = url
+            DispatchQueue.main.async { [weak self] in
+                self?.openButton.isHidden = false
+            }
+            return
         }
 
-        // Keep the status card on screen for a beat so the user can
-        // actually read it before the share sheet pops back to the
-        // host (WhatsApp / Mail / etc.).
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { [weak self] in
+        // Save failed — auto-dismiss after a beat so the user has time
+        // to read the error before iOS pops the share sheet back to
+        // the host (WhatsApp / Mail / etc.).
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) { [weak self] in
             self?.extensionContext?.completeRequest(
                 returningItems: nil, completionHandler: nil)
         }

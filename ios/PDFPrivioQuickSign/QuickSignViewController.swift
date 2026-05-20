@@ -26,13 +26,16 @@ class QuickSignViewController: UIViewController {
     private let wakeUpScheme = "pdfprivio"
     private let wakeUpHost = "share"
 
-    // Mirror of ShareViewController's diagnostic card — see that file
-    // for the full rationale (iOS 17+ blocks the programmatic host-app
-    // wake-up, so the user needs a visible confirmation that the save
-    // worked and an instruction to switch back to Privio).
+    // Mirror of ShareViewController's card. See that file for the full
+    // rationale — iOS 17+ blocks programmatic host-app launches from
+    // extensions, but a user-initiated tap on a button rendered inside
+    // the extension's own UI IS still honoured. The "Open Privio" CTA
+    // below is what closes the share→app loop.
     private let statusLabel = UILabel()
     private let detailLabel = UILabel()
     private let iconView = UIImageView()
+    private let openButton = UIButton(type: .system)
+    private var pendingOpenURL: URL?
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -69,10 +72,26 @@ class QuickSignViewController: UIViewController {
         detailLabel.translatesAutoresizingMaskIntoConstraints = false
         detailLabel.numberOfLines = 0
 
-        let stack = UIStackView(arrangedSubviews: [iconView, statusLabel, detailLabel])
+        openButton.translatesAutoresizingMaskIntoConstraints = false
+        openButton.setTitle("Sign in Privio  →", for: .normal)
+        openButton.titleLabel?.font = .systemFont(ofSize: 16, weight: .semibold)
+        openButton.setTitleColor(.white, for: .normal)
+        openButton.backgroundColor = UIColor(
+            red: 0.06, green: 0.46, blue: 0.43, alpha: 1)
+        openButton.layer.cornerRadius = 14
+        openButton.contentEdgeInsets = UIEdgeInsets(
+            top: 12, left: 22, bottom: 12, right: 22)
+        openButton.isHidden = true
+        openButton.addTarget(self,
+                             action: #selector(openButtonTapped),
+                             for: .touchUpInside)
+
+        let stack = UIStackView(
+            arrangedSubviews: [iconView, statusLabel, detailLabel, openButton])
         stack.axis = .vertical
         stack.alignment = .center
         stack.spacing = 10
+        stack.setCustomSpacing(16, after: detailLabel)
         stack.translatesAutoresizingMaskIntoConstraints = false
         card.addSubview(stack)
 
@@ -86,6 +105,17 @@ class QuickSignViewController: UIViewController {
             stack.trailingAnchor.constraint(equalTo: card.trailingAnchor, constant: -22),
             iconView.heightAnchor.constraint(equalToConstant: 40),
         ])
+    }
+
+    @objc private func openButtonTapped() {
+        guard let url = pendingOpenURL else {
+            extensionContext?.completeRequest(
+                returningItems: nil, completionHandler: nil)
+            return
+        }
+        openHostApp(url)
+        extensionContext?.completeRequest(
+            returningItems: nil, completionHandler: nil)
     }
 
     private func updateStatus(success: Bool?, title: String, detail: String) {
@@ -211,16 +241,21 @@ class QuickSignViewController: UIViewController {
             if let defaults = UserDefaults(suiteName: appGroupId) {
                 defaults.set("sign", forKey: preferredActionKey)
             }
-            title = "Queued for Quick Sign"
-            detail = "Open Privio to keep going."
+            title = "Ready for Quick Sign"
+            detail = "Tap below to open the Sign tool."
         }
         updateStatus(success: success, title: title, detail: detail)
 
-        if success, let url = URL(string: "\(wakeUpScheme)://\(wakeUpHost)") {
-            openHostApp(url)
+        if success,
+           let url = URL(string: "\(wakeUpScheme)://\(wakeUpHost)") {
+            pendingOpenURL = url
+            DispatchQueue.main.async { [weak self] in
+                self?.openButton.isHidden = false
+            }
+            return
         }
 
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { [weak self] in
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) { [weak self] in
             self?.extensionContext?.completeRequest(
                 returningItems: nil, completionHandler: nil)
         }
