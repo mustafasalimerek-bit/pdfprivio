@@ -84,31 +84,7 @@ class _RootScaffoldState extends ConsumerState<RootScaffold>
         SharedFileActionSheet.show(context, files);
       });
       _intentSub = AppIntentService.instance.routes.listen(_handleIntentRoute);
-      // …then pull the cold-launch backlog. Broadcast streams don't
-      // replay emissions made before any listener subscribes, so the
-      // initial share payload + the pending intent route would be lost
-      // if the services emitted them from their own init() during the
-      // pre-runApp boot chain. Pulling here, after subscribe, gets the
-      // user to the action sheet / target tool on every cold-launch
-      // path: WhatsApp share, Siri Shortcut, Quick Sign action, etc.
-      //
-      // We retry once after a short delay because the implicit Flutter
-      // engine's plugin registration race against the post-frame
-      // callback in scene-mode (FlutterImplicitEngineDelegate) — if
-      // the ShareExtensionBridge channel isn't installed yet, the
-      // method call throws MissingPluginException, _drainSilent
-      // swallows it, and we get a false negative.
-      var initialShares =
-          await ShareIntentService.instance.consumeInitial();
-      if (initialShares.isEmpty) {
-        await Future<void>.delayed(const Duration(milliseconds: 600));
-        if (!mounted) return;
-        initialShares = await ShareIntentService.instance.consumeInitial();
-      }
-      _showDrainDiagnosticBanner(initialShares.length);
-      if (mounted && initialShares.isNotEmpty) {
-        SharedFileActionSheet.show(context, initialShares);
-      }
+      await _runStartupDrainDiagnostic();
       final pendingRoute =
           await AppIntentService.instance.consumePending();
       if (mounted && pendingRoute != null) {
@@ -117,27 +93,68 @@ class _RootScaffoldState extends ConsumerState<RootScaffold>
     });
   }
 
-  /// Surfaces what `consumeInitial()` actually returned on launch. The
-  /// "Saved to Privio" confirmation card in the share extension proves
-  /// the file landed in the App Group, but the user kept reporting
-  /// that nothing appears when they open Privio. With no console
-  /// access on the device, this banner is how we see whether the host
-  /// app's drain found the file or returned empty. Auto-dismisses
-  /// after 5 s; tap to open the action sheet when files were found.
-  void _showDrainDiagnosticBanner(int count) {
+  /// Modal diagnostic dialog that always shows on launch (build 24+).
+  /// The previous SnackBar attempt either silently failed because
+  /// ScaffoldMessenger wasn't ready yet or the user missed it. An
+  /// AlertDialog is impossible to miss and gives us the exact App
+  /// Group container path the host sees, the list of files it found
+  /// in the drop folder, and any plugin-channel errors. Compare the
+  /// "Group: …xxx" tag to the one the share extension showed and we
+  /// know whether the two processes share the same physical folder.
+  Future<void> _runStartupDrainDiagnostic() async {
+    Map<String, dynamic> info = {};
+    String? errorMsg;
+    int count = 0;
+
+    try {
+      info = await ShareIntentService.instance.diagnosticInfo();
+      var initialShares =
+          await ShareIntentService.instance.consumeInitial();
+      if (initialShares.isEmpty) {
+        await Future<void>.delayed(const Duration(milliseconds: 600));
+        if (!mounted) return;
+        initialShares = await ShareIntentService.instance.consumeInitial();
+      }
+      count = initialShares.length;
+      if (mounted && initialShares.isNotEmpty) {
+        SharedFileActionSheet.show(context, initialShares);
+      }
+    } catch (e, st) {
+      errorMsg = '$e\n$st';
+    }
+
     if (!mounted) return;
-    final messenger = ScaffoldMessenger.maybeOf(context);
-    if (messenger == null) return;
-    final text = count == 0
-        ? 'App Group check: 0 shared files found'
-        : 'App Group check: $count shared file(s) ready';
-    messenger.showSnackBar(
-      SnackBar(
-        content: Text(text),
-        backgroundColor: count == 0
-            ? Colors.red.shade700
-            : AppColors.success,
-        duration: const Duration(seconds: 5),
+
+    final containerPath = (info['containerPath'] ?? '<nil>').toString();
+    final containerTag = containerPath.length > 12
+        ? '…${containerPath.substring(containerPath.length - 12)}'
+        : containerPath;
+    final dropFiles = (info['dropFolderFiles'] as List?)?.cast<String>() ?? [];
+
+    await showDialog<void>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(count > 0 ? 'Drained $count file(s)' : 'No shared files'),
+        content: SingleChildScrollView(
+          child: SelectableText(
+            'consumeInitial: $count file(s)\n'
+            '\n'
+            'App Group: ${info['appGroupId'] ?? '<missing>'}\n'
+            'Container tag: $containerTag\n'
+            'Drop folder exists: ${info['dropFolderExists'] ?? '?'}\n'
+            'Files in drop folder: ${dropFiles.length}\n'
+            '${dropFiles.isEmpty ? '' : dropFiles.join("\n")}\n'
+            '${errorMsg != null ? "\nError: $errorMsg" : ""}'
+            '${info['error'] != null ? "\nBridge: ${info['error']}" : ""}',
+            style: const TextStyle(fontSize: 12),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text('OK'),
+          ),
+        ],
       ),
     );
   }

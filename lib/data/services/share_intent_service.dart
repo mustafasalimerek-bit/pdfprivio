@@ -36,6 +36,28 @@ class ShareIntentService {
   /// filtered out so listeners only see real payloads.
   Stream<List<SharedMediaFile>> get intents => _controller.stream;
 
+  /// Debug-only: dump the App Group container URL the host sees and
+  /// list every file in the SharedExtensionDrop folder it can read.
+  /// Used by the startup diagnostic dialog so we can verify the
+  /// extension and the host actually share the same physical
+  /// container.
+  Future<Map<String, dynamic>> diagnosticInfo() async {
+    if (!Platform.isIOS) {
+      return {'platform': 'not-ios'};
+    }
+    try {
+      final result = await _shareExtChannel
+          .invokeMapMethod<String, dynamic>('diagnosticInfo');
+      return Map<String, dynamic>.from(result ?? {});
+    } on MissingPluginException {
+      return {'error': 'MissingPluginException — bridge not registered'};
+    } on PlatformException catch (e) {
+      return {'error': 'PlatformException: ${e.message}'};
+    } catch (e) {
+      return {'error': 'Unknown: $e'};
+    }
+  }
+
   /// Wire the package's two entry points. Safe to call multiple times.
   ///
   /// init() only wires the **hot** path — the live media stream and the

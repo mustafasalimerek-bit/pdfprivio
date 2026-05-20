@@ -222,8 +222,25 @@ class ShareViewController: UIViewController {
     }
 
     private func finish(savedCount: Int) {
-        let groupOk = FileManager.default.containerURL(
-            forSecurityApplicationGroupIdentifier: appGroupId) != nil
+        let container = FileManager.default.containerURL(
+            forSecurityApplicationGroupIdentifier: appGroupId)
+        let groupOk = container != nil
+
+        // Build a short identifier for the App Group container so the
+        // diagnostic dialog inside Privio can compare it to the host's
+        // own containerURL. If the two strings differ, the extension
+        // and host don't actually share a physical folder, which is
+        // the most likely root cause of "extension saved but Privio
+        // doesn't see it".
+        let containerTag: String
+        if let container = container {
+            // Last 12 chars of the container's GUID-like folder are
+            // enough to confirm equality without flooding the card.
+            let path = container.path
+            containerTag = String(path.suffix(12))
+        } else {
+            containerTag = "nil"
+        }
 
         let title: String
         let detail: String
@@ -241,7 +258,7 @@ class ShareViewController: UIViewController {
         } else {
             success = true
             title = "Saved to Privio"
-            detail = "Open Privio to keep going."
+            detail = "Open Privio to keep going.\nGroup: …\(containerTag)"
         }
         updateStatus(success: success, title: title, detail: detail)
 

@@ -187,6 +187,34 @@ class ShareExtensionBridge: NSObject, FlutterPlugin {
       let action = defaults.string(forKey: Self.preferredActionKey)
       defaults.removeObject(forKey: Self.preferredActionKey)
       result(action)
+    case "diagnosticInfo":
+      // Debug snapshot of what THIS process sees in the App Group
+      // container — used by the startup diagnostic dialog so we can
+      // verify the host and the extensions actually share the same
+      // physical folder. Mismatched container paths between host and
+      // extension is a known symptom of a TestFlight re-sign that
+      // stripped the App Group capability from one side.
+      var info: [String: Any] = [:]
+      info["appGroupId"] = Self.appGroupId
+      if let container = FileManager.default
+        .containerURL(forSecurityApplicationGroupIdentifier: Self.appGroupId) {
+        info["containerPath"] = container.path
+        let drop = container.appendingPathComponent(Self.dropFolderName)
+        info["dropFolderPath"] = drop.path
+        info["dropFolderExists"] = FileManager.default
+          .fileExists(atPath: drop.path)
+        if let files = try? FileManager.default
+          .contentsOfDirectory(atPath: drop.path) {
+          info["dropFolderFiles"] = files
+        } else {
+          info["dropFolderFiles"] = []
+        }
+      } else {
+        info["containerPath"] = NSNull()
+        info["dropFolderFiles"] = []
+        info["error"] = "containerURL returned nil — App Group entitlement not active"
+      }
+      result(info)
     default:
       result(FlutterMethodNotImplemented)
     }
