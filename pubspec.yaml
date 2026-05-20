@@ -1,7 +1,7 @@
 name: pdfprivio
 description: "Privio: 23 on-device PDF tools — scan, OCR, sign, redact, fill forms, summarise with Apple Intelligence, receipt scanner with CSV export. Never uploaded."
 publish_to: 'none'
-version: 1.0.0+20
+version: 1.0.0+21
 
 environment:
   sdk: ^3.11.5

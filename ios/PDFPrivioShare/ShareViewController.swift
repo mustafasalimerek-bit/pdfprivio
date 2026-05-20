@@ -156,20 +156,38 @@ class ShareViewController: UIViewController {
             guard let self = self else { return }
             if savedCount > 0, let url = URL(string:
                 "\(self.wakeUpScheme)://\(self.wakeUpHost)") {
-                // Modern API. Older builds used a UIApplication
-                // responder-chain selector trick that iOS 17+ silently
-                // blocks — that path is why tapping "Privio" in the
-                // apps row of an iPhone 17 share sheet appeared to do
-                // nothing. extensionContext.open is the documented and
-                // supported channel for share extension → host app.
-                self.extensionContext?.open(url) { _ in
-                    self.extensionContext?.completeRequest(
-                        returningItems: nil, completionHandler: nil)
-                }
-            } else {
-                self.extensionContext?.completeRequest(
-                    returningItems: nil, completionHandler: nil)
+                self.openHostApp(url)
             }
+            self.extensionContext?.completeRequest(
+                returningItems: nil, completionHandler: nil)
+        }
+    }
+
+    /// Wake the host app via the shared `pdfprivio://share` URL scheme.
+    ///
+    /// `NSExtensionContext.open(_:)` looks promising in the docs but
+    /// Apple's small print is "each extension point decides whether to
+    /// support this method" — in practice, share/action extensions on
+    /// iOS 17+ get `success = false` and nothing fires. That's what
+    /// killed the apps-row tap on build 20.
+    ///
+    /// The pattern that actually works (1Password, Bear, Drafts) is to
+    /// walk the responder chain and call `openURL:` via the ObjC
+    /// runtime on whichever object responds to it. UIKit installs a
+    /// private UIApplication-proxy in the extension context that
+    /// responds to that selector, but it isn't a UIApplication
+    /// subclass — so the old `responder as? UIApplication` cast
+    /// silently dropped through the loop. `responds(to:)` is
+    /// class-agnostic and finds the proxy.
+    private func openHostApp(_ url: URL) {
+        let selector = sel_registerName("openURL:")
+        var responder: UIResponder? = self
+        while let r = responder {
+            if r.responds(to: selector) {
+                _ = r.perform(selector, with: url)
+                return
+            }
+            responder = r.next
         }
     }
 }

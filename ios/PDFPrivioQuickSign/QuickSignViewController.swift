@@ -126,18 +126,28 @@ class QuickSignViewController: UIViewController {
                 defaults.set("sign", forKey: preferredActionKey)
             }
             if let url = URL(string: "\(wakeUpScheme)://\(wakeUpHost)") {
-                // Modern API — the UIApplication responder-chain trick
-                // we used to use is silently blocked on iOS 17+, which
-                // is what made "Quick Sign" appear to do nothing on
-                // recent iPhones. extensionContext.open is the
-                // documented + supported route.
-                extensionContext?.open(url) { [weak self] _ in
-                    self?.extensionContext?.completeRequest(
-                        returningItems: nil, completionHandler: nil)
-                }
-                return
+                openHostApp(url)
             }
         }
         extensionContext?.completeRequest(returningItems: nil, completionHandler: nil)
+    }
+
+    /// Wake the host app via the `pdfprivio://share` URL scheme. See
+    /// the matching method on ShareViewController for the full rationale
+    /// — extensionContext.open returns success=false for action
+    /// extensions, the only iOS-17/18 reliable channel is the
+    /// responder-chain selector trick with `responds(to:)` (not the
+    /// type-cast version, which silently fails because the UIKit
+    /// proxy isn't a UIApplication subclass).
+    private func openHostApp(_ url: URL) {
+        let selector = sel_registerName("openURL:")
+        var responder: UIResponder? = self
+        while let r = responder {
+            if r.responds(to: selector) {
+                _ = r.perform(selector, with: url)
+                return
+            }
+            responder = r.next
+        }
     }
 }
