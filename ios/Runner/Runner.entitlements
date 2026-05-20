@@ -6,5 +6,17 @@
 	<array>
 		<string>group.com.erekstudio.pdfprivio</string>
 	</array>
+	<!-- Universal Links host. The share/action extensions fire an
+	     HTTPS URL on this domain via extensionContext.open(), which
+	     iOS recognises as a Universal Link and routes back to Privio
+	     (custom URL schemes from extensions are blocked on iOS 17+;
+	     HTTPS Universal Links are still honoured). The matching
+	     apple-app-site-association lives at
+	     https://privio-aasa.netlify.app/.well-known/apple-app-site-association
+	     and points at this app's appID. -->
+	<key>com.apple.developer.associated-domains</key>
+	<array>
+		<string>applinks:privio-aasa.netlify.app</string>
+	</array>
 </dict>
 </plist>

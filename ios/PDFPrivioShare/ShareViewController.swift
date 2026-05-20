@@ -25,8 +25,14 @@ class ShareViewController: UIViewController {
     private let appGroupId = "group.com.erekstudio.pdfprivio"
     private let dropFolderName = "SharedExtensionDrop"
     private let preferredActionKey = "pdfprivio.preferredShareAction"
-    private let wakeUpScheme = "pdfprivio"
-    private let wakeUpHost = "share"
+    // Universal Link host. iOS 17+ blocks custom URL schemes
+    // (pdfprivio://) when fired from a share extension via
+    // extensionContext.open(); Universal Links (HTTPS) are still
+    // honoured. The matching apple-app-site-association lives on the
+    // Netlify host below and points at this app's bundle. Path is
+    // arbitrary as long as it matches the AASA components.
+    private let universalLinkBase =
+        "https://privio-aasa.netlify.app/pdfprivio/share"
     private let brandTeal = UIColor(red: 0.06, green: 0.46, blue: 0.43, alpha: 1)
 
     // The card swaps between three states managed by setCardContent():
@@ -67,7 +73,6 @@ class ShareViewController: UIViewController {
 
     private let card = UIView()
     private let contentStack = UIStackView()
-    private var pendingOpenURL: URL?
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -254,17 +259,41 @@ class ShareViewController: UIViewController {
            let defaults = UserDefaults(suiteName: appGroupId) {
             defaults.set(actionId, forKey: preferredActionKey)
         }
-        if let url = pendingOpenURL ?? URL(string:
-            "\(wakeUpScheme)://\(wakeUpHost)") {
-            openHostApp(url)
+
+        // Build the Universal Link, pinning the tool id as a query
+        // parameter so the host scene delegate can re-confirm the
+        // routing (defensive — the App Group write above is the
+        // primary signal).
+        var components = URLComponents(string: universalLinkBase)
+        if let actionId = tool.id {
+            components?.queryItems = [URLQueryItem(name: "tool", value: actionId)]
         }
-        // Give iOS a beat to honour the URL hand-off before we dismiss
-        // the extension. Calling completeRequest synchronously seemed to
-        // cancel the open on some iOS versions — by the time the URL
-        // handler kicked in, the extension was already torn down.
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { [weak self] in
-            self?.extensionContext?.completeRequest(
+
+        guard let url = components?.url else {
+            extensionContext?.completeRequest(
                 returningItems: nil, completionHandler: nil)
+            return
+        }
+
+        // extensionContext.open() is the Apple-blessed path for share
+        // extensions to wake the host app — but ONLY for Universal
+        // Links. Custom URL schemes fired this way are silently
+        // dropped on iOS 17+. The completion handler tells us whether
+        // iOS picked the URL up.
+        extensionContext?.open(url) { [weak self] success in
+            // If Universal Link routing fails for any reason (AASA
+            // not yet cached, entitlement mismatch, etc.), fall back
+            // to the legacy responder-chain pattern with the custom
+            // URL scheme. Both bets, then dismiss.
+            if !success {
+                if let legacy = URL(string: "pdfprivio://share") {
+                    self?.openHostAppLegacy(legacy)
+                }
+            }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                self?.extensionContext?.completeRequest(
+                    returningItems: nil, completionHandler: nil)
+            }
         }
     }
 
@@ -410,8 +439,6 @@ class ShareViewController: UIViewController {
             return
         }
 
-        pendingOpenURL = URL(string: "\(wakeUpScheme)://\(wakeUpHost)")
-
         // Strip the timestamp prefix the extension added so the display
         // matches what the user shared. e.g. "1779280063424_Dekont.pdf"
         // → "Dekont.pdf".
@@ -434,23 +461,14 @@ class ShareViewController: UIViewController {
         }
     }
 
-    /// Wake the host app via the shared `pdfprivio://share` URL scheme.
-    ///
-    /// `NSExtensionContext.open(_:)` looks promising in the docs but
-    /// Apple's small print is "each extension point decides whether to
-    /// support this method" — in practice, share/action extensions on
-    /// iOS 17+ get `success = false` and nothing fires. That's what
-    /// killed the apps-row tap on build 20.
-    ///
-    /// The pattern that actually works (1Password, Bear, Drafts) is to
-    /// walk the responder chain and call `openURL:` via the ObjC
-    /// runtime on whichever object responds to it. UIKit installs a
-    /// private UIApplication-proxy in the extension context that
-    /// responds to that selector, but it isn't a UIApplication
-    /// subclass — so the old `responder as? UIApplication` cast
-    /// silently dropped through the loop. `responds(to:)` is
-    /// class-agnostic and finds the proxy.
-    private func openHostApp(_ url: URL) {
+    /// Legacy fallback for waking the host app via the
+    /// `pdfprivio://share` custom URL scheme. iOS 17+ blocks this from
+    /// extensions even for user-initiated taps, so the Universal-Link
+    /// path above is the primary route. This stays as a safety net for
+    /// the iOS 16 deployment-target ≤ 17 window and for the rare case
+    /// where extensionContext.open() reports failure (e.g. Apple's
+    /// AASA CDN hasn't picked up the file yet).
+    private func openHostAppLegacy(_ url: URL) {
         let selector = sel_registerName("openURL:")
         var responder: UIResponder? = self
         while let r = responder {

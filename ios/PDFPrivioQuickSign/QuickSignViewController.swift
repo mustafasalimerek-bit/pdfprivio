@@ -23,8 +23,10 @@ class QuickSignViewController: UIViewController {
     private let appGroupId = "group.com.erekstudio.pdfprivio"
     private let dropFolderName = "SharedExtensionDrop"
     private let preferredActionKey = "pdfprivio.preferredShareAction"
-    private let wakeUpScheme = "pdfprivio"
-    private let wakeUpHost = "share"
+    // Universal Link host. See ShareViewController for the iOS-17+
+    // custom-scheme-block rationale — same fix applies here.
+    private let universalLinkBase =
+        "https://privio-aasa.netlify.app/pdfprivio/share"
     private let brandTeal = UIColor(red: 0.06, green: 0.46, blue: 0.43, alpha: 1)
 
     // Visual parity with PDFPrivioShare/ShareViewController. Same card
@@ -33,7 +35,6 @@ class QuickSignViewController: UIViewController {
     // "Quick Sign" in the Edit Actions row.
     private let card = UIView()
     private let contentStack = UIStackView()
-    private var pendingOpenURL: URL?
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -209,13 +210,29 @@ class QuickSignViewController: UIViewController {
         if let defaults = UserDefaults(suiteName: appGroupId) {
             defaults.set("sign", forKey: preferredActionKey)
         }
-        if let url = pendingOpenURL ?? URL(string:
-            "\(wakeUpScheme)://\(wakeUpHost)") {
-            openHostApp(url)
-        }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { [weak self] in
-            self?.extensionContext?.completeRequest(
+
+        var components = URLComponents(string: universalLinkBase)
+        components?.queryItems = [URLQueryItem(name: "tool", value: "sign")]
+
+        guard let url = components?.url else {
+            extensionContext?.completeRequest(
                 returningItems: nil, completionHandler: nil)
+            return
+        }
+
+        // Universal Link path — iOS 17+ honours this from share/action
+        // extensions where custom URL schemes are silently dropped.
+        // Fall back to the legacy custom-scheme responder-chain trick
+        // if extensionContext.open() reports failure (e.g. AASA not
+        // yet cached on Apple's CDN).
+        extensionContext?.open(url) { [weak self] success in
+            if !success, let legacy = URL(string: "pdfprivio://share") {
+                self?.openHostAppLegacy(legacy)
+            }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                self?.extensionContext?.completeRequest(
+                    returningItems: nil, completionHandler: nil)
+            }
         }
     }
 
@@ -329,8 +346,6 @@ class QuickSignViewController: UIViewController {
             return
         }
 
-        pendingOpenURL = URL(string: "\(wakeUpScheme)://\(wakeUpHost)")
-
         var displayName: String?
         if let first = savedPaths.first {
             let base = (first as NSString).lastPathComponent
@@ -350,14 +365,10 @@ class QuickSignViewController: UIViewController {
         }
     }
 
-    /// Wake the host app via the `pdfprivio://share` URL scheme. See
-    /// the matching method on ShareViewController for the full rationale
-    /// — extensionContext.open returns success=false for action
-    /// extensions, the only iOS-17/18 reliable channel is the
-    /// responder-chain selector trick with `responds(to:)` (not the
-    /// type-cast version, which silently fails because the UIKit
-    /// proxy isn't a UIApplication subclass).
-    private func openHostApp(_ url: URL) {
+    /// Legacy fallback for waking the host app via custom URL scheme.
+    /// See ShareViewController's matching method — Universal Link is
+    /// the primary route, this is the safety net.
+    private func openHostAppLegacy(_ url: URL) {
         let selector = sel_registerName("openURL:")
         var responder: UIResponder? = self
         while let r = responder {
