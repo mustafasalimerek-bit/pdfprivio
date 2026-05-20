@@ -91,8 +91,21 @@ class _RootScaffoldState extends ConsumerState<RootScaffold>
       // pre-runApp boot chain. Pulling here, after subscribe, gets the
       // user to the action sheet / target tool on every cold-launch
       // path: WhatsApp share, Siri Shortcut, Quick Sign action, etc.
-      final initialShares =
+      //
+      // We retry once after a short delay because the implicit Flutter
+      // engine's plugin registration race against the post-frame
+      // callback in scene-mode (FlutterImplicitEngineDelegate) — if
+      // the ShareExtensionBridge channel isn't installed yet, the
+      // method call throws MissingPluginException, _drainSilent
+      // swallows it, and we get a false negative.
+      var initialShares =
           await ShareIntentService.instance.consumeInitial();
+      if (initialShares.isEmpty) {
+        await Future<void>.delayed(const Duration(milliseconds: 600));
+        if (!mounted) return;
+        initialShares = await ShareIntentService.instance.consumeInitial();
+      }
+      _showDrainDiagnosticBanner(initialShares.length);
       if (mounted && initialShares.isNotEmpty) {
         SharedFileActionSheet.show(context, initialShares);
       }
@@ -102,6 +115,31 @@ class _RootScaffoldState extends ConsumerState<RootScaffold>
         _handleIntentRoute(pendingRoute);
       }
     });
+  }
+
+  /// Surfaces what `consumeInitial()` actually returned on launch. The
+  /// "Saved to Privio" confirmation card in the share extension proves
+  /// the file landed in the App Group, but the user kept reporting
+  /// that nothing appears when they open Privio. With no console
+  /// access on the device, this banner is how we see whether the host
+  /// app's drain found the file or returned empty. Auto-dismisses
+  /// after 5 s; tap to open the action sheet when files were found.
+  void _showDrainDiagnosticBanner(int count) {
+    if (!mounted) return;
+    final messenger = ScaffoldMessenger.maybeOf(context);
+    if (messenger == null) return;
+    final text = count == 0
+        ? 'App Group check: 0 shared files found'
+        : 'App Group check: $count shared file(s) ready';
+    messenger.showSnackBar(
+      SnackBar(
+        content: Text(text),
+        backgroundColor: count == 0
+            ? Colors.red.shade700
+            : AppColors.success,
+        duration: const Duration(seconds: 5),
+      ),
+    );
   }
 
   @override
