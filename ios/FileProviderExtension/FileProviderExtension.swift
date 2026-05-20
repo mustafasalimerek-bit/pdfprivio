@@ -148,14 +148,27 @@ class FileProviderExtension: NSObject, NSFileProviderReplicatedExtension {
 }
 
 // MARK: - Inbox resolution
+//
+// The FileProvider domain ("Privio" entry in the Files sidebar) exposes
+// the App-Group folder where incoming shares accumulate. We point it at
+// `SharedExtensionDrop` — the same folder PDFPrivioShare and
+// PDFPrivioQuickSign write into and the host's drain reads from. Until
+// build 28 this enum was pointed at `Inbox/`, which nothing else
+// touched, so the Files sidebar entry was always empty even after
+// dozens of shares.
 
 @available(iOS 16.0, *)
 enum InboxResolver {
+    /// Match the share extensions' constant — see
+    /// `PDFPrivioShare/ShareViewController.swift` `dropFolderName`.
+    static let dropFolderName = "SharedExtensionDrop"
+
     static var inboxURL: URL? {
         guard let container = FileManager.default
             .containerURL(forSecurityApplicationGroupIdentifier: FileProviderExtension.appGroupId)
         else { return nil }
-        let inbox = container.appendingPathComponent("Inbox", isDirectory: true)
+        let inbox = container.appendingPathComponent(
+            dropFolderName, isDirectory: true)
         try? FileManager.default.createDirectory(
             at: inbox,
             withIntermediateDirectories: true

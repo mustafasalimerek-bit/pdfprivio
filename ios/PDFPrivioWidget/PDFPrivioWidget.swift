@@ -25,7 +25,7 @@ import AppIntents
 struct ScanToPdfIntent: AppIntent {
     static var title: LocalizedStringResource = "Scan to PDF"
     static var description = IntentDescription(
-        "Open the document scanner — Apple VisionKit edge detection and multi-page capture into one PDF."
+        "Open the document scanner — auto edge detection and multi-page capture into one PDF."
     )
     static var openAppWhenRun: Bool = true
 
