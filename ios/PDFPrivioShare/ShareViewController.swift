@@ -260,41 +260,26 @@ class ShareViewController: UIViewController {
             defaults.set(actionId, forKey: preferredActionKey)
         }
 
-        // Build the Universal Link, pinning the tool id as a query
-        // parameter so the host scene delegate can re-confirm the
-        // routing (defensive — the App Group write above is the
-        // primary signal).
-        var components = URLComponents(string: universalLinkBase)
+        // Bluesky's pattern: walk the responder chain, find the real
+        // UIApplication instance, call its modern open() method with
+        // a custom URL scheme. This works in production on iOS 18 —
+        // major apps (Bluesky, Notion, Drafts, Zoom, Gmail) all use
+        // this exact pattern despite Apple DTS's "not allowed"
+        // warning. The custom scheme `pdfprivio://` is registered in
+        // Runner.app's Info.plist CFBundleURLSchemes.
+        var components = URLComponents()
+        components.scheme = "pdfprivio"
+        components.host = "share"
         if let actionId = tool.id {
-            components?.queryItems = [URLQueryItem(name: "tool", value: actionId)]
+            components.queryItems = [
+                URLQueryItem(name: "tool", value: actionId)
+            ]
         }
-
-        guard let url = components?.url else {
-            extensionContext?.completeRequest(
-                returningItems: nil, completionHandler: nil)
-            return
+        if let url = components.url {
+            openHostAppViaResponder(url)
         }
-
-        // Fire the Universal Link via BOTH channels in parallel — Apple
-        // is inconsistent about which one share extensions are allowed
-        // to use on iOS 17+:
-        //   * extensionContext.open(_:) — documented for iMessage
-        //     extensions only, but reported to work for some share
-        //     extensions on newer iOS. Returns success=false silently
-        //     when iOS refuses.
-        //   * responder-chain `openURL:` selector — the classic
-        //     1Password / Bear trick. With a custom URL scheme iOS 17+
-        //     rejects it; with a Universal Link iOS treats it as a
-        //     normal web URL launch and IS allowed to honour it via
-        //     the AASA-registered app association.
-        // Firing both maximises the odds one path wakes the host.
-        openHostAppViaResponder(url)
-        extensionContext?.open(url) { [weak self] _ in
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                self?.extensionContext?.completeRequest(
-                    returningItems: nil, completionHandler: nil)
-            }
-        }
+        extensionContext?.completeRequest(
+            returningItems: nil, completionHandler: nil)
     }
 
     @objc private func cancelTapped() {
@@ -461,24 +446,35 @@ class ShareViewController: UIViewController {
         }
     }
 
-    /// Walk the responder chain looking for any object that responds
-    /// to the legacy `openURL:` selector and fire the URL through it.
-    /// UIKit injects a private UIApplication proxy into the share-
-    /// extension responder chain that handles this selector — calling
-    /// it bypasses the iOS 17+ extensionContext.open() block. With a
-    /// Universal Link URL iOS routes through the AASA association and
-    /// brings the host app to the foreground; with a custom URL
-    /// scheme iOS 17+ drops the request silently.
-    private func openHostAppViaResponder(_ url: URL) {
-        let selector = sel_registerName("openURL:")
+    /// Walk the responder chain looking for a real UIApplication
+    /// instance and call its **modern** `open(_:)` method directly.
+    /// This is Bluesky's production-tested pattern (used by millions
+    /// of users on iOS 18) — the key insight is that while
+    /// `UIApplication.shared` is marked unavailable inside extensions,
+    /// the UIApplication CLASS itself isn't. UIKit puts a real
+    /// UIApplication instance somewhere in the share-extension
+    /// responder chain; the `as? UIApplication` cast finds it, and
+    /// `application.open(url)` is a public Swift method (not the
+    /// deprecated openURL: selector iOS 18 blocked), so iOS routes
+    /// the URL normally.
+    ///
+    /// Earlier builds (17-31) used the `responds(to: sel("openURL:"))`
+    /// + `perform()` pattern instead, which hits the deprecated
+    /// selector — that path got "Force returning false" on iOS 18.
+    /// Using the modern instance method works because iOS hasn't
+    /// killed the public UIApplication API surface, only the legacy
+    /// selector dispatch.
+    @discardableResult
+    @objc private func openHostAppViaResponder(_ url: URL) -> Bool {
         var responder: UIResponder? = self
-        while let r = responder {
-            if r.responds(to: selector) {
-                _ = r.perform(selector, with: url)
-                return
+        while responder != nil {
+            if let application = responder as? UIApplication {
+                application.open(url)
+                return true
             }
-            responder = r.next
+            responder = responder?.next
         }
+        return false
     }
 }
 

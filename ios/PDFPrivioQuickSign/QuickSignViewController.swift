@@ -210,27 +210,18 @@ class QuickSignViewController: UIViewController {
         if let defaults = UserDefaults(suiteName: appGroupId) {
             defaults.set("sign", forKey: preferredActionKey)
         }
-
-        var components = URLComponents(string: universalLinkBase)
-        components?.queryItems = [URLQueryItem(name: "tool", value: "sign")]
-
-        guard let url = components?.url else {
-            extensionContext?.completeRequest(
-                returningItems: nil, completionHandler: nil)
-            return
+        // Bluesky's responder-chain + modern UIApplication.open()
+        // pattern with custom URL scheme. See ShareViewController for
+        // the long-form rationale.
+        var components = URLComponents()
+        components.scheme = "pdfprivio"
+        components.host = "share"
+        components.queryItems = [URLQueryItem(name: "tool", value: "sign")]
+        if let url = components.url {
+            openHostAppViaResponder(url)
         }
-
-        // Fire the Universal Link via both channels in parallel — see
-        // ShareViewController for the full rationale. iOS 17+ is
-        // inconsistent about which path share/action extensions are
-        // allowed to use, so we maximise the odds by firing both.
-        openHostAppViaResponder(url)
-        extensionContext?.open(url) { [weak self] _ in
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                self?.extensionContext?.completeRequest(
-                    returningItems: nil, completionHandler: nil)
-            }
-        }
+        extensionContext?.completeRequest(
+            returningItems: nil, completionHandler: nil)
     }
 
     @objc private func cancelTapped() {
@@ -362,20 +353,21 @@ class QuickSignViewController: UIViewController {
         }
     }
 
-    /// Responder-chain `openURL:` fire. With a Universal Link URL iOS
-    /// honours the AASA association and brings Privio to the
-    /// foreground via the standard web-URL routing path. See
-    /// ShareViewController for the long-form rationale.
-    private func openHostAppViaResponder(_ url: URL) {
-        let selector = sel_registerName("openURL:")
+    /// Bluesky's pattern — see ShareViewController for the full
+    /// rationale. Cast responder to real UIApplication, call modern
+    /// `open(_:)` instance method (not the iOS 18-deprecated
+    /// `openURL:` selector).
+    @discardableResult
+    @objc private func openHostAppViaResponder(_ url: URL) -> Bool {
         var responder: UIResponder? = self
-        while let r = responder {
-            if r.responds(to: selector) {
-                _ = r.perform(selector, with: url)
-                return
+        while responder != nil {
+            if let application = responder as? UIApplication {
+                application.open(url)
+                return true
             }
-            responder = r.next
+            responder = responder?.next
         }
+        return false
     }
 }
 
