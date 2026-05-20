@@ -7,13 +7,14 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		03B66B943205F3D5A33DA408 /* iconAlwaysTemplate@3x.png in Resources */ = {isa = PBXBuildFile; fileRef = A29BF51BBF5BC892EAF8FE62 /* iconAlwaysTemplate@3x.png */; };
 		065EAC6E85B217E209C8D6E8 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B1F2D1347F6D9A0C9B22EB0D /* Foundation.framework */; };
 		07A735C0BE553ABA904CE473 /* QuickLookBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0F34CE5DBE01FFA5D9C64856 /* QuickLookBridge.swift */; };
-		333E462552B275DE5CF06127 /* ReviewBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3FAC1AF417B88E0D8DCA2DAC /* ReviewBridge.swift */; };
 		0D5B11DF8D2766D5F1BF55CD /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B1F2D1347F6D9A0C9B22EB0D /* Foundation.framework */; };
 		1498D2341E8E89220040F4C2 /* GeneratedPluginRegistrant.m in Sources */ = {isa = PBXBuildFile; fileRef = 1498D2331E8E89220040F4C2 /* GeneratedPluginRegistrant.m */; };
 		1CCE61B02DB900151F1C3082 /* ShareViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = BC68728586275ED67B205A85 /* ShareViewController.swift */; };
 		331C808B294A63AB00263BE5 /* RunnerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 331C807B294A618700263BE5 /* RunnerTests.swift */; };
+		333E462552B275DE5CF06127 /* ReviewBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3FAC1AF417B88E0D8DCA2DAC /* ReviewBridge.swift */; };
 		3B3967161E833CAA004F5970 /* AppFrameworkInfo.plist in Resources */ = {isa = PBXBuildFile; fileRef = 3B3967151E833CAA004F5970 /* AppFrameworkInfo.plist */; };
 		587AC37BA8D711082D54B7C6 /* PDFPrivioQuickSign.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = 80CF3E3FD03FC0784078D061 /* PDFPrivioQuickSign.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		636305CC8C8521AE8719F646 /* Pods_RunnerTests.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 807DAC76E6C7CDB78B24CD0B /* Pods_RunnerTests.framework */; };
@@ -34,7 +35,9 @@
 		AFB88FA51F288E071F8DA659 /* PDFPrivioWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = 46EE2897018D20D7B6CA038A /* PDFPrivioWidget.swift */; };
 		B7D669C8727B33ABBC455CAB /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B1F2D1347F6D9A0C9B22EB0D /* Foundation.framework */; };
 		B8DB3A80CEA681B860B93412 /* MainInterface.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 318CDE867A17F8190A1DFAF5 /* MainInterface.storyboard */; };
+		B9E329A28762D9797BE182D4 /* iconAlwaysTemplate@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = B2D0AC80732F1F63D19BA08B /* iconAlwaysTemplate@2x.png */; };
 		D48B38459BCF756D948F6376 /* PDFPrivioAppShortcuts.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4225D3A42E4CF88C1C6E6D76 /* PDFPrivioAppShortcuts.swift */; };
+		D7C4398D8415B80FE1D11296 /* iconAlwaysTemplate.png in Resources */ = {isa = PBXBuildFile; fileRef = D096A5C84D0D5C4D1F0EC5DB /* iconAlwaysTemplate.png */; };
 		E0425A08E29CA1656C5190A8 /* SummarizationBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF966FE0CE812DB5C54C58F5 /* SummarizationBridge.swift */; };
 		E4B7007C99FE3847FA91E1CE /* QuickSignViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 354829713608C8CB9D4FCE10 /* QuickSignViewController.swift */; };
 		E6EAB32DA5ABD20982081BD5 /* FileProviderExtension.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = 1BCF2327EF0896E0BBA94249 /* FileProviderExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
@@ -111,7 +114,6 @@
 		03ACA07F089216D71E5BF264 /* PDFPrivioWidget.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = PDFPrivioWidget.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		0C15AD83CEFD78125A03CB20 /* Runner.entitlements */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.entitlements; path = Runner.entitlements; sourceTree = "<group>"; };
 		0F34CE5DBE01FFA5D9C64856 /* QuickLookBridge.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = QuickLookBridge.swift; sourceTree = "<group>"; };
-		3FAC1AF417B88E0D8DCA2DAC /* ReviewBridge.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ReviewBridge.swift; sourceTree = "<group>"; };
 		0F8E6D68721540A45DC894A9 /* Info.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		1380EA98C6177F2384B6CA4B /* Pods-RunnerTests.profile.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-RunnerTests.profile.xcconfig"; path = "Target Support Files/Pods-RunnerTests/Pods-RunnerTests.profile.xcconfig"; sourceTree = "<group>"; };
 		1498D2321E8E86230040F4C2 /* GeneratedPluginRegistrant.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = GeneratedPluginRegistrant.h; sourceTree = "<group>"; };
@@ -124,6 +126,7 @@
 		331C8081294A63A400263BE5 /* RunnerTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = RunnerTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		354829713608C8CB9D4FCE10 /* QuickSignViewController.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = QuickSignViewController.swift; sourceTree = "<group>"; };
 		3B3967151E833CAA004F5970 /* AppFrameworkInfo.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = AppFrameworkInfo.plist; path = Flutter/AppFrameworkInfo.plist; sourceTree = "<group>"; };
+		3FAC1AF417B88E0D8DCA2DAC /* ReviewBridge.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ReviewBridge.swift; sourceTree = "<group>"; };
 		4225D3A42E4CF88C1C6E6D76 /* PDFPrivioAppShortcuts.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = PDFPrivioAppShortcuts.swift; sourceTree = "<group>"; };
 		44939DAEA1231B7E779DEB50 /* Info.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		44DCDE1B3B696E46C31572AF /* Intents.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = Intents.swift; sourceTree = "<group>"; };
@@ -150,6 +153,7 @@
 		97C146FD1CF9000F007C117D /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		97C147001CF9000F007C117D /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		97C147021CF9000F007C117D /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		A29BF51BBF5BC892EAF8FE62 /* iconAlwaysTemplate@3x.png */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = image.png; path = "iconAlwaysTemplate@3x.png"; sourceTree = "<group>"; };
 		A3A8DE9BA64F3E6F43877D42 /* Info.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		AA96D1015543CE2C25FF53C3 /* DocumentScannerBridge.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = DocumentScannerBridge.swift; sourceTree = "<group>"; };
 		AB1350959F5D8C3344A130C2 /* FileProviderExtension.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = FileProviderExtension.swift; sourceTree = "<group>"; };
@@ -157,6 +161,7 @@
 		AF71C76F88677C1D74BED191 /* Pods-ShareExtension.profile.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-ShareExtension.profile.xcconfig"; path = "Target Support Files/Pods-ShareExtension/Pods-ShareExtension.profile.xcconfig"; sourceTree = "<group>"; };
 		AF966FE0CE812DB5C54C58F5 /* SummarizationBridge.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SummarizationBridge.swift; sourceTree = "<group>"; };
 		B1F2D1347F6D9A0C9B22EB0D /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS18.0.sdk/System/Library/Frameworks/Foundation.framework; sourceTree = DEVELOPER_DIR; };
+		B2D0AC80732F1F63D19BA08B /* iconAlwaysTemplate@2x.png */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = image.png; path = "iconAlwaysTemplate@2x.png"; sourceTree = "<group>"; };
 		B98F4F26CC028663E7D8C431 /* Pods_ShareExtension.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_ShareExtension.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		BC68728586275ED67B205A85 /* ShareViewController.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ShareViewController.swift; sourceTree = "<group>"; };
 		C03B5DF58714B667F352E7C5 /* Pods-ShareExtension.profile.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; path = "Pods-ShareExtension.profile.xcconfig"; sourceTree = "<group>"; };
@@ -164,6 +169,7 @@
 		C6E27A9C295B878AE004FD20 /* Pods_Runner.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_Runner.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		C7DFB18333FC1B2A5AC9F31C /* Info.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		CB99833E405AD436DA30A198 /* TextRecognizerBridge.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = TextRecognizerBridge.swift; sourceTree = "<group>"; };
+		D096A5C84D0D5C4D1F0EC5DB /* iconAlwaysTemplate.png */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = image.png; path = iconAlwaysTemplate.png; sourceTree = "<group>"; };
 		D9226A87AE79D4F38C8D6C4D /* PDFPrivioShare.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = PDFPrivioShare.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		E0852AADFAC1022286E44F2E /* Pods-ShareExtension.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; path = "Pods-ShareExtension.release.xcconfig"; sourceTree = "<group>"; };
 		E946B0CC7A149E0AD26D7836 /* Assets.xcassets */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
@@ -317,6 +323,9 @@
 				44939DAEA1231B7E779DEB50 /* Info.plist */,
 				7F402C4581B29E124FDF0E0B /* PDFPrivioQuickSign.entitlements */,
 				FB3A558E34D8DDDCE436BA5D /* Base.lproj */,
+				D096A5C84D0D5C4D1F0EC5DB /* iconAlwaysTemplate.png */,
+				B2D0AC80732F1F63D19BA08B /* iconAlwaysTemplate@2x.png */,
+				A29BF51BBF5BC892EAF8FE62 /* iconAlwaysTemplate@3x.png */,
 			);
 			name = PDFPrivioQuickSign;
 			path = PDFPrivioQuickSign;
@@ -636,6 +645,9 @@
 			buildActionMask = 2147483647;
 			files = (
 				B8DB3A80CEA681B860B93412 /* MainInterface.storyboard in Resources */,
+				D7C4398D8415B80FE1D11296 /* iconAlwaysTemplate.png in Resources */,
+				B9E329A28762D9797BE182D4 /* iconAlwaysTemplate@2x.png in Resources */,
+				03B66B943205F3D5A33DA408 /* iconAlwaysTemplate@3x.png in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
