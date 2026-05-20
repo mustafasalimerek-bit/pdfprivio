@@ -154,31 +154,22 @@ class ShareViewController: UIViewController {
     private func finish(savedCount: Int) {
         DispatchQueue.main.async { [weak self] in
             guard let self = self else { return }
-            if savedCount > 0 {
-                self.openHostApp()
+            if savedCount > 0, let url = URL(string:
+                "\(self.wakeUpScheme)://\(self.wakeUpHost)") {
+                // Modern API. Older builds used a UIApplication
+                // responder-chain selector trick that iOS 17+ silently
+                // blocks — that path is why tapping "Privio" in the
+                // apps row of an iPhone 17 share sheet appeared to do
+                // nothing. extensionContext.open is the documented and
+                // supported channel for share extension → host app.
+                self.extensionContext?.open(url) { _ in
+                    self.extensionContext?.completeRequest(
+                        returningItems: nil, completionHandler: nil)
+                }
+            } else {
+                self.extensionContext?.completeRequest(
+                    returningItems: nil, completionHandler: nil)
             }
-            self.extensionContext?.completeRequest(returningItems: nil, completionHandler: nil)
         }
     }
-
-    /// Open the host app via our custom URL scheme. iOS routes the
-    /// URL to FlutterAppDelegate.application(_:open:options:); our
-    /// AppDelegate override forwards it to a MethodChannel so the
-    /// Flutter side can drain the drop folder.
-    @objc private func openHostApp() {
-        guard let url = URL(string: "\(wakeUpScheme)://\(wakeUpHost)") else { return }
-        var responder: UIResponder? = self
-        while responder != nil {
-            if let app = responder as? UIApplication {
-                _ = app.perform(#selector(openURL(_:)), with: url)
-                return
-            }
-            responder = responder?.next
-        }
-    }
-
-    // iOS deprecates application.open(_:) inside extensions — this
-    // selector-based trick still works and is the documented pattern
-    // for share-extension → host-app deep links.
-    @objc func openURL(_ url: URL) {}
 }

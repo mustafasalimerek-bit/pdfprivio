@@ -125,22 +125,19 @@ class QuickSignViewController: UIViewController {
             if let defaults = UserDefaults(suiteName: appGroupId) {
                 defaults.set("sign", forKey: preferredActionKey)
             }
-            openHostApp()
+            if let url = URL(string: "\(wakeUpScheme)://\(wakeUpHost)") {
+                // Modern API — the UIApplication responder-chain trick
+                // we used to use is silently blocked on iOS 17+, which
+                // is what made "Quick Sign" appear to do nothing on
+                // recent iPhones. extensionContext.open is the
+                // documented + supported route.
+                extensionContext?.open(url) { [weak self] _ in
+                    self?.extensionContext?.completeRequest(
+                        returningItems: nil, completionHandler: nil)
+                }
+                return
+            }
         }
         extensionContext?.completeRequest(returningItems: nil, completionHandler: nil)
     }
-
-    @objc private func openHostApp() {
-        guard let url = URL(string: "\(wakeUpScheme)://\(wakeUpHost)") else { return }
-        var responder: UIResponder? = self
-        while responder != nil {
-            if let app = responder as? UIApplication {
-                _ = app.perform(#selector(openURL(_:)), with: url)
-                return
-            }
-            responder = responder?.next
-        }
-    }
-
-    @objc func openURL(_ url: URL) {}
 }
