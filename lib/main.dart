@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io' show Platform;
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -33,35 +34,42 @@ Future<void> main() async {
       FlutterError.presentError(details);
     };
 
-    // Hive — backs the audit log + recent files entries.
-    await Hive.initFlutter();
+    // Service boot. Wrapped in a defensive shell — one throw inside
+    // any init() used to take down main() before runApp ever ran,
+    // leaving the user with a black screen and no diagnostic. Each
+    // service is isolated now; a failure logs and the rest proceeds.
+    //
+    // ReviewPromptService must run AFTER AuditService because it
+    // subscribes to AuditService.changes; order in this list is
+    // therefore meaningful even though failures don't propagate.
+    //
+    // ShareIntentService + AppIntentService only wire their hot paths
+    // here — cold-launch payloads (initial share / pending Siri route)
+    // are pulled by RootScaffold once its listeners are subscribed,
+    // since broadcast streams don't replay emissions made before a
+    // listener attaches.
+    Future<void> safe(String name, Future<void> Function() init) async {
+      try {
+        await init();
+      } catch (e, st) {
+        if (kDebugMode) {
+          debugPrint('Init failed for $name: $e\n$st');
+        }
+      }
+    }
 
-    // Purchase + usage-limits boot. Init runs StoreKit availability
-    // check and silent restore so the home grid renders with the right
-    // lock state on the very first frame.
-    await PurchaseService.instance.init();
-    await PromoCodeService.instance.init();
-    await AuditService.instance.init();
-    await ExpenseLedgerService.instance.init();
-    await UsageLimitsService.instance.pruneOldEntries();
-    // Subscribes to AuditService.changes to count successful tool
-    // operations; surfaces SKStoreReviewController after 3 successes
-    // + 2 days since install, then sleeps for 90 days. Must init
-    // AFTER AuditService so the stream subscription has a live
-    // broadcaster to bind to.
-    await ReviewPromptService.instance.init();
-    // Home Screen widget bridge — pushes recent files into the App
-    // Group shared store so the iOS WidgetKit extension can render
-    // them. No-op on Android (widget arrives in v1.1).
-    await WidgetDataService.instance.init();
-    // Listen for inbound files handed to us via Share Sheet / Open In
-    // / our own Share Extension. Cold-launch payload is drained here;
-    // hot stream events are picked up by RootScaffold's listener.
-    await ShareIntentService.instance.init();
-    // Drain any AppIntent-triggered route ("Hey Siri, sign a PDF with
-    // Privio"). Cold-launch route comes through on init; warm
-    // resumes re-poll from RootScaffold's lifecycle listener.
-    await AppIntentService.instance.init();
+    // Hive — backs the audit log + recent files entries.
+    await safe('Hive', () async => await Hive.initFlutter());
+    await safe('PurchaseService', PurchaseService.instance.init);
+    await safe('PromoCodeService', PromoCodeService.instance.init);
+    await safe('AuditService', AuditService.instance.init);
+    await safe('ExpenseLedgerService', ExpenseLedgerService.instance.init);
+    await safe('UsageLimitsService.prune',
+        UsageLimitsService.instance.pruneOldEntries);
+    await safe('ReviewPromptService', ReviewPromptService.instance.init);
+    await safe('WidgetDataService', WidgetDataService.instance.init);
+    await safe('ShareIntentService', ShareIntentService.instance.init);
+    await safe('AppIntentService', AppIntentService.instance.init);
 
     // iPhone stays portrait-locked — the tool screens are vertical
     // forms and rotating them helps nobody. iPad gets all four

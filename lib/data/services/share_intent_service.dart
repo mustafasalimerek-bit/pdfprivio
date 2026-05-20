@@ -37,26 +37,21 @@ class ShareIntentService {
   Stream<List<SharedMediaFile>> get intents => _controller.stream;
 
   /// Wire the package's two entry points. Safe to call multiple times.
-  /// Call this AFTER runApp so a listener is already subscribed when
-  /// the initial-launch payload arrives.
+  ///
+  /// init() only wires the **hot** path — the live media stream and the
+  /// method-channel ping handler — both of which need to be hooked up
+  /// early in main() so foreground shares arriving moments after launch
+  /// are not lost.
+  ///
+  /// The **cold-launch backlog** (`getInitialMedia()` payload + any files
+  /// our PDFPrivioShare / PDFPrivioQuickSign extensions dropped before
+  /// the app started) is pulled separately via [consumeInitial] — the
+  /// listener (RootScaffold post-frame) calls it after subscribing to
+  /// [intents], because broadcast streams do not replay emissions made
+  /// before a listener subscribes.
   Future<void> init() async {
     if (_inited) return;
     _inited = true;
-
-    try {
-      // Cold-launch payload.
-      final initial = await ReceiveSharingIntent.instance.getInitialMedia();
-      if (initial.isNotEmpty) {
-        _controller.add(initial);
-        // The package keeps the cold-launch payload cached until reset,
-        // which would re-emit the same file the next time we read it.
-        ReceiveSharingIntent.instance.reset();
-      }
-    } catch (e) {
-      if (kDebugMode) {
-        debugPrint('ShareIntentService.getInitialMedia failed: $e');
-      }
-    }
 
     // Hot path — app already running, new share lands.
     _streamSub = ReceiveSharingIntent.instance.getMediaStream().listen(
@@ -72,10 +67,6 @@ class ShareIntentService {
       },
     );
 
-    // Also drain whatever our custom PDFPrivioShare extension dropped
-    // before launch (Share-Sheet cold-launch path).
-    await drainExtensionDrop();
-
     // Listen for the AppDelegate-fired "shareExtensionPending" pings
     // — these fire when the user shares while the app is already
     // running so we don't have to wait for the next AppLifecycle
@@ -85,6 +76,38 @@ class ShareIntentService {
         await drainExtensionDrop();
       }
     });
+  }
+
+  /// Pull every share payload that landed before listeners were
+  /// subscribed. Called once from RootScaffold's post-frame callback,
+  /// **after** the [intents] stream is being listened to. Returns the
+  /// combined backlog so the caller can fire the action sheet directly
+  /// (the stream itself is not used for cold-launch delivery — events
+  /// added before any listener subscribes are dropped by broadcast
+  /// streams). Hot shares continue to flow through [intents].
+  Future<List<SharedMediaFile>> consumeInitial() async {
+    if (!Platform.isIOS) return const [];
+    final results = <SharedMediaFile>[];
+    // 1. receive_sharing_intent's cached cold-launch payload.
+    try {
+      final initial = await ReceiveSharingIntent.instance.getInitialMedia();
+      if (initial.isNotEmpty) {
+        results.addAll(initial);
+        // The package keeps the cold-launch payload cached until reset,
+        // which would re-emit the same file the next time we read it.
+        ReceiveSharingIntent.instance.reset();
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint('ShareIntentService.consumeInitial getInitialMedia '
+            'failed: $e');
+      }
+    }
+    // 2. Files our PDFPrivioShare / PDFPrivioQuickSign extensions
+    //    dropped before launch into the App Group's
+    //    SharedExtensionDrop folder.
+    results.addAll(await _drainSilent());
+    return results;
   }
 
   /// Last preferred-action string the QuickSign / Quick* Action
@@ -102,19 +125,31 @@ class ShareIntentService {
     _preferredAction = null;
   }
 
-  /// Move every file the PDFPrivioShare Share Extension dumped into
-  /// the App Group's SharedExtensionDrop folder into our own
-  /// Documents/Inbox, then emit them on [intents] so the action sheet
-  /// gets the same treatment as a CFBundleDocumentTypes-routed file.
-  /// Called by RootScaffold on every AppLifecycleState.resumed plus
-  /// once during init().
+  /// Drain + emit. Used by the hot paths (AppLifecycleState.resumed
+  /// and the `shareExtensionPending` method-channel ping) when
+  /// listeners are guaranteed to already be subscribed.
   Future<void> drainExtensionDrop() async {
-    if (!Platform.isIOS) return;
+    final imported = await _drainSilent();
+    if (imported.isNotEmpty) {
+      _controller.add(imported);
+    }
+  }
+
+  /// Core drain — moves every file the PDFPrivioShare / PDFPrivioQuickSign
+  /// extensions dumped into the App Group's SharedExtensionDrop folder
+  /// into our own Documents/Inbox, pulls the preferred-action hint, and
+  /// **returns** the imported list without touching the stream. Stream
+  /// emission is the caller's call: hot paths use [drainExtensionDrop]
+  /// (which wraps this + emits); the cold-launch caller pulls the list
+  /// via [consumeInitial] and dispatches it directly so it doesn't fire
+  /// before listeners subscribe.
+  Future<List<SharedMediaFile>> _drainSilent() async {
+    if (!Platform.isIOS) return const [];
+    final imported = <SharedMediaFile>[];
     try {
       final paths = await _shareExtChannel.invokeListMethod<String>('drain');
-      if (paths == null || paths.isEmpty) return;
+      if (paths == null || paths.isEmpty) return imported;
 
-      final imported = <SharedMediaFile>[];
       final docs = await getApplicationDocumentsDirectory();
       final inbox = Directory(p.join(docs.path, 'Inbox'));
       if (!await inbox.exists()) {
@@ -153,10 +188,6 @@ class ShareIntentService {
       } on MissingPluginException {
         _preferredAction = null;
       }
-
-      if (imported.isNotEmpty) {
-        _controller.add(imported);
-      }
     } on PlatformException catch (e) {
       if (kDebugMode) {
         debugPrint('drainExtensionDrop platform error: $e');
@@ -165,6 +196,7 @@ class ShareIntentService {
       // Bridge not registered yet (very early boot). Will be picked
       // up on the next resume tick.
     }
+    return imported;
   }
 
   /// Copy the iOS-supplied file path into the app's Documents/Inbox

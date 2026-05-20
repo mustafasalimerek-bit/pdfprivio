@@ -65,10 +65,7 @@ class _RootScaffoldState extends ConsumerState<RootScaffold>
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    // Defer until the widget has a real context — using the
-    // post-frame callback also catches the cold-launch share payload
-    // that ShareIntentService.init() emits during app boot.
-    WidgetsBinding.instance.addPostFrameCallback((_) {
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
       if (!mounted) return;
       // Re-apply the orientation policy now that a view is attached.
       // main() runs before the scene connects on a URL-scheme cold
@@ -80,11 +77,30 @@ class _RootScaffoldState extends ConsumerState<RootScaffold>
             ? const <DeviceOrientation>[]
             : const [DeviceOrientation.portraitUp],
       );
+      // Subscribe to the hot streams FIRST so any share that lands
+      // during the next frame already has a listener…
       _shareSub = ShareIntentService.instance.intents.listen((files) {
         if (!mounted) return;
         SharedFileActionSheet.show(context, files);
       });
       _intentSub = AppIntentService.instance.routes.listen(_handleIntentRoute);
+      // …then pull the cold-launch backlog. Broadcast streams don't
+      // replay emissions made before any listener subscribes, so the
+      // initial share payload + the pending intent route would be lost
+      // if the services emitted them from their own init() during the
+      // pre-runApp boot chain. Pulling here, after subscribe, gets the
+      // user to the action sheet / target tool on every cold-launch
+      // path: WhatsApp share, Siri Shortcut, Quick Sign action, etc.
+      final initialShares =
+          await ShareIntentService.instance.consumeInitial();
+      if (mounted && initialShares.isNotEmpty) {
+        SharedFileActionSheet.show(context, initialShares);
+      }
+      final pendingRoute =
+          await AppIntentService.instance.consumePending();
+      if (mounted && pendingRoute != null) {
+        _handleIntentRoute(pendingRoute);
+      }
     });
   }
 
