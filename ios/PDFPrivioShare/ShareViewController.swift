@@ -258,8 +258,14 @@ class ShareViewController: UIViewController {
             "\(wakeUpScheme)://\(wakeUpHost)") {
             openHostApp(url)
         }
-        extensionContext?.completeRequest(returningItems: nil,
-                                          completionHandler: nil)
+        // Give iOS a beat to honour the URL hand-off before we dismiss
+        // the extension. Calling completeRequest synchronously seemed to
+        // cancel the open on some iOS versions — by the time the URL
+        // handler kicked in, the extension was already torn down.
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { [weak self] in
+            self?.extensionContext?.completeRequest(
+                returningItems: nil, completionHandler: nil)
+        }
     }
 
     @objc private func cancelTapped() {
@@ -495,13 +501,7 @@ private final class ToolRowControl: UIControl {
         labels.axis = .vertical
         labels.spacing = 1
 
-        let chevron = UIImageView(image: UIImage(
-            systemName: "chevron.right",
-            withConfiguration: UIImage.SymbolConfiguration(
-                pointSize: 12, weight: .semibold)))
-        chevron.tintColor = .tertiaryLabel
-
-        let stack = UIStackView(arrangedSubviews: [iconView, labels, chevron])
+        let stack = UIStackView(arrangedSubviews: [iconView, labels])
         stack.axis = .horizontal
         stack.alignment = .center
         stack.spacing = 12

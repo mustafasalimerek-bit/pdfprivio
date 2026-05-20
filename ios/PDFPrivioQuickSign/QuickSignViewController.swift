@@ -25,112 +25,203 @@ class QuickSignViewController: UIViewController {
     private let preferredActionKey = "pdfprivio.preferredShareAction"
     private let wakeUpScheme = "pdfprivio"
     private let wakeUpHost = "share"
+    private let brandTeal = UIColor(red: 0.06, green: 0.46, blue: 0.43, alpha: 1)
 
-    // Mirror of ShareViewController's card. See that file for the full
-    // rationale — iOS 17+ blocks programmatic host-app launches from
-    // extensions, but a user-initiated tap on a button rendered inside
-    // the extension's own UI IS still honoured. The "Open Privio" CTA
-    // below is what closes the share→app loop.
-    private let statusLabel = UILabel()
-    private let detailLabel = UILabel()
-    private let iconView = UIImageView()
-    private let openButton = UIButton(type: .system)
+    // Visual parity with PDFPrivioShare/ShareViewController. Same card
+    // layout, same header, same row style — but only one row (Sign),
+    // because the user already declared their intent by tapping
+    // "Quick Sign" in the Edit Actions row.
+    private let card = UIView()
+    private let contentStack = UIStackView()
     private var pendingOpenURL: URL?
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        installStatusCard(title: "Queuing for Quick Sign…",
-                          detail: "Reading the PDF")
+        installShell()
+        showLoadingState()
         processAttachments()
     }
 
-    private func installStatusCard(title: String, detail: String) {
+    private func installShell() {
         view.backgroundColor = UIColor.black.withAlphaComponent(0.45)
-        let card = UIView()
         card.backgroundColor = .systemBackground
-        card.layer.cornerRadius = 18
+        card.layer.cornerRadius = 22
         card.translatesAutoresizingMaskIntoConstraints = false
         view.addSubview(card)
 
-        iconView.translatesAutoresizingMaskIntoConstraints = false
-        iconView.tintColor = UIColor(red: 0.06, green: 0.46, blue: 0.43, alpha: 1)
-        iconView.image = UIImage(
-            systemName: "signature",
-            withConfiguration: UIImage.SymbolConfiguration(pointSize: 36, weight: .semibold))
-        iconView.contentMode = .scaleAspectFit
-
-        statusLabel.text = title
-        statusLabel.font = .systemFont(ofSize: 17, weight: .semibold)
-        statusLabel.textAlignment = .center
-        statusLabel.translatesAutoresizingMaskIntoConstraints = false
-        statusLabel.numberOfLines = 0
-
-        detailLabel.text = detail
-        detailLabel.font = .systemFont(ofSize: 13, weight: .regular)
-        detailLabel.textColor = .secondaryLabel
-        detailLabel.textAlignment = .center
-        detailLabel.translatesAutoresizingMaskIntoConstraints = false
-        detailLabel.numberOfLines = 0
-
-        openButton.translatesAutoresizingMaskIntoConstraints = false
-        openButton.setTitle("Sign in Privio  →", for: .normal)
-        openButton.titleLabel?.font = .systemFont(ofSize: 16, weight: .semibold)
-        openButton.setTitleColor(.white, for: .normal)
-        openButton.backgroundColor = UIColor(
-            red: 0.06, green: 0.46, blue: 0.43, alpha: 1)
-        openButton.layer.cornerRadius = 14
-        openButton.contentEdgeInsets = UIEdgeInsets(
-            top: 12, left: 22, bottom: 12, right: 22)
-        openButton.isHidden = true
-        openButton.addTarget(self,
-                             action: #selector(openButtonTapped),
-                             for: .touchUpInside)
-
-        let stack = UIStackView(
-            arrangedSubviews: [iconView, statusLabel, detailLabel, openButton])
-        stack.axis = .vertical
-        stack.alignment = .center
-        stack.spacing = 10
-        stack.setCustomSpacing(16, after: detailLabel)
-        stack.translatesAutoresizingMaskIntoConstraints = false
-        card.addSubview(stack)
+        contentStack.axis = .vertical
+        contentStack.alignment = .fill
+        contentStack.spacing = 12
+        contentStack.translatesAutoresizingMaskIntoConstraints = false
+        card.addSubview(contentStack)
 
         NSLayoutConstraint.activate([
             card.centerXAnchor.constraint(equalTo: view.centerXAnchor),
             card.centerYAnchor.constraint(equalTo: view.centerYAnchor),
-            card.widthAnchor.constraint(equalToConstant: 280),
-            stack.topAnchor.constraint(equalTo: card.topAnchor, constant: 22),
-            stack.bottomAnchor.constraint(equalTo: card.bottomAnchor, constant: -22),
-            stack.leadingAnchor.constraint(equalTo: card.leadingAnchor, constant: 22),
-            stack.trailingAnchor.constraint(equalTo: card.trailingAnchor, constant: -22),
-            iconView.heightAnchor.constraint(equalToConstant: 40),
+            card.widthAnchor.constraint(equalToConstant: 320),
+            card.heightAnchor.constraint(lessThanOrEqualTo:
+                view.safeAreaLayoutGuide.heightAnchor, multiplier: 0.88),
+            contentStack.topAnchor.constraint(equalTo: card.topAnchor, constant: 20),
+            contentStack.bottomAnchor.constraint(equalTo: card.bottomAnchor, constant: -16),
+            contentStack.leadingAnchor.constraint(equalTo: card.leadingAnchor, constant: 16),
+            contentStack.trailingAnchor.constraint(equalTo: card.trailingAnchor, constant: -16),
         ])
     }
 
-    @objc private func openButtonTapped() {
-        guard let url = pendingOpenURL else {
-            extensionContext?.completeRequest(
-                returningItems: nil, completionHandler: nil)
-            return
+    private func clearContent() {
+        for view in contentStack.arrangedSubviews {
+            contentStack.removeArrangedSubview(view)
+            view.removeFromSuperview()
         }
-        openHostApp(url)
-        extensionContext?.completeRequest(
-            returningItems: nil, completionHandler: nil)
     }
 
-    private func updateStatus(success: Bool?, title: String, detail: String) {
-        DispatchQueue.main.async {
-            self.statusLabel.text = title
-            self.detailLabel.text = detail
-            if let success = success {
-                self.iconView.image = UIImage(
-                    systemName: success ? "checkmark.circle.fill" : "xmark.octagon.fill",
-                    withConfiguration: UIImage.SymbolConfiguration(pointSize: 36, weight: .semibold))
-                self.iconView.tintColor = success
-                    ? UIColor(red: 0.06, green: 0.46, blue: 0.43, alpha: 1)
-                    : .systemRed
-            }
+    private func showLoadingState() {
+        DispatchQueue.main.async { [weak self] in
+            guard let self = self else { return }
+            self.clearContent()
+            let icon = UIImageView(image: UIImage(
+                systemName: "signature",
+                withConfiguration: UIImage.SymbolConfiguration(
+                    pointSize: 36, weight: .semibold)))
+            icon.tintColor = self.brandTeal
+            icon.contentMode = .scaleAspectFit
+            icon.heightAnchor.constraint(equalToConstant: 40).isActive = true
+
+            let title = UILabel()
+            title.text = "Queuing for Quick Sign…"
+            title.font = .systemFont(ofSize: 17, weight: .semibold)
+            title.textAlignment = .center
+
+            let detail = UILabel()
+            detail.text = "Reading the PDF"
+            detail.font = .systemFont(ofSize: 13)
+            detail.textColor = .secondaryLabel
+            detail.textAlignment = .center
+
+            self.contentStack.alignment = .center
+            self.contentStack.addArrangedSubview(icon)
+            self.contentStack.addArrangedSubview(title)
+            self.contentStack.addArrangedSubview(detail)
         }
+    }
+
+    private func showErrorState(title: String, detail: String) {
+        DispatchQueue.main.async { [weak self] in
+            guard let self = self else { return }
+            self.clearContent()
+            let icon = UIImageView(image: UIImage(
+                systemName: "xmark.octagon.fill",
+                withConfiguration: UIImage.SymbolConfiguration(
+                    pointSize: 36, weight: .semibold)))
+            icon.tintColor = .systemRed
+            icon.contentMode = .scaleAspectFit
+            icon.heightAnchor.constraint(equalToConstant: 40).isActive = true
+
+            let titleLabel = UILabel()
+            titleLabel.text = title
+            titleLabel.font = .systemFont(ofSize: 17, weight: .semibold)
+            titleLabel.textAlignment = .center
+            titleLabel.numberOfLines = 0
+
+            let detailLabel = UILabel()
+            detailLabel.text = detail
+            detailLabel.font = .systemFont(ofSize: 13)
+            detailLabel.textColor = .secondaryLabel
+            detailLabel.textAlignment = .center
+            detailLabel.numberOfLines = 0
+
+            self.contentStack.alignment = .center
+            self.contentStack.addArrangedSubview(icon)
+            self.contentStack.addArrangedSubview(titleLabel)
+            self.contentStack.addArrangedSubview(detailLabel)
+        }
+    }
+
+    private func showSignState(fileName: String?) {
+        DispatchQueue.main.async { [weak self] in
+            guard let self = self else { return }
+            self.clearContent()
+            self.contentStack.alignment = .fill
+
+            // Same header as ShareViewController so the two extensions
+            // read as one consistent feature, not two divergent surfaces.
+            let checkIcon = UIImageView(image: UIImage(
+                systemName: "checkmark.circle.fill",
+                withConfiguration: UIImage.SymbolConfiguration(
+                    pointSize: 28, weight: .semibold)))
+            checkIcon.tintColor = self.brandTeal
+            checkIcon.contentMode = .scaleAspectFit
+
+            let savedTitle = UILabel()
+            savedTitle.text = "Saved to Privio"
+            savedTitle.font = .systemFont(ofSize: 16, weight: .semibold)
+
+            let nameLabel = UILabel()
+            nameLabel.text = fileName ?? "Shared PDF"
+            nameLabel.font = .systemFont(ofSize: 12)
+            nameLabel.textColor = .secondaryLabel
+            nameLabel.lineBreakMode = .byTruncatingMiddle
+
+            let textStack = UIStackView(arrangedSubviews: [savedTitle, nameLabel])
+            textStack.axis = .vertical
+            textStack.spacing = 2
+
+            let headerStack = UIStackView(
+                arrangedSubviews: [checkIcon, textStack])
+            headerStack.axis = .horizontal
+            headerStack.alignment = .center
+            headerStack.spacing = 12
+            checkIcon.widthAnchor.constraint(equalToConstant: 32).isActive = true
+            self.contentStack.addArrangedSubview(headerStack)
+
+            let openWithLabel = UILabel()
+            openWithLabel.text = "OPEN WITH"
+            openWithLabel.font = .systemFont(ofSize: 11, weight: .semibold)
+            openWithLabel.textColor = .tertiaryLabel
+            self.contentStack.setCustomSpacing(18, after: headerStack)
+            self.contentStack.addArrangedSubview(openWithLabel)
+
+            // The one row Quick Sign needs — Sign. Same visual treatment
+            // as ShareViewController's rows, no chevron, single-tool list.
+            let signTool = QuickSignToolRow.Tool(
+                id: "sign",
+                title: "Sign",
+                subtitle: "Draw and place a signature",
+                symbolName: "signature")
+            let row = QuickSignToolRow(tool: signTool, brandTeal: self.brandTeal)
+            row.addTarget(self, action: #selector(self.signRowTapped),
+                          for: .touchUpInside)
+            self.contentStack.addArrangedSubview(row)
+
+            // Cancel
+            let cancel = UIButton(type: .system)
+            cancel.setTitle("Cancel", for: .normal)
+            cancel.titleLabel?.font = .systemFont(ofSize: 15, weight: .semibold)
+            cancel.setTitleColor(.secondaryLabel, for: .normal)
+            cancel.addTarget(self, action: #selector(self.cancelTapped),
+                             for: .touchUpInside)
+            self.contentStack.setCustomSpacing(8, after: row)
+            self.contentStack.addArrangedSubview(cancel)
+        }
+    }
+
+    @objc private func signRowTapped() {
+        if let defaults = UserDefaults(suiteName: appGroupId) {
+            defaults.set("sign", forKey: preferredActionKey)
+        }
+        if let url = pendingOpenURL ?? URL(string:
+            "\(wakeUpScheme)://\(wakeUpHost)") {
+            openHostApp(url)
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { [weak self] in
+            self?.extensionContext?.completeRequest(
+                returningItems: nil, completionHandler: nil)
+        }
+    }
+
+    @objc private func cancelTapped() {
+        extensionContext?.completeRequest(returningItems: nil,
+                                          completionHandler: nil)
     }
 
     private func processAttachments() {
@@ -138,7 +229,7 @@ class QuickSignViewController: UIViewController {
               let providers = item.attachments,
               !providers.isEmpty
         else {
-            finish(savedCount: 0)
+            finish(savedPaths: [])
             return
         }
 
@@ -149,17 +240,17 @@ class QuickSignViewController: UIViewController {
         }
 
         let group = DispatchGroup()
-        var savedCount = 0
+        var savedPaths: [String] = []
         for provider in pdfProviders {
             group.enter()
             handleAttachment(provider) { path in
-                if path != nil { savedCount += 1 }
+                if let p = path { savedPaths.append(p) }
                 group.leave()
             }
         }
 
         group.notify(queue: .main) { [weak self] in
-            self?.finish(savedCount: savedCount)
+            self?.finish(savedPaths: savedPaths)
         }
     }
 
@@ -218,44 +309,42 @@ class QuickSignViewController: UIViewController {
         }
     }
 
-    private func finish(savedCount: Int) {
+    private func finish(savedPaths: [String]) {
         let groupOk = FileManager.default.containerURL(
             forSecurityApplicationGroupIdentifier: appGroupId) != nil
 
-        let title: String
-        let detail: String
-        let success: Bool
         if !groupOk {
-            success = false
-            title = "App Group unavailable"
-            detail = "Privio's shared storage couldn't be opened.\n" +
-                     "Reinstall the app or contact support."
-        } else if savedCount == 0 {
-            success = false
-            title = "No PDF found"
-            detail = "The attachment didn't contain a readable PDF."
-        } else {
-            success = true
-            // Tell ShareIntentService which tool to route to — bypasses
-            // the chooser sheet so "Quick Sign" actually feels quick.
-            if let defaults = UserDefaults(suiteName: appGroupId) {
-                defaults.set("sign", forKey: preferredActionKey)
-            }
-            title = "Ready for Quick Sign"
-            detail = "Tap below to open the Sign tool."
+            showErrorState(
+                title: "App Group unavailable",
+                detail: "Privio's shared storage couldn't be opened.\n" +
+                        "Reinstall the app or contact support.")
+            scheduleAutoDismiss(after: 2.0)
+            return
         }
-        updateStatus(success: success, title: title, detail: detail)
-
-        if success,
-           let url = URL(string: "\(wakeUpScheme)://\(wakeUpHost)") {
-            pendingOpenURL = url
-            DispatchQueue.main.async { [weak self] in
-                self?.openButton.isHidden = false
-            }
+        if savedPaths.isEmpty {
+            showErrorState(
+                title: "No PDF found",
+                detail: "The attachment didn't contain a readable PDF.")
+            scheduleAutoDismiss(after: 2.0)
             return
         }
 
-        DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) { [weak self] in
+        pendingOpenURL = URL(string: "\(wakeUpScheme)://\(wakeUpHost)")
+
+        var displayName: String?
+        if let first = savedPaths.first {
+            let base = (first as NSString).lastPathComponent
+            if let underscore = base.firstIndex(of: "_") {
+                displayName = String(base[base.index(after: underscore)...])
+            } else {
+                displayName = base
+            }
+        }
+        showSignState(fileName: displayName)
+    }
+
+    private func scheduleAutoDismiss(after seconds: TimeInterval) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + seconds) { [weak self] in
             self?.extensionContext?.completeRequest(
                 returningItems: nil, completionHandler: nil)
         }
@@ -277,6 +366,81 @@ class QuickSignViewController: UIViewController {
                 return
             }
             responder = r.next
+        }
+    }
+}
+
+// MARK: - QuickSignToolRow
+
+/// Visual twin of ShareViewController.ToolRowControl — same layout, no
+/// chevron, single tap target. Kept here because Swift extensions can't
+/// see private types declared in the host app's compilation unit.
+private final class QuickSignToolRow: UIControl {
+    struct Tool {
+        let id: String
+        let title: String
+        let subtitle: String
+        let symbolName: String
+    }
+
+    let tool: Tool
+
+    init(tool: Tool, brandTeal: UIColor) {
+        self.tool = tool
+        super.init(frame: .zero)
+        backgroundColor = .secondarySystemBackground
+        layer.cornerRadius = 14
+
+        let iconView = UIImageView(image: UIImage(
+            systemName: tool.symbolName,
+            withConfiguration: UIImage.SymbolConfiguration(
+                pointSize: 20, weight: .semibold)))
+        iconView.translatesAutoresizingMaskIntoConstraints = false
+        iconView.tintColor = brandTeal
+        iconView.contentMode = .scaleAspectFit
+
+        let title = UILabel()
+        title.text = tool.title
+        title.font = .systemFont(ofSize: 15, weight: .semibold)
+        title.textColor = .label
+
+        let subtitle = UILabel()
+        subtitle.text = tool.subtitle
+        subtitle.font = .systemFont(ofSize: 12)
+        subtitle.textColor = .secondaryLabel
+        subtitle.numberOfLines = 1
+
+        let labels = UIStackView(arrangedSubviews: [title, subtitle])
+        labels.axis = .vertical
+        labels.spacing = 1
+
+        let stack = UIStackView(arrangedSubviews: [iconView, labels])
+        stack.axis = .horizontal
+        stack.alignment = .center
+        stack.spacing = 12
+        stack.translatesAutoresizingMaskIntoConstraints = false
+        stack.isUserInteractionEnabled = false
+        addSubview(stack)
+
+        NSLayoutConstraint.activate([
+            iconView.widthAnchor.constraint(equalToConstant: 28),
+            iconView.heightAnchor.constraint(equalToConstant: 28),
+            stack.topAnchor.constraint(equalTo: topAnchor, constant: 10),
+            stack.bottomAnchor.constraint(equalTo: bottomAnchor, constant: -10),
+            stack.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 12),
+            stack.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -12),
+        ])
+    }
+
+    required init?(coder: NSCoder) { fatalError("init(coder:) not implemented") }
+
+    override var isHighlighted: Bool {
+        didSet {
+            UIView.animate(withDuration: 0.12) {
+                self.transform = self.isHighlighted
+                    ? CGAffineTransform(scaleX: 0.97, y: 0.97) : .identity
+                self.alpha = self.isHighlighted ? 0.7 : 1
+            }
         }
     }
 }
