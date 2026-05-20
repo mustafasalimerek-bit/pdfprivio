@@ -275,21 +275,21 @@ class ShareViewController: UIViewController {
             return
         }
 
-        // extensionContext.open() is the Apple-blessed path for share
-        // extensions to wake the host app — but ONLY for Universal
-        // Links. Custom URL schemes fired this way are silently
-        // dropped on iOS 17+. The completion handler tells us whether
-        // iOS picked the URL up.
-        extensionContext?.open(url) { [weak self] success in
-            // If Universal Link routing fails for any reason (AASA
-            // not yet cached, entitlement mismatch, etc.), fall back
-            // to the legacy responder-chain pattern with the custom
-            // URL scheme. Both bets, then dismiss.
-            if !success {
-                if let legacy = URL(string: "pdfprivio://share") {
-                    self?.openHostAppLegacy(legacy)
-                }
-            }
+        // Fire the Universal Link via BOTH channels in parallel — Apple
+        // is inconsistent about which one share extensions are allowed
+        // to use on iOS 17+:
+        //   * extensionContext.open(_:) — documented for iMessage
+        //     extensions only, but reported to work for some share
+        //     extensions on newer iOS. Returns success=false silently
+        //     when iOS refuses.
+        //   * responder-chain `openURL:` selector — the classic
+        //     1Password / Bear trick. With a custom URL scheme iOS 17+
+        //     rejects it; with a Universal Link iOS treats it as a
+        //     normal web URL launch and IS allowed to honour it via
+        //     the AASA-registered app association.
+        // Firing both maximises the odds one path wakes the host.
+        openHostAppViaResponder(url)
+        extensionContext?.open(url) { [weak self] _ in
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
                 self?.extensionContext?.completeRequest(
                     returningItems: nil, completionHandler: nil)
@@ -461,14 +461,15 @@ class ShareViewController: UIViewController {
         }
     }
 
-    /// Legacy fallback for waking the host app via the
-    /// `pdfprivio://share` custom URL scheme. iOS 17+ blocks this from
-    /// extensions even for user-initiated taps, so the Universal-Link
-    /// path above is the primary route. This stays as a safety net for
-    /// the iOS 16 deployment-target ≤ 17 window and for the rare case
-    /// where extensionContext.open() reports failure (e.g. Apple's
-    /// AASA CDN hasn't picked up the file yet).
-    private func openHostAppLegacy(_ url: URL) {
+    /// Walk the responder chain looking for any object that responds
+    /// to the legacy `openURL:` selector and fire the URL through it.
+    /// UIKit injects a private UIApplication proxy into the share-
+    /// extension responder chain that handles this selector — calling
+    /// it bypasses the iOS 17+ extensionContext.open() block. With a
+    /// Universal Link URL iOS routes through the AASA association and
+    /// brings the host app to the foreground; with a custom URL
+    /// scheme iOS 17+ drops the request silently.
+    private func openHostAppViaResponder(_ url: URL) {
         let selector = sel_registerName("openURL:")
         var responder: UIResponder? = self
         while let r = responder {

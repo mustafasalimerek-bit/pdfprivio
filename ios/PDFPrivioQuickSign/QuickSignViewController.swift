@@ -220,15 +220,12 @@ class QuickSignViewController: UIViewController {
             return
         }
 
-        // Universal Link path — iOS 17+ honours this from share/action
-        // extensions where custom URL schemes are silently dropped.
-        // Fall back to the legacy custom-scheme responder-chain trick
-        // if extensionContext.open() reports failure (e.g. AASA not
-        // yet cached on Apple's CDN).
-        extensionContext?.open(url) { [weak self] success in
-            if !success, let legacy = URL(string: "pdfprivio://share") {
-                self?.openHostAppLegacy(legacy)
-            }
+        // Fire the Universal Link via both channels in parallel — see
+        // ShareViewController for the full rationale. iOS 17+ is
+        // inconsistent about which path share/action extensions are
+        // allowed to use, so we maximise the odds by firing both.
+        openHostAppViaResponder(url)
+        extensionContext?.open(url) { [weak self] _ in
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
                 self?.extensionContext?.completeRequest(
                     returningItems: nil, completionHandler: nil)
@@ -365,10 +362,11 @@ class QuickSignViewController: UIViewController {
         }
     }
 
-    /// Legacy fallback for waking the host app via custom URL scheme.
-    /// See ShareViewController's matching method — Universal Link is
-    /// the primary route, this is the safety net.
-    private func openHostAppLegacy(_ url: URL) {
+    /// Responder-chain `openURL:` fire. With a Universal Link URL iOS
+    /// honours the AASA association and brings Privio to the
+    /// foreground via the standard web-URL routing path. See
+    /// ShareViewController for the long-form rationale.
+    private func openHostAppViaResponder(_ url: URL) {
         let selector = sel_registerName("openURL:")
         var responder: UIResponder? = self
         while let r = responder {
