@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:receive_sharing_intent/receive_sharing_intent.dart';
 
@@ -68,6 +69,17 @@ class _RootScaffoldState extends ConsumerState<RootScaffold>
     // post-frame callback also catches the cold-launch share payload
     // that ShareIntentService.init() emits during app boot.
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      // Re-apply the orientation policy now that a view is attached.
+      // main() runs before the scene connects on a URL-scheme cold
+      // launch, so it falls back to portraitUp; here we know whether
+      // we're on iPad and can lift the lock.
+      final shortest = MediaQuery.sizeOf(context).shortestSide;
+      SystemChrome.setPreferredOrientations(
+        shortest >= 600
+            ? const <DeviceOrientation>[]
+            : const [DeviceOrientation.portraitUp],
+      );
       _shareSub = ShareIntentService.instance.intents.listen((files) {
         if (!mounted) return;
         SharedFileActionSheet.show(context, files);

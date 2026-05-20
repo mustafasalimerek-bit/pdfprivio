@@ -66,15 +66,22 @@ Future<void> main() async {
     // iPhone stays portrait-locked — the tool screens are vertical
     // forms and rotating them helps nobody. iPad gets all four
     // orientations so Magic-Keyboard-default landscape and Stage
-    // Manager rotation work as users expect. Display API (over the
-    // window-relative physicalSize) keeps the classification correct
-    // even if the app is restored into a Split View pane.
-    final firstView =
-        WidgetsBinding.instance.platformDispatcher.views.first;
-    final display = firstView.display;
-    final shortestSidePt =
-        display.size.shortestSide / display.devicePixelRatio;
-    final isIPadDevice = Platform.isIOS && shortestSidePt >= 600;
+    // Manager rotation work as users expect.
+    //
+    // `implicitView` can be null when the app is cold-launched via a
+    // URL scheme (Share Extension / Quick Sign hand off `pdfprivio://`
+    // before the scene attaches), so `.views.first` used to throw and
+    // crash main() before runApp ever ran. Treat the no-view case as
+    // iPhone-default — RootScaffold can re-evaluate via `View.of`
+    // once it has a BuildContext.
+    final view = WidgetsBinding.instance.platformDispatcher.implicitView;
+    bool isIPadDevice = false;
+    if (Platform.isIOS && view != null) {
+      final display = view.display;
+      final shortestSidePt =
+          display.size.shortestSide / display.devicePixelRatio;
+      isIPadDevice = shortestSidePt >= 600;
+    }
     await SystemChrome.setPreferredOrientations(
       isIPadDevice
           ? const <DeviceOrientation>[] // [] = all orientations allowed
