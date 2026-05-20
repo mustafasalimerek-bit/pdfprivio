@@ -27,12 +27,82 @@ class ShareViewController: UIViewController {
     private let wakeUpScheme = "pdfprivio"
     private let wakeUpHost = "share"
 
+    // Visible diagnostic UI — replaces the invisible (alpha=0) flow we
+    // were using before. iOS 17+ blocks programmatic host-app launches
+    // from share extensions, so the only reliable wake-up is the user
+    // opening Privio manually. The card tells them the save succeeded
+    // (or shows the exact failure mode) so we can finally see what's
+    // happening on real-device builds instead of guessing.
+    private let statusLabel = UILabel()
+    private let detailLabel = UILabel()
+    private let iconView = UIImageView()
+
     override func viewDidLoad() {
         super.viewDidLoad()
-        view.backgroundColor = .clear
-        // We don't want a visible UI — process attachments then dismiss.
-        view.alpha = 0
+        installStatusCard(title: "Saving to Privio…", detail: "Reading attachment")
         processAttachments()
+    }
+
+    private func installStatusCard(title: String, detail: String) {
+        view.backgroundColor = UIColor.black.withAlphaComponent(0.45)
+        let card = UIView()
+        card.backgroundColor = .systemBackground
+        card.layer.cornerRadius = 18
+        card.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(card)
+
+        iconView.translatesAutoresizingMaskIntoConstraints = false
+        iconView.tintColor = UIColor(red: 0.06, green: 0.46, blue: 0.43, alpha: 1)
+        iconView.image = UIImage(
+            systemName: "arrow.down.circle",
+            withConfiguration: UIImage.SymbolConfiguration(pointSize: 36, weight: .semibold))
+        iconView.contentMode = .scaleAspectFit
+
+        statusLabel.text = title
+        statusLabel.font = .systemFont(ofSize: 17, weight: .semibold)
+        statusLabel.textAlignment = .center
+        statusLabel.translatesAutoresizingMaskIntoConstraints = false
+        statusLabel.numberOfLines = 0
+
+        detailLabel.text = detail
+        detailLabel.font = .systemFont(ofSize: 13, weight: .regular)
+        detailLabel.textColor = .secondaryLabel
+        detailLabel.textAlignment = .center
+        detailLabel.translatesAutoresizingMaskIntoConstraints = false
+        detailLabel.numberOfLines = 0
+
+        let stack = UIStackView(arrangedSubviews: [iconView, statusLabel, detailLabel])
+        stack.axis = .vertical
+        stack.alignment = .center
+        stack.spacing = 10
+        stack.translatesAutoresizingMaskIntoConstraints = false
+        card.addSubview(stack)
+
+        NSLayoutConstraint.activate([
+            card.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            card.centerYAnchor.constraint(equalTo: view.centerYAnchor),
+            card.widthAnchor.constraint(equalToConstant: 280),
+            stack.topAnchor.constraint(equalTo: card.topAnchor, constant: 22),
+            stack.bottomAnchor.constraint(equalTo: card.bottomAnchor, constant: -22),
+            stack.leadingAnchor.constraint(equalTo: card.leadingAnchor, constant: 22),
+            stack.trailingAnchor.constraint(equalTo: card.trailingAnchor, constant: -22),
+            iconView.heightAnchor.constraint(equalToConstant: 40),
+        ])
+    }
+
+    private func updateStatus(success: Bool?, title: String, detail: String) {
+        DispatchQueue.main.async {
+            self.statusLabel.text = title
+            self.detailLabel.text = detail
+            if let success = success {
+                self.iconView.image = UIImage(
+                    systemName: success ? "checkmark.circle.fill" : "xmark.octagon.fill",
+                    withConfiguration: UIImage.SymbolConfiguration(pointSize: 36, weight: .semibold))
+                self.iconView.tintColor = success
+                    ? UIColor(red: 0.06, green: 0.46, blue: 0.43, alpha: 1)
+                    : .systemRed
+            }
+        }
     }
 
     private func processAttachments() {
@@ -152,13 +222,44 @@ class ShareViewController: UIViewController {
     }
 
     private func finish(savedCount: Int) {
-        DispatchQueue.main.async { [weak self] in
-            guard let self = self else { return }
-            if savedCount > 0, let url = URL(string:
-                "\(self.wakeUpScheme)://\(self.wakeUpHost)") {
-                self.openHostApp(url)
-            }
-            self.extensionContext?.completeRequest(
+        let groupOk = FileManager.default.containerURL(
+            forSecurityApplicationGroupIdentifier: appGroupId) != nil
+
+        let title: String
+        let detail: String
+        let success: Bool
+        if !groupOk {
+            success = false
+            title = "App Group unavailable"
+            detail = "Privio's shared storage couldn't be opened.\n" +
+                     "Reinstall the app or contact support."
+        } else if savedCount == 0 {
+            success = false
+            title = "No file shared"
+            detail = "Couldn't read the attachment. Try sharing the PDF " +
+                     "directly instead of a link."
+        } else {
+            success = true
+            title = "Saved to Privio"
+            detail = "Open Privio to keep going."
+        }
+        updateStatus(success: success, title: title, detail: detail)
+
+        if success, let url = URL(string:
+            "\(self.wakeUpScheme)://\(self.wakeUpHost)") {
+            // Best-effort wake-up — iOS 17+ usually blocks programmatic
+            // host-app launches from share extensions, so we don't rely
+            // on it. The card above tells the user to switch to Privio
+            // manually; the file is already in the App Group so the
+            // host app's resume-drain catches it either way.
+            openHostApp(url)
+        }
+
+        // Keep the status card on screen for a beat so the user can
+        // actually read it before the share sheet pops back to the
+        // host (WhatsApp / Mail / etc.).
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { [weak self] in
+            self?.extensionContext?.completeRequest(
                 returningItems: nil, completionHandler: nil)
         }
     }
