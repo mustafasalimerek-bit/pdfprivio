@@ -36,28 +36,6 @@ class ShareIntentService {
   /// filtered out so listeners only see real payloads.
   Stream<List<SharedMediaFile>> get intents => _controller.stream;
 
-  /// Debug-only: dump the App Group container URL the host sees and
-  /// list every file in the SharedExtensionDrop folder it can read.
-  /// Used by the startup diagnostic dialog so we can verify the
-  /// extension and the host actually share the same physical
-  /// container.
-  Future<Map<String, dynamic>> diagnosticInfo() async {
-    if (!Platform.isIOS) {
-      return {'platform': 'not-ios'};
-    }
-    try {
-      final result = await _shareExtChannel
-          .invokeMapMethod<String, dynamic>('diagnosticInfo');
-      return Map<String, dynamic>.from(result ?? {});
-    } on MissingPluginException {
-      return {'error': 'MissingPluginException — bridge not registered'};
-    } on PlatformException catch (e) {
-      return {'error': 'PlatformException: ${e.message}'};
-    } catch (e) {
-      return {'error': 'Unknown: $e'};
-    }
-  }
-
   /// Wire the package's two entry points. Safe to call multiple times.
   ///
   /// init() only wires the **hot** path — the live media stream and the
@@ -159,12 +137,19 @@ class ShareIntentService {
 
   /// Core drain — moves every file the PDFPrivioShare / PDFPrivioQuickSign
   /// extensions dumped into the App Group's SharedExtensionDrop folder
-  /// into our own Documents/Inbox, pulls the preferred-action hint, and
-  /// **returns** the imported list without touching the stream. Stream
-  /// emission is the caller's call: hot paths use [drainExtensionDrop]
-  /// (which wraps this + emits); the cold-launch caller pulls the list
-  /// via [consumeInitial] and dispatches it directly so it doesn't fire
-  /// before listeners subscribe.
+  /// into our own Documents/Imported, pulls the preferred-action hint,
+  /// and **returns** the imported list without touching the stream.
+  /// Stream emission is the caller's call: hot paths use
+  /// [drainExtensionDrop] (which wraps this + emits); the cold-launch
+  /// caller pulls the list via [consumeInitial] and dispatches it
+  /// directly so it doesn't fire before listeners subscribe.
+  ///
+  /// The destination subfolder is `Imported/`, not `Inbox/`. iOS reserves
+  /// `Documents/Inbox/` for UIDocumentBrowserViewController + the
+  /// "Open in…" flow — apps can read from it but Directory.create
+  /// is rejected with "Operation not permitted, errno = 1", which is
+  /// the silent failure that kept the action sheet from ever showing
+  /// on shared files (builds 17–24).
   Future<List<SharedMediaFile>> _drainSilent() async {
     if (!Platform.isIOS) return const [];
     final imported = <SharedMediaFile>[];
@@ -173,7 +158,7 @@ class ShareIntentService {
       if (paths == null || paths.isEmpty) return imported;
 
       final docs = await getApplicationDocumentsDirectory();
-      final inbox = Directory(p.join(docs.path, 'Inbox'));
+      final inbox = Directory(p.join(docs.path, 'Imported'));
       if (!await inbox.exists()) {
         await inbox.create(recursive: true);
       }
@@ -221,17 +206,22 @@ class ShareIntentService {
     return imported;
   }
 
-  /// Copy the iOS-supplied file path into the app's Documents/Inbox
-  /// so it persists past the share callback (iOS may purge the original
-  /// temp file as soon as the extension finishes) and so the user can
-  /// also see it in the Files app under "On My iPhone / Privio /
-  /// Inbox" if they ever need it again.
+  /// Copy the iOS-supplied file path into the app's Documents/Imported
+  /// folder so it persists past the share callback (iOS may purge the
+  /// original temp file as soon as the extension finishes) and so the
+  /// user can also see it in the Files app under "On My iPhone /
+  /// Privio / Imported" if they ever need it again.
+  ///
+  /// Why `Imported` and not `Inbox`: see the matching note on
+  /// `_drainSilent`. iOS owns the `Documents/Inbox/` directory and
+  /// rejects Directory.create on it — the original code that wrote
+  /// there silently failed for every share-extension cold launch.
   static Future<File?> importToInbox(SharedMediaFile shared) async {
     try {
       final src = File(shared.path);
       if (!await src.exists()) return null;
       final docs = await getApplicationDocumentsDirectory();
-      final inbox = Directory(p.join(docs.path, 'Inbox'));
+      final inbox = Directory(p.join(docs.path, 'Imported'));
       if (!await inbox.exists()) {
         await inbox.create(recursive: true);
       }

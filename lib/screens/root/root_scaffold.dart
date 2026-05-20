@@ -84,79 +84,26 @@ class _RootScaffoldState extends ConsumerState<RootScaffold>
         SharedFileActionSheet.show(context, files);
       });
       _intentSub = AppIntentService.instance.routes.listen(_handleIntentRoute);
-      await _runStartupDrainDiagnostic();
+      var initialShares =
+          await ShareIntentService.instance.consumeInitial();
+      if (initialShares.isEmpty) {
+        // Retry once after a beat — the implicit Flutter engine's
+        // plugin registration can race against the post-frame callback
+        // in scene mode (FlutterImplicitEngineDelegate). If the bridge
+        // wasn't installed yet, the first call quietly returned empty.
+        await Future<void>.delayed(const Duration(milliseconds: 600));
+        if (!mounted) return;
+        initialShares = await ShareIntentService.instance.consumeInitial();
+      }
+      if (mounted && initialShares.isNotEmpty) {
+        SharedFileActionSheet.show(context, initialShares);
+      }
       final pendingRoute =
           await AppIntentService.instance.consumePending();
       if (mounted && pendingRoute != null) {
         _handleIntentRoute(pendingRoute);
       }
     });
-  }
-
-  /// Modal diagnostic dialog that always shows on launch (build 24+).
-  /// The previous SnackBar attempt either silently failed because
-  /// ScaffoldMessenger wasn't ready yet or the user missed it. An
-  /// AlertDialog is impossible to miss and gives us the exact App
-  /// Group container path the host sees, the list of files it found
-  /// in the drop folder, and any plugin-channel errors. Compare the
-  /// "Group: …xxx" tag to the one the share extension showed and we
-  /// know whether the two processes share the same physical folder.
-  Future<void> _runStartupDrainDiagnostic() async {
-    Map<String, dynamic> info = {};
-    String? errorMsg;
-    int count = 0;
-
-    try {
-      info = await ShareIntentService.instance.diagnosticInfo();
-      var initialShares =
-          await ShareIntentService.instance.consumeInitial();
-      if (initialShares.isEmpty) {
-        await Future<void>.delayed(const Duration(milliseconds: 600));
-        if (!mounted) return;
-        initialShares = await ShareIntentService.instance.consumeInitial();
-      }
-      count = initialShares.length;
-      if (mounted && initialShares.isNotEmpty) {
-        SharedFileActionSheet.show(context, initialShares);
-      }
-    } catch (e, st) {
-      errorMsg = '$e\n$st';
-    }
-
-    if (!mounted) return;
-
-    final containerPath = (info['containerPath'] ?? '<nil>').toString();
-    final containerTag = containerPath.length > 12
-        ? '…${containerPath.substring(containerPath.length - 12)}'
-        : containerPath;
-    final dropFiles = (info['dropFolderFiles'] as List?)?.cast<String>() ?? [];
-
-    await showDialog<void>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(count > 0 ? 'Drained $count file(s)' : 'No shared files'),
-        content: SingleChildScrollView(
-          child: SelectableText(
-            'consumeInitial: $count file(s)\n'
-            '\n'
-            'App Group: ${info['appGroupId'] ?? '<missing>'}\n'
-            'Container tag: $containerTag\n'
-            'Drop folder exists: ${info['dropFolderExists'] ?? '?'}\n'
-            'Files in drop folder: ${dropFiles.length}\n'
-            '${dropFiles.isEmpty ? '' : dropFiles.join("\n")}\n'
-            '${errorMsg != null ? "\nError: $errorMsg" : ""}'
-            '${info['error'] != null ? "\nBridge: ${info['error']}" : ""}',
-            style: const TextStyle(fontSize: 12),
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(),
-            child: const Text('OK'),
-          ),
-        ],
-      ),
-    );
   }
 
   @override

@@ -26,14 +26,16 @@ class SharedFileActionSheet {
   ) async {
     if (files.isEmpty) return;
     final first = files.first;
-    // CFBundleDocumentTypes path drops files in temp / Files
-    // sandbox — copy into Inbox first. The PDFPrivioShare /
-    // PDFPrivioQuickSign extensions have already moved their file
-    // into Documents/Inbox, so importToInbox just no-ops the copy
-    // when the source already lives there.
+    // The drain pipeline writes into Documents/Imported (renamed from
+    // Inbox because iOS reserves the latter — Directory.create on
+    // `Documents/Inbox/` errors with "Operation not permitted").
+    // CFBundleDocumentTypes "Open in…" flows still land in the
+    // iOS-managed Documents/Inbox, so we accept both as already-local
+    // files and skip the re-import.
     File workingFile;
     final src = File(first.path);
-    if (src.path.contains('/Documents/Inbox/')) {
+    if (src.path.contains('/Documents/Imported/') ||
+        src.path.contains('/Documents/Inbox/')) {
       workingFile = src;
     } else {
       final imported = await ShareIntentService.importToInbox(first);
