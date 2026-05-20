@@ -24,134 +24,257 @@ import UniformTypeIdentifiers
 class ShareViewController: UIViewController {
     private let appGroupId = "group.com.erekstudio.pdfprivio"
     private let dropFolderName = "SharedExtensionDrop"
+    private let preferredActionKey = "pdfprivio.preferredShareAction"
     private let wakeUpScheme = "pdfprivio"
     private let wakeUpHost = "share"
+    private let brandTeal = UIColor(red: 0.06, green: 0.46, blue: 0.43, alpha: 1)
 
-    // Visible diagnostic UI — replaces the invisible (alpha=0) flow we
-    // were using before. iOS 17+ blocks programmatic host-app launches
-    // from share extensions, so the only reliable wake-up is the user
-    // opening Privio manually. The card tells them the save succeeded
-    // (or shows the exact failure mode) so we can finally see what's
-    // happening on real-device builds instead of guessing.
-    private let statusLabel = UILabel()
-    private let detailLabel = UILabel()
-    private let iconView = UIImageView()
-    private let openButton = UIButton(type: .system)
+    // The card swaps between three states managed by setCardContent():
+    //   1. Loading — spinner + "Saving…" while we process the attachment
+    //   2. Error   — red icon + reason + auto-dismiss (App Group missing,
+    //                no PDF found, etc.)
+    //   3. Picker  — file confirmation + the list of tools the user can
+    //                hand off to Privio
+    // Each Tool below maps to a `pdfprivio.preferredShareAction` value
+    // that the host app's SharedFileActionSheet already consumes (see
+    // _routeForAction in lib/widgets/shared_file_action_sheet.dart).
+    fileprivate struct Tool {
+        let id: String?      // nil = no preferred action, fall through to chooser
+        let title: String
+        let subtitle: String
+        let symbolName: String
+    }
+
+    private let tools: [Tool] = [
+        Tool(id: "sign", title: "Sign", subtitle: "Draw and place a signature",
+             symbolName: "signature"),
+        Tool(id: "redact", title: "Redact",
+             subtitle: "Black out sensitive text",
+             symbolName: "rectangle.dashed"),
+        Tool(id: "merge", title: "Merge with another PDF",
+             subtitle: "Combine multiple files",
+             symbolName: "rectangle.stack"),
+        Tool(id: "ocr", title: "OCR",
+             subtitle: "Make a scanned PDF searchable",
+             symbolName: "doc.text.magnifyingglass"),
+        Tool(id: "pii", title: "Find sensitive data",
+             subtitle: "SSN, EIN, cards, emails, phones",
+             symbolName: "shield"),
+        Tool(id: nil, title: "Other tools…",
+             subtitle: "Open Privio for the full menu",
+             symbolName: "ellipsis.circle"),
+    ]
+
+    private let card = UIView()
+    private let contentStack = UIStackView()
     private var pendingOpenURL: URL?
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        installStatusCard(title: "Saving to Privio…", detail: "Reading attachment")
+        installShell()
+        showLoadingState()
         processAttachments()
     }
 
-    private func installStatusCard(title: String, detail: String) {
+    // MARK: - Shell + state swapping
+
+    private func installShell() {
         view.backgroundColor = UIColor.black.withAlphaComponent(0.45)
-        let card = UIView()
         card.backgroundColor = .systemBackground
-        card.layer.cornerRadius = 18
+        card.layer.cornerRadius = 22
         card.translatesAutoresizingMaskIntoConstraints = false
         view.addSubview(card)
 
-        iconView.translatesAutoresizingMaskIntoConstraints = false
-        iconView.tintColor = UIColor(red: 0.06, green: 0.46, blue: 0.43, alpha: 1)
-        iconView.image = UIImage(
-            systemName: "arrow.down.circle",
-            withConfiguration: UIImage.SymbolConfiguration(pointSize: 36, weight: .semibold))
-        iconView.contentMode = .scaleAspectFit
-
-        statusLabel.text = title
-        statusLabel.font = .systemFont(ofSize: 17, weight: .semibold)
-        statusLabel.textAlignment = .center
-        statusLabel.translatesAutoresizingMaskIntoConstraints = false
-        statusLabel.numberOfLines = 0
-
-        detailLabel.text = detail
-        detailLabel.font = .systemFont(ofSize: 13, weight: .regular)
-        detailLabel.textColor = .secondaryLabel
-        detailLabel.textAlignment = .center
-        detailLabel.translatesAutoresizingMaskIntoConstraints = false
-        detailLabel.numberOfLines = 0
-
-        // Filled teal "Open Privio →" button. Hidden until finish() flips
-        // it on once the save succeeds, so we never offer a tap that
-        // would lead to a half-finished state. Apple blocks the URL
-        // open for programmatic calls from extensions on iOS 17+, but
-        // user-initiated taps from inside the extension's own UI are
-        // still honoured — which is the whole point of this button.
-        openButton.translatesAutoresizingMaskIntoConstraints = false
-        openButton.setTitle("Open Privio  →", for: .normal)
-        openButton.titleLabel?.font = .systemFont(ofSize: 16, weight: .semibold)
-        openButton.setTitleColor(.white, for: .normal)
-        openButton.backgroundColor = UIColor(
-            red: 0.06, green: 0.46, blue: 0.43, alpha: 1)
-        openButton.layer.cornerRadius = 14
-        openButton.contentEdgeInsets = UIEdgeInsets(
-            top: 12, left: 22, bottom: 12, right: 22)
-        openButton.isHidden = true
-        openButton.addTarget(self,
-                             action: #selector(openButtonTapped),
-                             for: .touchUpInside)
-
-        let stack = UIStackView(
-            arrangedSubviews: [iconView, statusLabel, detailLabel, openButton])
-        stack.axis = .vertical
-        stack.alignment = .center
-        stack.spacing = 10
-        stack.setCustomSpacing(16, after: detailLabel)
-        stack.translatesAutoresizingMaskIntoConstraints = false
-        card.addSubview(stack)
+        contentStack.axis = .vertical
+        contentStack.alignment = .fill
+        contentStack.spacing = 12
+        contentStack.translatesAutoresizingMaskIntoConstraints = false
+        card.addSubview(contentStack)
 
         NSLayoutConstraint.activate([
             card.centerXAnchor.constraint(equalTo: view.centerXAnchor),
             card.centerYAnchor.constraint(equalTo: view.centerYAnchor),
-            card.widthAnchor.constraint(equalToConstant: 280),
-            stack.topAnchor.constraint(equalTo: card.topAnchor, constant: 22),
-            stack.bottomAnchor.constraint(equalTo: card.bottomAnchor, constant: -22),
-            stack.leadingAnchor.constraint(equalTo: card.leadingAnchor, constant: 22),
-            stack.trailingAnchor.constraint(equalTo: card.trailingAnchor, constant: -22),
-            iconView.heightAnchor.constraint(equalToConstant: 40),
+            card.widthAnchor.constraint(equalToConstant: 320),
+            card.heightAnchor.constraint(lessThanOrEqualTo:
+                view.safeAreaLayoutGuide.heightAnchor, multiplier: 0.88),
+            contentStack.topAnchor.constraint(equalTo: card.topAnchor, constant: 20),
+            contentStack.bottomAnchor.constraint(equalTo: card.bottomAnchor, constant: -16),
+            contentStack.leadingAnchor.constraint(equalTo: card.leadingAnchor, constant: 16),
+            contentStack.trailingAnchor.constraint(equalTo: card.trailingAnchor, constant: -16),
         ])
     }
 
-    @objc private func openButtonTapped() {
-        guard let url = pendingOpenURL else {
-            extensionContext?.completeRequest(
-                returningItems: nil, completionHandler: nil)
-            return
+    private func clearContent() {
+        for view in contentStack.arrangedSubviews {
+            contentStack.removeArrangedSubview(view)
+            view.removeFromSuperview()
         }
-        // User tapped — programmatic restriction lifted, fire the URL
-        // via the responder chain and then dismiss the extension. iOS
-        // routes the URL to the host app, the resume drain there picks
-        // up the file we just saved, and the action sheet auto-shows.
-        openHostApp(url)
-        extensionContext?.completeRequest(
-            returningItems: nil, completionHandler: nil)
     }
 
-    private func updateStatus(success: Bool?, title: String, detail: String) {
-        DispatchQueue.main.async {
-            self.statusLabel.text = title
-            self.detailLabel.text = detail
-            if let success = success {
-                self.iconView.image = UIImage(
-                    systemName: success ? "checkmark.circle.fill" : "xmark.octagon.fill",
-                    withConfiguration: UIImage.SymbolConfiguration(pointSize: 36, weight: .semibold))
-                self.iconView.tintColor = success
-                    ? UIColor(red: 0.06, green: 0.46, blue: 0.43, alpha: 1)
-                    : .systemRed
-            }
+    // MARK: - States
+
+    private func showLoadingState() {
+        DispatchQueue.main.async { [weak self] in
+            guard let self = self else { return }
+            self.clearContent()
+            let icon = UIImageView(image: UIImage(
+                systemName: "arrow.down.circle",
+                withConfiguration: UIImage.SymbolConfiguration(
+                    pointSize: 36, weight: .semibold)))
+            icon.tintColor = self.brandTeal
+            icon.contentMode = .scaleAspectFit
+            icon.heightAnchor.constraint(equalToConstant: 40).isActive = true
+
+            let title = UILabel()
+            title.text = "Saving to Privio…"
+            title.font = .systemFont(ofSize: 17, weight: .semibold)
+            title.textAlignment = .center
+
+            let detail = UILabel()
+            detail.text = "Reading attachment"
+            detail.font = .systemFont(ofSize: 13)
+            detail.textColor = .secondaryLabel
+            detail.textAlignment = .center
+
+            self.contentStack.alignment = .center
+            self.contentStack.addArrangedSubview(icon)
+            self.contentStack.addArrangedSubview(title)
+            self.contentStack.addArrangedSubview(detail)
         }
+    }
+
+    private func showErrorState(title: String, detail: String) {
+        DispatchQueue.main.async { [weak self] in
+            guard let self = self else { return }
+            self.clearContent()
+            let icon = UIImageView(image: UIImage(
+                systemName: "xmark.octagon.fill",
+                withConfiguration: UIImage.SymbolConfiguration(
+                    pointSize: 36, weight: .semibold)))
+            icon.tintColor = .systemRed
+            icon.contentMode = .scaleAspectFit
+            icon.heightAnchor.constraint(equalToConstant: 40).isActive = true
+
+            let titleLabel = UILabel()
+            titleLabel.text = title
+            titleLabel.font = .systemFont(ofSize: 17, weight: .semibold)
+            titleLabel.textAlignment = .center
+            titleLabel.numberOfLines = 0
+
+            let detailLabel = UILabel()
+            detailLabel.text = detail
+            detailLabel.font = .systemFont(ofSize: 13)
+            detailLabel.textColor = .secondaryLabel
+            detailLabel.textAlignment = .center
+            detailLabel.numberOfLines = 0
+
+            self.contentStack.alignment = .center
+            self.contentStack.addArrangedSubview(icon)
+            self.contentStack.addArrangedSubview(titleLabel)
+            self.contentStack.addArrangedSubview(detailLabel)
+        }
+    }
+
+    private func showPickerState(fileName: String?) {
+        DispatchQueue.main.async { [weak self] in
+            guard let self = self else { return }
+            self.clearContent()
+            self.contentStack.alignment = .fill
+
+            // Header: small green check + file name + "Saved to Privio"
+            let checkIcon = UIImageView(image: UIImage(
+                systemName: "checkmark.circle.fill",
+                withConfiguration: UIImage.SymbolConfiguration(
+                    pointSize: 28, weight: .semibold)))
+            checkIcon.tintColor = self.brandTeal
+            checkIcon.contentMode = .scaleAspectFit
+
+            let savedTitle = UILabel()
+            savedTitle.text = "Saved to Privio"
+            savedTitle.font = .systemFont(ofSize: 16, weight: .semibold)
+
+            let nameLabel = UILabel()
+            nameLabel.text = fileName ?? "Shared file"
+            nameLabel.font = .systemFont(ofSize: 12)
+            nameLabel.textColor = .secondaryLabel
+            nameLabel.lineBreakMode = .byTruncatingMiddle
+
+            let textStack = UIStackView(arrangedSubviews: [savedTitle, nameLabel])
+            textStack.axis = .vertical
+            textStack.spacing = 2
+
+            let headerStack = UIStackView(
+                arrangedSubviews: [checkIcon, textStack])
+            headerStack.axis = .horizontal
+            headerStack.alignment = .center
+            headerStack.spacing = 12
+            checkIcon.widthAnchor.constraint(equalToConstant: 32).isActive = true
+            self.contentStack.addArrangedSubview(headerStack)
+
+            // Section label
+            let openWithLabel = UILabel()
+            openWithLabel.text = "OPEN WITH"
+            openWithLabel.font = .systemFont(ofSize: 11, weight: .semibold)
+            openWithLabel.textColor = .tertiaryLabel
+            self.contentStack.setCustomSpacing(18, after: headerStack)
+            self.contentStack.addArrangedSubview(openWithLabel)
+
+            // Tool rows
+            for tool in self.tools {
+                self.contentStack.addArrangedSubview(self.makeToolRow(tool))
+            }
+
+            // Cancel
+            let cancel = UIButton(type: .system)
+            cancel.setTitle("Cancel", for: .normal)
+            cancel.titleLabel?.font = .systemFont(ofSize: 15, weight: .semibold)
+            cancel.setTitleColor(.secondaryLabel, for: .normal)
+            cancel.addTarget(self, action: #selector(self.cancelTapped),
+                             for: .touchUpInside)
+            self.contentStack.setCustomSpacing(8, after:
+                self.contentStack.arrangedSubviews.last!)
+            self.contentStack.addArrangedSubview(cancel)
+        }
+    }
+
+    private func makeToolRow(_ tool: Tool) -> UIControl {
+        let row = ToolRowControl(tool: tool, brandTeal: brandTeal)
+        row.addTarget(self, action: #selector(toolRowTapped(_:)),
+                      for: .touchUpInside)
+        return row
+    }
+
+    @objc private func toolRowTapped(_ sender: ToolRowControl) {
+        let tool = sender.tool
+        // Hand the preferred action to the host via App Group UserDefaults
+        // so SharedFileActionSheet routes straight to that tool instead of
+        // showing the chooser. nil id = "Other tools…" → leave the key
+        // unset and let the chooser open.
+        if let actionId = tool.id,
+           let defaults = UserDefaults(suiteName: appGroupId) {
+            defaults.set(actionId, forKey: preferredActionKey)
+        }
+        if let url = pendingOpenURL ?? URL(string:
+            "\(wakeUpScheme)://\(wakeUpHost)") {
+            openHostApp(url)
+        }
+        extensionContext?.completeRequest(returningItems: nil,
+                                          completionHandler: nil)
+    }
+
+    @objc private func cancelTapped() {
+        extensionContext?.completeRequest(returningItems: nil,
+                                          completionHandler: nil)
     }
 
     private func processAttachments() {
         guard let item = extensionContext?.inputItems.first as? NSExtensionItem else {
-            finish(savedCount: 0)
+            finish(savedPaths: [])
             return
         }
         let providers = item.attachments ?? []
         if providers.isEmpty {
-            finish(savedCount: 0)
+            finish(savedPaths: [])
             return
         }
 
@@ -169,7 +292,7 @@ class ShareViewController: UIViewController {
         }
 
         group.notify(queue: .main) { [weak self] in
-            self?.finish(savedCount: savedPaths.count)
+            self?.finish(savedPaths: savedPaths)
         }
     }
 
@@ -260,46 +383,46 @@ class ShareViewController: UIViewController {
         }
     }
 
-    private func finish(savedCount: Int) {
+    private func finish(savedPaths: [String]) {
         let groupOk = FileManager.default.containerURL(
             forSecurityApplicationGroupIdentifier: appGroupId) != nil
 
-        let title: String
-        let detail: String
-        let success: Bool
         if !groupOk {
-            success = false
-            title = "App Group unavailable"
-            detail = "Privio's shared storage couldn't be opened.\n" +
-                     "Reinstall the app or contact support."
-        } else if savedCount == 0 {
-            success = false
-            title = "No file shared"
-            detail = "Couldn't read the attachment. Try sharing the PDF " +
-                     "directly instead of a link."
-        } else {
-            success = true
-            title = "Saved to Privio"
-            detail = "Tap below to keep going."
+            showErrorState(
+                title: "App Group unavailable",
+                detail: "Privio's shared storage couldn't be opened.\n" +
+                        "Reinstall the app or contact support.")
+            scheduleAutoDismiss(after: 2.0)
+            return
         }
-        updateStatus(success: success, title: title, detail: detail)
-
-        if success,
-           let url = URL(string: "\(wakeUpScheme)://\(wakeUpHost)") {
-            // Show the Open button. Tapping it counts as user-initiated,
-            // which is the only category of URL open that iOS 17+ still
-            // honours from share extensions.
-            pendingOpenURL = url
-            DispatchQueue.main.async { [weak self] in
-                self?.openButton.isHidden = false
-            }
+        if savedPaths.isEmpty {
+            showErrorState(
+                title: "No file shared",
+                detail: "Couldn't read the attachment. Try sharing the " +
+                        "PDF directly instead of a link.")
+            scheduleAutoDismiss(after: 2.0)
             return
         }
 
-        // Save failed — auto-dismiss after a beat so the user has time
-        // to read the error before iOS pops the share sheet back to
-        // the host (WhatsApp / Mail / etc.).
-        DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) { [weak self] in
+        pendingOpenURL = URL(string: "\(wakeUpScheme)://\(wakeUpHost)")
+
+        // Strip the timestamp prefix the extension added so the display
+        // matches what the user shared. e.g. "1779280063424_Dekont.pdf"
+        // → "Dekont.pdf".
+        var displayName: String?
+        if let first = savedPaths.first {
+            let base = (first as NSString).lastPathComponent
+            if let underscore = base.firstIndex(of: "_") {
+                displayName = String(base[base.index(after: underscore)...])
+            } else {
+                displayName = base
+            }
+        }
+        showPickerState(fileName: displayName)
+    }
+
+    private func scheduleAutoDismiss(after seconds: TimeInterval) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + seconds) { [weak self] in
             self?.extensionContext?.completeRequest(
                 returningItems: nil, completionHandler: nil)
         }
@@ -330,6 +453,81 @@ class ShareViewController: UIViewController {
                 return
             }
             responder = r.next
+        }
+    }
+}
+
+// MARK: - ToolRowControl
+
+/// One tappable row in the tool picker. Custom UIControl subclass so the
+/// whole row gets a single touch target + a press-down highlight,
+/// instead of fighting with nested UIButton hit-testing.
+private final class ToolRowControl: UIControl {
+    let tool: ShareViewController.Tool
+    private let iconView = UIImageView()
+
+    init(tool: ShareViewController.Tool, brandTeal: UIColor) {
+        self.tool = tool
+        super.init(frame: .zero)
+        backgroundColor = .secondarySystemBackground
+        layer.cornerRadius = 14
+
+        iconView.translatesAutoresizingMaskIntoConstraints = false
+        iconView.image = UIImage(
+            systemName: tool.symbolName,
+            withConfiguration: UIImage.SymbolConfiguration(
+                pointSize: 20, weight: .semibold))
+        iconView.tintColor = brandTeal
+        iconView.contentMode = .scaleAspectFit
+
+        let title = UILabel()
+        title.text = tool.title
+        title.font = .systemFont(ofSize: 15, weight: .semibold)
+        title.textColor = .label
+
+        let subtitle = UILabel()
+        subtitle.text = tool.subtitle
+        subtitle.font = .systemFont(ofSize: 12)
+        subtitle.textColor = .secondaryLabel
+        subtitle.numberOfLines = 1
+
+        let labels = UIStackView(arrangedSubviews: [title, subtitle])
+        labels.axis = .vertical
+        labels.spacing = 1
+
+        let chevron = UIImageView(image: UIImage(
+            systemName: "chevron.right",
+            withConfiguration: UIImage.SymbolConfiguration(
+                pointSize: 12, weight: .semibold)))
+        chevron.tintColor = .tertiaryLabel
+
+        let stack = UIStackView(arrangedSubviews: [iconView, labels, chevron])
+        stack.axis = .horizontal
+        stack.alignment = .center
+        stack.spacing = 12
+        stack.translatesAutoresizingMaskIntoConstraints = false
+        stack.isUserInteractionEnabled = false  // let the UIControl handle taps
+        addSubview(stack)
+
+        NSLayoutConstraint.activate([
+            iconView.widthAnchor.constraint(equalToConstant: 28),
+            iconView.heightAnchor.constraint(equalToConstant: 28),
+            stack.topAnchor.constraint(equalTo: topAnchor, constant: 10),
+            stack.bottomAnchor.constraint(equalTo: bottomAnchor, constant: -10),
+            stack.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 12),
+            stack.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -12),
+        ])
+    }
+
+    required init?(coder: NSCoder) { fatalError("init(coder:) not implemented") }
+
+    override var isHighlighted: Bool {
+        didSet {
+            UIView.animate(withDuration: 0.12) {
+                self.transform = self.isHighlighted
+                    ? CGAffineTransform(scaleX: 0.97, y: 0.97) : .identity
+                self.alpha = self.isHighlighted ? 0.7 : 1
+            }
         }
     }
 }
