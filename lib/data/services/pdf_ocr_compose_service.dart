@@ -33,14 +33,25 @@ class OcrComposeOutcome {
 }
 
 /// Composes a "searchable PDF" from a list of (image, OCR result) pairs:
-/// each page holds the original image at its native size, plus an
-/// invisible text layer placed at the recognized bounding boxes.
+/// each page holds the original image at its native size, plus a text
+/// layer placed at the recognized bounding boxes that lives UNDER the
+/// image.
 ///
-/// Searchability mechanism: the text is drawn with an alpha-1/255 brush
-/// (visually invisible to any viewer, but written into the page content
-/// stream — so Cmd+F, copy/paste, and PDF parsers find it). Position
-/// follows Vision's normalized bottom-left coords, flipped to PDF's
-/// top-left convention used by Syncfusion's drawing API.
+/// Searchability mechanism: text is drawn into the content stream
+/// first, then the opaque image is painted on top — same trick Adobe
+/// Acrobat and Tesseract use for "searchable PDF" output. The image
+/// visually covers the text, but PDF text extraction (Cmd+F,
+/// copy/paste, parsers) reads the content stream order-agnostically
+/// and finds the OCR text. Position follows Vision's normalized
+/// bottom-left coords, flipped to PDF's top-left convention used by
+/// Syncfusion's drawing API.
+///
+/// Why under-image instead of an alpha-1/255 brush on top: iOS PDFKit
+/// (and the Files app preview) do NOT honor 0.4% alpha as truly
+/// invisible — the OCR text bled through as faint duplicated glyphs
+/// over the original scan, making the output read as "two layers of
+/// mixed text." Placing the layer below the image is the only viewer-
+/// agnostic way to keep text searchable without visual artifacts.
 class PdfOcrComposeService {
   PdfOcrComposeService._();
   static final PdfOcrComposeService instance = PdfOcrComposeService._();
@@ -87,15 +98,10 @@ class PdfOcrComposeService {
         pdf.pageSettings.size = ui.Size(pageW, pageH);
         final page = pdf.pages.add();
 
-        // Draw the image filling the page.
-        page.graphics.drawImage(
-          bitmap,
-          ui.Rect.fromLTWH(0, 0, page.size.width, page.size.height),
-        );
-
-        // Invisible text overlay — alpha 1/255 keeps it searchable but
-        // visually undetectable in every PDF viewer we've checked.
-        final brush = sf.PdfSolidBrush(sf.PdfColor(0, 0, 0, 1));
+        // Step 1 — text layer FIRST so the image (drawn next) sits on
+        // top of it. Color/alpha don't matter visually since the image
+        // covers it; using opaque black keeps the brush simple.
+        final brush = sf.PdfSolidBrush(sf.PdfColor(0, 0, 0));
 
         for (final obs in p0.ocr.observations) {
           // Vision: normalized 0..1, origin bottom-left.
@@ -120,6 +126,12 @@ class PdfOcrComposeService {
             bounds: ui.Rect.fromLTWH(x, y, w, h),
           );
         }
+
+        // Step 2 — opaque image on top, covering the text layer.
+        page.graphics.drawImage(
+          bitmap,
+          ui.Rect.fromLTWH(0, 0, page.size.width, page.size.height),
+        );
 
         totalObs += p0.ocr.observations.length;
       }

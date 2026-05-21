@@ -31,10 +31,13 @@ struct ScanToPdfIntent: AppIntent {
 
     @MainActor
     func perform() async throws -> some IntentResult {
+        // See ScanToPdfIntent in Runner/AppIntents/Intents.swift for the
+        // `?auto=1` rationale — same intent, same auto-fire contract.
+        let route = "/tool/scan?auto=1"
         if let defaults = UserDefaults(suiteName: "group.com.erekstudio.pdfprivio") {
-            defaults.set("/tool/scan", forKey: "pdfprivio.pendingIntentRoute")
+            defaults.set(route, forKey: "pdfprivio.pendingIntentRoute")
         }
-        UserDefaults.standard.set("/tool/scan", forKey: "pdfprivio.pendingIntentRoute")
+        UserDefaults.standard.set(route, forKey: "pdfprivio.pendingIntentRoute")
         return .result()
     }
 }

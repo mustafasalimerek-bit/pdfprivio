@@ -79,8 +79,7 @@ class OcrService {
     OcrLevel level = OcrLevel.accurate,
   }) async {
     if (!Platform.isIOS) {
-      return Err(FailureKind.unknown,
-          'OCR is iOS-only right now — Android coming with ML Kit later.');
+      return Err(FailureKind.unknown, 'OCR requires iOS.');
     }
     try {
       final result = await _channel.invokeMethod<Map<dynamic, dynamic>>(

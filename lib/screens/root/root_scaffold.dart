@@ -152,7 +152,16 @@ class _RootScaffoldState extends ConsumerState<RootScaffold>
       }
       return;
     }
-    Navigator.of(context).pushNamed(route);
+    // Intent routes may carry a query string (e.g. "/tool/scan?auto=1")
+    // that the target screen reads from ModalRoute.settings.arguments
+    // to decide whether to skip its intro state and act immediately.
+    // The Navigator routes table only knows the bare paths, so split
+    // before pushing.
+    final uri = Uri.parse(route);
+    Navigator.of(context).pushNamed(
+      uri.path,
+      arguments: uri.queryParameters.isEmpty ? null : uri.queryParameters,
+    );
   }
 
   void _select(int i) {

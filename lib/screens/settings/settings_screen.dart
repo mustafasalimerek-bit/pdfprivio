@@ -74,28 +74,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     if (mounted) setState(() => _auditCount = count);
   }
 
-  Future<void> _openAppearance() async {
-    HapticsService.instance.tap();
-    await showDialog<void>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Appearance'),
-        content: const Text(
-          "Privio currently matches your device's system "
-          'appearance — light or dark. A per-app override (always '
-          'light / always dark) is coming in v1.1.',
-          style: TextStyle(fontSize: 13),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(),
-            child: const Text('Got it'),
-          ),
-        ],
-      ),
-    );
-  }
-
   String _proPlanLabel() {
     if (!_hasPro) return 'Free tier';
     final sku = PurchaseService.instance.activeSku;
@@ -535,12 +513,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 : _displayName!,
           ),
           onTap: _editDisplayName,
-        ),
-        _RowSpec(
-          icon: Icons.palette_outlined,
-          title: 'Appearance',
-          subtitle: 'Match system',
-          onTap: _openAppearance,
         ),
         _RowSpec(
           icon: Icons.widgets_outlined,

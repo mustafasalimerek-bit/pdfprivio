@@ -8,6 +8,7 @@ import '../../core/utils/cancellation_token.dart';
 import '../../core/utils/responsive.dart';
 import '../../core/utils/result.dart';
 import '../../data/models/receipt.dart';
+import '../../data/services/audit_service.dart';
 import '../../data/services/document_scanner_service.dart';
 import '../../data/services/expense_ledger_service.dart';
 import '../../data/services/haptics_service.dart';
@@ -39,6 +40,7 @@ class _ScanScreenState extends ConsumerState<ScanScreen> {
   double? _progress;
   String? _status;
   CancellationToken? _cancel;
+  bool _autoFired = false;
 
   @override
   void initState() {
@@ -46,10 +48,43 @@ class _ScanScreenState extends ConsumerState<ScanScreen> {
     _checkAvailability();
   }
 
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // ScanIntent / widget tap routes here as "/tool/scan?auto=1", which
+    // RootScaffold parses into a queryParameters map. When present we
+    // fire VNDocumentCameraViewController immediately — the whole point
+    // of a Siri / Shortcuts / widget trigger is to skip the tap-through.
+    // Home-tile taps land here without the flag and still get the
+    // gentle "Scan now" intro, which doubles as a safe back-out for
+    // accidental taps.
+    if (_autoFired) return;
+    final args = ModalRoute.of(context)?.settings.arguments;
+    if (args is Map && args['auto'] == '1') {
+      _autoFired = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _autoStartScan();
+      });
+    }
+  }
+
   Future<void> _checkAvailability() async {
     final avail = await DocumentScannerService.instance.isAvailable();
     if (!mounted) return;
     setState(() => _scannerAvailable = avail);
+  }
+
+  Future<void> _autoStartScan() async {
+    // Availability may still be unknown when the intent fires; wait
+    // briefly for the platform check rather than spawning the scanner
+    // and immediately erroring on devices without a camera.
+    final deadline = DateTime.now().add(const Duration(seconds: 3));
+    while (_scannerAvailable == null && DateTime.now().isBefore(deadline)) {
+      await Future<void>.delayed(const Duration(milliseconds: 80));
+      if (!mounted) return;
+    }
+    if (!mounted || _scannerAvailable != true) return;
+    await _scan();
   }
 
   Future<void> _scan({ScanMode mode = ScanMode.doc}) async {
@@ -232,6 +267,11 @@ class _ScanScreenState extends ConsumerState<ScanScreen> {
   }
 
   Future<void> _pushResult(File pdf, {required int sourceCount}) async {
+    await AuditService.instance.record(
+      tool: 'scan',
+      outputFile: pdf,
+      params: {'pageCount': '$sourceCount'},
+    );
     await Navigator.of(context).push(
       MaterialPageRoute(
         builder: (_) => MergeResultScreen(

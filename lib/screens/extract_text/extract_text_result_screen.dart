@@ -120,8 +120,8 @@ class ExtractTextResultScreen extends StatelessWidget {
                       Expanded(
                         child: Text(
                           "This PDF looks like a scan with no embedded text. "
-                          "Use OCR (coming soon) to recognise the words from "
-                          "the page images.",
+                          "Run the OCR tool first to recognise the words from "
+                          "the page images, then come back here.",
                           style: TextStyle(fontSize: 12),
                         ),
                       ),

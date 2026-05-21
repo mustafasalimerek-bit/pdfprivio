@@ -230,7 +230,7 @@ class _NoTextLayerHint extends StatelessWidget {
           Expanded(
             child: Text(
               "This PDF has no text layer — likely a pure scan. "
-              "Run OCR first (coming next update) and then re-scan.",
+              "Run the OCR tool first to add a text layer, then re-scan.",
               style: TextStyle(fontSize: 13),
             ),
           ),

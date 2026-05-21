@@ -109,7 +109,12 @@ struct ScanToPdfIntent: AppIntent {
 
     @MainActor
     func perform() async throws -> some IntentResult {
-        PDFPrivioIntentRoute.enqueue("/tool/scan")
+        // `?auto=1` tells ScanScreen to fire VNDocumentCameraViewController
+        // immediately instead of showing the "Scan now" intro screen.
+        // The whole point of a Siri / Shortcuts trigger is to skip the
+        // tap-through; without auto-fire the shortcut buys the user
+        // nothing over tapping the home tile.
+        PDFPrivioIntentRoute.enqueue("/tool/scan?auto=1")
         return .result()
     }
 }

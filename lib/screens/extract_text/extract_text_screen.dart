@@ -10,6 +10,7 @@ import '../../core/utils/cancellation_token.dart';
 import '../../core/utils/format_bytes.dart';
 import '../../core/utils/result.dart';
 import '../../data/models/pdf_document.dart';
+import '../../data/services/audit_service.dart';
 import '../../data/services/haptics_service.dart';
 import '../../data/services/pdf_metadata_service.dart';
 import '../../data/services/pdf_text_extract_service.dart';
@@ -119,6 +120,15 @@ class _ExtractTextScreenState extends ConsumerState<ExtractTextScreen> {
       case Ok(:final value):
         HapticsService.instance.success();
         UsageLimitsService.instance.recordUse('extract_text');
+        await AuditService.instance.record(
+          tool: 'extract_text',
+          inputFile: doc.file,
+          params: {
+            'pageCount': '${value.pagesText.length}',
+            'charCount': '${value.charCount}',
+            'wasMostlyEmpty': '${value.wasMostlyEmpty}',
+          },
+        );
         await Navigator.of(context).push(
           MaterialPageRoute(
             builder: (_) => ExtractTextResultScreen(

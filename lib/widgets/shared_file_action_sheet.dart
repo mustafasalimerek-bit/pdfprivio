@@ -13,10 +13,12 @@ import '../data/services/share_intent_service.dart';
 /// the chosen tool's route — the tool reads the pending file in its
 /// own initState and skips its usual file picker.
 ///
-/// For PDFs we surface the four highest-intent tools for the lawyer /
-/// CPA wedge (Sign, Redact, Merge, OCR). For images there's only one
-/// sensible target (Image to PDF), so we route straight there without
-/// asking.
+/// For PDFs we surface the five highest-intent tools for the lawyer /
+/// CPA wedge (Sign, Redact, Merge, OCR, Find sensitive data) —
+/// mirroring the iOS share extension's own menu so the in-app and
+/// out-of-process choosers stay in lockstep. For images there's only
+/// one sensible target (Image to PDF), so we route straight there
+/// without asking.
 class SharedFileActionSheet {
   SharedFileActionSheet._();
 
@@ -161,18 +163,26 @@ class _Sheet extends StatelessWidget {
             subtitle: 'Add a text layer so Cmd+F finds words',
             onTap: () => _open(context, '/tool/ocr'),
           ),
+          _ActionTile(
+            icon: Icons.shield_outlined,
+            title: 'Find sensitive data',
+            subtitle: 'SSN, EIN, cards, IBAN, emails, phones',
+            onTap: () => _open(context, '/tool/pii'),
+          ),
           const SizedBox(height: 12),
           Center(
             child: TextButton(
               onPressed: () {
                 HapticsService.instance.tap();
-                // Leave the file in Inbox — user can pick it from any
-                // tool's file picker later under "On My iPhone /
-                // Privio / Inbox" in the Files browser.
+                // Stash the file inside Privio's Documents/Imported so
+                // the user can pick it up from any tool's file picker
+                // later. Folder is "Imported" (not "Inbox") because
+                // iOS reserves Documents/Inbox for the system —
+                // attempting to write to it errors out.
                 Navigator.of(context).pop();
               },
               child: const Text(
-                'Just save to Inbox',
+                'Just save to Privio',
                 style: TextStyle(
                   color: AppColors.textSecondary,
                   fontWeight: FontWeight.w600,

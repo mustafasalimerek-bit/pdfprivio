@@ -125,8 +125,7 @@ class DocumentScannerService {
     bool extractMetadata = true,
   }) async {
     if (!Platform.isIOS) {
-      return Err(FailureKind.unknown,
-          'Document Scanner is iOS-only right now — Android scanner is coming.');
+      return Err(FailureKind.unknown, 'Document Scanner requires iOS.');
     }
 
     try {

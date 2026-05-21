@@ -14,6 +14,7 @@ import '../../data/services/haptics_service.dart';
 import '../../data/services/pdf_metadata_service.dart';
 import '../../data/services/pdf_pii_scan_service.dart';
 import '../../data/services/sample_pdf_service.dart';
+import '../../data/services/share_intent_service.dart';
 import '../../data/services/usage_limits_service.dart';
 import '../../widgets/disclaimer_banner.dart';
 import '../../widgets/progress_overlay.dart';
@@ -33,17 +34,23 @@ class _PiiScanScreenState extends ConsumerState<PiiScanScreen> {
   String? _status;
   CancellationToken? _cancel;
 
-  Future<void> _pick() async {
-    HapticsService.instance.tap();
-    final res = await FilePicker.platform.pickFiles(
-      type: FileType.custom,
-      allowedExtensions: ['pdf'],
-    );
-    if (res == null) return;
-    final path = res.paths.firstOrNull;
-    if (path == null) return;
+  @override
+  void initState() {
+    super.initState();
+    // Pick up a file handed in via the Share Extension's "Find
+    // sensitive data" tile. Same pattern the other 7 tool screens
+    // already use — PII was the only one missing it, so the share flow
+    // landed on an empty picker instead of the shared PDF.
+    final pending = PendingSharedFile.consume();
+    if (pending != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _loadFromFile(pending);
+      });
+    }
+  }
 
-    final outcome = await PdfMetadataService.instance.inspect(File(path));
+  Future<void> _loadFromFile(File file) async {
+    final outcome = await PdfMetadataService.instance.inspect(file);
     if (!mounted) return;
     switch (outcome) {
       case Ok(:final value):
@@ -60,6 +67,17 @@ class _PiiScanScreenState extends ConsumerState<PiiScanScreen> {
           ),
         );
     }
+  }
+
+  Future<void> _pick() async {
+    HapticsService.instance.tap();
+    final res = await FilePicker.platform.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: ['pdf'],
+    );
+    final path = res?.paths.firstOrNull;
+    if (path == null) return;
+    await _loadFromFile(File(path));
   }
 
   Future<void> _trySample() async {
