@@ -27,6 +27,12 @@ class QuickSignViewController: UIViewController {
     private let universalLinkBase =
         "https://privio-aasa.netlify.app/pdfprivio/share"
     private let brandTeal = UIColor(red: 0.06, green: 0.46, blue: 0.43, alpha: 1)
+    // Matches AppColors.background (0xFFF5F1EA) — Privio's signature
+    // cream tone. See ShareViewController for the rationale.
+    private let brandCream = UIColor(red: 245.0/255.0,
+                                     green: 241.0/255.0,
+                                     blue:  234.0/255.0,
+                                     alpha: 1.0)
 
     // Visual parity with PDFPrivioShare/ShareViewController. Same card
     // layout, same header, same row style — but only one row (Sign),
@@ -43,9 +49,13 @@ class QuickSignViewController: UIViewController {
     }
 
     private func installShell() {
-        view.backgroundColor = UIColor.black.withAlphaComponent(0.45)
+        view.backgroundColor = brandCream
         card.backgroundColor = .systemBackground
         card.layer.cornerRadius = 22
+        card.layer.shadowColor = UIColor.black.cgColor
+        card.layer.shadowOpacity = 0.08
+        card.layer.shadowRadius = 16
+        card.layer.shadowOffset = CGSize(width: 0, height: 4)
         card.translatesAutoresizingMaskIntoConstraints = false
         view.addSubview(card)
 
