@@ -3,8 +3,10 @@ import 'package:flutter/services.dart';
 import 'package:share_plus/share_plus.dart';
 
 import '../../core/theme/colors.dart';
+import '../../core/utils/responsive.dart';
 import '../../data/services/haptics_service.dart';
 import '../../data/services/pdf_text_extract_service.dart';
+import '../../data/services/share_service.dart';
 import '../../widgets/privacy_badge.dart';
 
 class ExtractTextResultScreen extends StatelessWidget {
@@ -37,14 +39,11 @@ class ExtractTextResultScreen extends StatelessWidget {
       text: outcome.fullText,
     );
     if (!context.mounted) return;
-    final box = context.findRenderObject() as RenderBox?;
-    final origin = box != null && box.hasSize
-        ? box.localToGlobal(Offset.zero) & box.size
-        : null;
-    await SharePlus.instance.share(
+    await ShareService.shareWithFeedback(
+      context,
       ShareParams(
         files: [XFile(file.path)],
-        sharePositionOrigin: origin,
+        sharePositionOrigin: ShareService.originFromContext(context),
       ),
     );
   }
@@ -67,7 +66,8 @@ class ExtractTextResultScreen extends StatelessWidget {
         title: const Text('Extracted text'),
       ),
       body: SafeArea(
-        child: Column(
+        child: MaxWidthBody(
+          child: Column(
           children: [
             const Padding(
               padding: EdgeInsets.fromLTRB(16, 8, 16, 8),
@@ -181,6 +181,7 @@ class ExtractTextResultScreen extends StatelessWidget {
               ),
             ),
           ],
+        ),
         ),
       ),
     );

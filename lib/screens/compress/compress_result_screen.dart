@@ -6,8 +6,10 @@ import 'package:share_plus/share_plus.dart';
 
 import '../../core/theme/colors.dart';
 import '../../core/utils/format_bytes.dart';
+import '../../core/utils/responsive.dart';
 import '../../data/services/haptics_service.dart';
 import '../../data/services/recent_files_service.dart';
+import '../../data/services/share_service.dart';
 import '../../data/services/usage_limits_service.dart';
 import '../../providers/compress_providers.dart';
 import '../../widgets/privacy_badge.dart';
@@ -25,14 +27,11 @@ class _CompressResultScreenState extends ConsumerState<CompressResultScreen> {
 
   Future<void> _share(BuildContext context, String path) async {
     HapticsService.instance.tap();
-    final box = context.findRenderObject() as RenderBox?;
-    final origin = box != null && box.hasSize
-        ? box.localToGlobal(Offset.zero) & box.size
-        : null;
-    await SharePlus.instance.share(
+    await ShareService.shareWithFeedback(
+      context,
       ShareParams(
         files: [XFile(path)],
-        sharePositionOrigin: origin,
+        sharePositionOrigin: ShareService.originFromContext(context),
       ),
     );
   }
@@ -76,10 +75,11 @@ class _CompressResultScreenState extends ConsumerState<CompressResultScreen> {
             Navigator.of(context).pop();
           },
         ),
-        title: const Text('Done'),
+        title: const Text('Compressed'),
       ),
       body: SafeArea(
-        child: Padding(
+        child: MaxWidthBody(
+          child: Padding(
           padding: const EdgeInsets.all(20),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -155,6 +155,7 @@ class _CompressResultScreenState extends ConsumerState<CompressResultScreen> {
               ),
             ],
           ),
+        ),
         ),
       ),
     );

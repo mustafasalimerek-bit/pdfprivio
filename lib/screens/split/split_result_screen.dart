@@ -6,8 +6,10 @@ import 'package:share_plus/share_plus.dart';
 
 import '../../core/theme/colors.dart';
 import '../../core/utils/format_bytes.dart';
+import '../../core/utils/responsive.dart';
 import '../../data/services/haptics_service.dart';
 import '../../data/services/recent_files_service.dart';
+import '../../data/services/share_service.dart';
 import '../../data/services/usage_limits_service.dart';
 import '../../widgets/privacy_badge.dart';
 
@@ -36,28 +38,22 @@ class _SplitResultScreenState extends State<SplitResultScreen> {
 
   Future<void> _shareAll(BuildContext context) async {
     HapticsService.instance.tap();
-    final box = context.findRenderObject() as RenderBox?;
-    final origin = box != null && box.hasSize
-        ? box.localToGlobal(Offset.zero) & box.size
-        : null;
-    await SharePlus.instance.share(
+    await ShareService.shareWithFeedback(
+      context,
       ShareParams(
         files: widget.files.map((f) => XFile(f.path)).toList(),
-        sharePositionOrigin: origin,
+        sharePositionOrigin: ShareService.originFromContext(context),
       ),
     );
   }
 
   Future<void> _shareOne(BuildContext context, File file) async {
     HapticsService.instance.tap();
-    final box = context.findRenderObject() as RenderBox?;
-    final origin = box != null && box.hasSize
-        ? box.localToGlobal(Offset.zero) & box.size
-        : null;
-    await SharePlus.instance.share(
+    await ShareService.shareWithFeedback(
+      context,
       ShareParams(
         files: [XFile(file.path)],
-        sharePositionOrigin: origin,
+        sharePositionOrigin: ShareService.originFromContext(context),
       ),
     );
   }
@@ -73,7 +69,7 @@ class _SplitResultScreenState extends State<SplitResultScreen> {
             Navigator.of(context).pop();
           },
         ),
-        title: const Text('Done'),
+        title: const Text('Split files'),
         actions: [
           if (widget.files.length > 1)
             TextButton.icon(
@@ -84,7 +80,8 @@ class _SplitResultScreenState extends State<SplitResultScreen> {
         ],
       ),
       body: SafeArea(
-        child: Column(
+        child: MaxWidthBody(
+          child: Column(
           children: [
             const SizedBox(height: 12),
             Center(
@@ -147,6 +144,7 @@ class _SplitResultScreenState extends State<SplitResultScreen> {
               ),
             ),
           ],
+        ),
         ),
       ),
     );

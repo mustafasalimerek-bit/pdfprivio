@@ -11,6 +11,7 @@ import '../../core/utils/responsive.dart';
 import '../../data/models/receipt.dart';
 import '../../data/services/expense_ledger_service.dart';
 import '../../data/services/haptics_service.dart';
+import '../../data/services/share_service.dart';
 
 /// Browse and export the on-device expense ledger.
 ///
@@ -63,10 +64,12 @@ class _ExpenseLedgerScreenState
     HapticsService.instance.tap();
     final file = await ExpenseLedgerService.instance.exportCsv();
     if (!mounted) return;
-    await SharePlus.instance.share(
+    await ShareService.shareWithFeedback(
+      context,
       ShareParams(
         files: [XFile(file.path)],
         subject: 'Privio expense ledger',
+        sharePositionOrigin: ShareService.originFromContext(context),
       ),
     );
   }

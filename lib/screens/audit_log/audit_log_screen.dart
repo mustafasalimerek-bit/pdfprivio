@@ -10,6 +10,7 @@ import '../../core/utils/responsive.dart';
 import '../../data/models/audit_entry.dart';
 import '../../data/services/audit_service.dart';
 import '../../data/services/haptics_service.dart';
+import '../../data/services/share_service.dart';
 
 /// Browse + export the on-device audit log. Niche by design — most
 /// users will never open this screen; compliance-conscious lawyers /
@@ -54,10 +55,12 @@ class _AuditLogScreenState extends ConsumerState<AuditLogScreen> {
     HapticsService.instance.tap();
     final file = await AuditService.instance.exportCsv();
     if (!mounted) return;
-    await SharePlus.instance.share(
+    await ShareService.shareWithFeedback(
+      context,
       ShareParams(
         files: [XFile(file.path)],
         text: 'Privio audit log (CSV export)',
+        sharePositionOrigin: ShareService.originFromContext(context),
       ),
     );
   }

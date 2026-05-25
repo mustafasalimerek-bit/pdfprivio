@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../core/theme/colors.dart';
+import '../../core/utils/responsive.dart';
 import '../../data/services/pdf_compare_service.dart';
 import '../../widgets/privacy_badge.dart';
 
@@ -28,7 +29,8 @@ class CompareResultScreen extends StatelessWidget {
         title: const Text('Differences'),
       ),
       body: SafeArea(
-        child: Column(
+        child: MaxWidthBody(
+          child: Column(
           children: [
             const Padding(
               padding: EdgeInsets.fromLTRB(16, 8, 16, 8),
@@ -58,6 +60,7 @@ class CompareResultScreen extends StatelessWidget {
                     ),
             ),
           ],
+        ),
         ),
       ),
     );

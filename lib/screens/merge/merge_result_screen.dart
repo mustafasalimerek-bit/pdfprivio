@@ -9,6 +9,7 @@ import '../../core/utils/format_bytes.dart';
 import '../../core/utils/responsive.dart';
 import '../../data/services/haptics_service.dart';
 import '../../data/services/recent_files_service.dart';
+import '../../data/services/share_service.dart';
 import '../../data/services/usage_limits_service.dart';
 import '../../widgets/privacy_badge.dart';
 
@@ -62,14 +63,11 @@ class _MergeResultScreenState extends State<MergeResultScreen> {
 
   Future<void> _share(BuildContext context) async {
     HapticsService.instance.tap();
-    final box = context.findRenderObject() as RenderBox?;
-    final origin = box != null && box.hasSize
-        ? box.localToGlobal(Offset.zero) & box.size
-        : null;
-    await SharePlus.instance.share(
+    await ShareService.shareWithFeedback(
+      context,
       ShareParams(
         files: [XFile(widget.outputFile.path)],
-        sharePositionOrigin: origin,
+        sharePositionOrigin: ShareService.originFromContext(context),
       ),
     );
   }
@@ -93,7 +91,7 @@ class _MergeResultScreenState extends State<MergeResultScreen> {
           tooltip: 'Close',
           onPressed: _closeWithAd,
         ),
-        title: const Text('Done'),
+        title: const Text('Merged'),
       ),
       body: SafeArea(
         child: MaxWidthBody(

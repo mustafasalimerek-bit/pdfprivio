@@ -13,6 +13,7 @@ import '../../data/services/batch_operations_service.dart';
 import '../../data/services/haptics_service.dart';
 import '../../data/services/pdf_rotate_service.dart';
 import '../../data/services/pdf_watermark_service.dart';
+import '../../data/services/share_service.dart';
 import '../../widgets/tool_chrome.dart';
 
 /// Batch tool — pick an operation, drop a stack of PDFs in, get a
@@ -140,10 +141,12 @@ class _BatchScreenState extends ConsumerState<BatchScreen> {
         .toList();
     if (successFiles.isEmpty) return;
     HapticsService.instance.tap();
-    await SharePlus.instance.share(
+    await ShareService.shareWithFeedback(
+      context,
       ShareParams(
         files: successFiles,
         text: 'Privio batch — ${outcome.operation.label}',
+        sharePositionOrigin: ShareService.originFromContext(context),
       ),
     );
   }

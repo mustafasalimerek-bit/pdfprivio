@@ -19,6 +19,7 @@ import '../../data/services/pdf_redact_service.dart';
 import '../../data/services/recent_files_service.dart';
 import '../../data/services/scan_pickup_service.dart';
 import '../../data/services/share_intent_service.dart';
+import '../../data/services/share_service.dart';
 import '../../widgets/disclaimer_banner.dart';
 import '../../widgets/privacy_badge.dart';
 import '../../widgets/progress_overlay.dart';
@@ -562,14 +563,11 @@ class _RedactResultScreen extends StatelessWidget {
 
   Future<void> _share(BuildContext context) async {
     HapticsService.instance.tap();
-    final box = context.findRenderObject() as RenderBox?;
-    final origin = box != null && box.hasSize
-        ? box.localToGlobal(Offset.zero) & box.size
-        : null;
-    await SharePlus.instance.share(
+    await ShareService.shareWithFeedback(
+      context,
       ShareParams(
         files: [XFile(outcome.file.path)],
-        sharePositionOrigin: origin,
+        sharePositionOrigin: ShareService.originFromContext(context),
       ),
     );
   }

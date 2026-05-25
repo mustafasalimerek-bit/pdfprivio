@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../core/theme/colors.dart';
+import '../../core/utils/responsive.dart';
 import '../../data/models/pdf_document.dart';
 import '../../data/services/haptics_service.dart';
 import '../../data/services/pdf_pii_scan_service.dart';
@@ -55,7 +56,8 @@ class PiiScanResultScreen extends StatelessWidget {
         title: const Text('Scan results'),
       ),
       body: SafeArea(
-        child: ListView(
+        child: MaxWidthBody(
+          child: ListView(
           padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
           children: [
             const Align(
@@ -107,6 +109,7 @@ class PiiScanResultScreen extends StatelessWidget {
                   ),
             ],
           ],
+        ),
         ),
       ),
     );

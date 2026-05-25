@@ -14,6 +14,7 @@ import '../../data/models/recent_file.dart';
 import '../../data/services/haptics_service.dart';
 import '../../data/services/quick_look_service.dart';
 import '../../data/services/recent_files_service.dart';
+import '../../data/services/share_service.dart';
 import '../../widgets/app_card.dart';
 import '../../widgets/primary_button.dart';
 import '../../widgets/privacy_pill.dart';
@@ -97,14 +98,11 @@ class _RecentScreenState extends State<RecentScreen> {
 
   Future<void> _share(BuildContext context, RecentFile f) async {
     HapticsService.instance.tap();
-    final box = context.findRenderObject() as RenderBox?;
-    final origin = box != null && box.hasSize
-        ? box.localToGlobal(Offset.zero) & box.size
-        : null;
-    await SharePlus.instance.share(
+    await ShareService.shareWithFeedback(
+      context,
       ShareParams(
         files: [XFile(f.path)],
-        sharePositionOrigin: origin,
+        sharePositionOrigin: ShareService.originFromContext(context),
       ),
     );
   }
