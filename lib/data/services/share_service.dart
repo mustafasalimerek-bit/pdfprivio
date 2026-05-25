@@ -28,22 +28,45 @@ class ShareService {
   /// given context's render box. Returns null if the render box isn't
   /// available yet (which is fine on iPhone — sharePositionOrigin is
   /// only required for iPad popover positioning).
+  ///
+  /// Uses an `is RenderBox` check rather than an `as RenderBox?` cast
+  /// because tile items inside a ListView resolve their render object
+  /// to a `RenderSliverList`, and the cast would throw — which used to
+  /// be the actual root cause of "Share button does nothing" in Build
+  /// 37: the silent throw bubbled out of the ShareParams constructor
+  /// before reaching the try/catch around SharePlus.
   static Rect? originFromContext(BuildContext context) {
-    final box = context.findRenderObject() as RenderBox?;
-    if (box == null || !box.hasSize) return null;
-    return box.localToGlobal(Offset.zero) & box.size;
+    final renderObject = context.findRenderObject();
+    if (renderObject is! RenderBox || !renderObject.hasSize) return null;
+    return renderObject.localToGlobal(Offset.zero) & renderObject.size;
   }
 
-  /// Calls SharePlus with the given params; on any throw, posts a
-  /// SnackBar so the user knows the action failed instead of assuming
-  /// the button is broken.
+  /// Calls SharePlus with the given params; on any throw OR on a
+  /// non-success ShareResult (share_plus completes without throwing
+  /// when the OS can't present a sheet — e.g. iOS Simulator has no
+  /// Share Extensions registered, so the sheet just doesn't appear),
+  /// posts a SnackBar so the user knows the action didn't open instead
+  /// of assuming the button is broken.
   static Future<void> shareWithFeedback(
     BuildContext context,
     ShareParams params, {
     String fallbackMessage = "Couldn't open the share sheet.",
   }) async {
     try {
-      await SharePlus.instance.share(params);
+      final result = await SharePlus.instance.share(params);
+      if (!context.mounted) return;
+      if (result.status == ShareResultStatus.unavailable) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              '$fallbackMessage Share Sheet is unavailable on this device '
+              '(common in the iOS Simulator — try a real iPhone).',
+            ),
+            behavior: SnackBarBehavior.floating,
+            duration: const Duration(seconds: 5),
+          ),
+        );
+      }
     } catch (e) {
       if (!context.mounted) return;
       // Trim the prefix Dart adds to thrown messages so the SnackBar

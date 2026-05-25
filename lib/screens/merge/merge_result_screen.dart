@@ -91,7 +91,7 @@ class _MergeResultScreenState extends State<MergeResultScreen> {
           tooltip: 'Close',
           onPressed: _closeWithAd,
         ),
-        title: const Text('Merged'),
+        title: Text(widget.toolLabel),
       ),
       body: SafeArea(
         child: MaxWidthBody(
