@@ -80,10 +80,18 @@ class _RootScaffoldState extends ConsumerState<RootScaffold>
       // Subscribe to the hot streams FIRST so any share that lands
       // during the next frame already has a listener…
       _shareSub = ShareIntentService.instance.intents.listen((files) {
-        if (!mounted) return;
+        if (!mounted || files.isEmpty) return;
         SharedFileActionSheet.show(context, files);
       });
-      _intentSub = AppIntentService.instance.routes.listen(_handleIntentRoute);
+      // Both streams get an explicit onError so a single bad route or
+      // share payload can't kill the subscription silently (which would
+      // leave the app deaf to subsequent intents until cold restart).
+      _intentSub = AppIntentService.instance.routes.listen(
+        _handleIntentRoute,
+        onError: (Object err) {
+          debugPrint('AppIntent route stream error: $err');
+        },
+      );
       var initialShares =
           await ShareIntentService.instance.consumeInitial();
       if (initialShares.isEmpty) {
@@ -156,11 +164,20 @@ class _RootScaffoldState extends ConsumerState<RootScaffold>
     // that the target screen reads from ModalRoute.settings.arguments
     // to decide whether to skip its intro state and act immediately.
     // The Navigator routes table only knows the bare paths, so split
-    // before pushing.
-    final uri = Uri.parse(route);
+    // before pushing. Uri.parse can throw on malformed input — guard so
+    // a bad route written to UserDefaults by a future intent doesn't
+    // crash navigation; fall back to the literal string in that case.
+    Uri? uri;
+    try {
+      uri = Uri.parse(route);
+    } catch (e) {
+      debugPrint('AppIntent route parse failed for "$route": $e');
+    }
     Navigator.of(context).pushNamed(
-      uri.path,
-      arguments: uri.queryParameters.isEmpty ? null : uri.queryParameters,
+      uri?.path ?? route,
+      arguments: (uri?.queryParameters.isNotEmpty ?? false)
+          ? uri!.queryParameters
+          : null,
     );
   }
 

@@ -16,9 +16,8 @@ import '../../data/services/haptics_service.dart';
 ///
 /// One row per receipt, newest first. Long-press a row for delete.
 /// Toolbar export dumps every receipt to a QuickBooks-friendly CSV
-/// via the Share Sheet. v1.0 doesn't support tap-to-edit yet — to
-/// fix a wrong field, delete the row and re-scan; v1.1 adds an
-/// inline editor.
+/// via the Share Sheet. Tap-to-edit isn't supported yet — to fix a
+/// wrong field, delete the row and re-scan.
 class ExpenseLedgerScreen extends ConsumerStatefulWidget {
   const ExpenseLedgerScreen({super.key});
 
