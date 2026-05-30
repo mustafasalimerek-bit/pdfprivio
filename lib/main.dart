@@ -5,7 +5,6 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 
 import 'app.dart';
@@ -71,25 +70,6 @@ Future<void> main() async {
     await safe('WidgetDataService', WidgetDataService.instance.init);
     await safe('ShareIntentService', ShareIntentService.instance.init);
     await safe('AppIntentService', AppIntentService.instance.init);
-
-    // AdMob SDK init — fire-and-forget. Per-unit IDs in
-    // lib/core/ads/ad_unit_ids.dart; per-platform App IDs in the
-    // platform manifests. Debug builds get Google's test ad units so
-    // we never serve real impressions from a developer device.
-    //
-    // Android-only for now — iOS init requires GADApplicationIdentifier
-    // in Info.plist + ATT permission prompt + SKAdNetworkIdentifier
-    // entries (one per ad network we partner with). That setup lands
-    // in a later phase; until then, calling MobileAds.initialize() on
-    // iOS without the manifest entry throws.
-    //
-    // Banner / interstitial / rewarded widget placement also lands in
-    // a later phase — this just gets the SDK ready.
-    if (Platform.isAndroid) {
-      await safe('MobileAds', () async {
-        await MobileAds.instance.initialize();
-      });
-    }
 
     // iPhone stays portrait-locked — the tool screens are vertical
     // forms and rotating them helps nobody. iPad gets all four
