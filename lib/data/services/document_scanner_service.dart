@@ -1,6 +1,8 @@
 import 'dart:io';
 
 import 'package:flutter/services.dart';
+import 'package:google_mlkit_document_scanner/google_mlkit_document_scanner.dart'
+    as mlkit;
 
 import '../../core/utils/result.dart';
 
@@ -93,16 +95,25 @@ class DocumentScannerService {
   static const MethodChannel _channel =
       MethodChannel('com.erekstudio.pdfprivio/scanner');
 
-  /// True on iPhone/iPad with a rear camera. Always false on the
-  /// iOS Simulator (no camera) and on iPads without a usable camera.
+  /// True on iPhone/iPad with a rear camera (Apple VisionKit) or on
+  /// Android devices with Google Play Services + camera support
+  /// (ML Kit Document Scanner). Always false on iOS Simulator (no
+  /// camera) and on Android emulators without Play Services.
   Future<bool> isAvailable() async {
-    if (!Platform.isIOS) return false;
-    try {
-      final result = await _channel.invokeMethod<bool>('isAvailable');
-      return result ?? false;
-    } catch (_) {
-      return false;
+    if (Platform.isIOS) {
+      try {
+        final result = await _channel.invokeMethod<bool>('isAvailable');
+        return result ?? false;
+      } catch (_) {
+        return false;
+      }
     }
+    // ML Kit Document Scanner has no static "isAvailable" check — Google
+    // Play Services availability is checked at scan() time. Optimistically
+    // return true here; scan() will return the appropriate error if the
+    // device cannot present the scanner.
+    if (Platform.isAndroid) return true;
+    return false;
   }
 
   /// Opens the native scanner in [mode]. Defaults to [ScanMode.doc].
@@ -124,10 +135,20 @@ class DocumentScannerService {
     ScanMode mode = ScanMode.doc,
     bool extractMetadata = true,
   }) async {
-    if (!Platform.isIOS) {
-      return Err(FailureKind.unknown, 'Document Scanner requires iOS.');
+    if (Platform.isIOS) {
+      return _scanIOS(mode, extractMetadata);
     }
+    if (Platform.isAndroid) {
+      return _scanAndroid(mode);
+    }
+    return Err(FailureKind.unknown,
+        'Document Scanner requires iOS or Android.');
+  }
 
+  Future<Result<ScanOutcome>> _scanIOS(
+    ScanMode mode,
+    bool extractMetadata,
+  ) async {
     try {
       final result =
           await _channel.invokeMethod<Map<dynamic, dynamic>>('scan', {
@@ -184,6 +205,59 @@ class DocumentScannerService {
               e.message ?? 'Scanning failed.',
               cause: e);
       }
+    } catch (e) {
+      return Err(FailureKind.unknown, 'Scanning failed.', cause: e);
+    }
+  }
+
+  /// Android implementation via Google ML Kit Document Scanner v2 — the
+  /// same on-device pipeline Google Drive uses for "Scan a document".
+  /// Edge detection, perspective correction, multi-page capture, and
+  /// PDF assembly all run inside Google Play Services.
+  ///
+  /// ScanMode caveat: ML Kit's scanner only ships a single capture mode
+  /// (full document scan). Receipt / Card / ID mode-specific post-
+  /// processing (date+amount parse, two-side capture flow, sensitive-
+  /// field detection) is not wired on Android in v1 — we accept the
+  /// mode hint but the result is a plain multi-page PDF. Phase 2.5 can
+  /// layer Dart-side ReceiptExtractionService + OcrService on top of
+  /// the scan output to recover the metadata Apple's pipeline returns
+  /// natively.
+  Future<Result<ScanOutcome>> _scanAndroid(ScanMode mode) async {
+    try {
+      final options = mlkit.DocumentScannerOptions(
+        documentFormats: const {mlkit.DocumentFormat.pdf},
+        // 50-page cap matches Apple VisionKit's practical session limit
+        // — long enough for a contract or multi-page lease, short enough
+        // to avoid runaway memory on cheap mid-range devices.
+        pageLimit: 50,
+        mode: mlkit.ScannerMode.full,
+        isGalleryImport: false,
+      );
+      final scanner = mlkit.DocumentScanner(options: options);
+      final result = await scanner.scanDocument();
+      await scanner.close();
+
+      final pdfUri = result.pdf?.uri;
+      if (pdfUri == null || pdfUri.isEmpty) {
+        return Ok(ScanOutcome(pdfFile: null, mode: mode));
+      }
+
+      // ML Kit returns a file:// URI. Strip the scheme so we get a
+      // plain absolute path the rest of the app's File-based pipeline
+      // can consume.
+      final path =
+          pdfUri.startsWith('file://') ? pdfUri.substring(7) : pdfUri;
+
+      return Ok(ScanOutcome(
+        pdfFile: File(path),
+        mode: mode,
+        metadata: null,
+      ));
+    } on PlatformException catch (e) {
+      return Err(FailureKind.unknown,
+          e.message ?? 'Scanning failed.',
+          cause: e);
     } catch (e) {
       return Err(FailureKind.unknown, 'Scanning failed.', cause: e);
     }

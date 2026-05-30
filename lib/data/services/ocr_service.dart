@@ -1,6 +1,9 @@
 import 'dart:io';
 
 import 'package:flutter/services.dart';
+import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart'
+    as mlkit;
+import 'package:image/image.dart' as img;
 
 import '../../core/utils/result.dart';
 
@@ -61,16 +64,24 @@ class OcrService {
   Future<List<String>> supportedLanguages({
     OcrLevel level = OcrLevel.accurate,
   }) async {
-    if (!Platform.isIOS) return const ['en-US'];
-    try {
-      final res = await _channel.invokeMethod<List<dynamic>>(
-        'supportedLanguages',
-        {'level': level.name},
-      );
-      return (res ?? const []).cast<String>();
-    } catch (_) {
-      return const ['en-US'];
+    if (Platform.isIOS) {
+      try {
+        final res = await _channel.invokeMethod<List<dynamic>>(
+          'supportedLanguages',
+          {'level': level.name},
+        );
+        return (res ?? const []).cast<String>();
+      } catch (_) {
+        return const ['en-US'];
+      }
     }
+    if (Platform.isAndroid) {
+      // ML Kit on Android supports Latin/Chinese/Japanese/Korean/Devanagari
+      // scripts. We expose a representative ISO-639 language per script so
+      // callers can drive UI pickers without dispatching to the native side.
+      return const ['en-US', 'zh-Hans', 'ja-JP', 'ko-KR', 'hi-IN'];
+    }
+    return const ['en-US'];
   }
 
   Future<Result<OcrPageResult>> recognize({
@@ -78,9 +89,20 @@ class OcrService {
     List<String> languages = const ['en-US'],
     OcrLevel level = OcrLevel.accurate,
   }) async {
-    if (!Platform.isIOS) {
-      return Err(FailureKind.unknown, 'OCR requires iOS.');
+    if (Platform.isIOS) {
+      return _recognizeIOS(image, languages, level);
     }
+    if (Platform.isAndroid) {
+      return _recognizeAndroid(image, languages);
+    }
+    return Err(FailureKind.unknown, 'OCR requires iOS or Android.');
+  }
+
+  Future<Result<OcrPageResult>> _recognizeIOS(
+    File image,
+    List<String> languages,
+    OcrLevel level,
+  ) async {
     try {
       final result = await _channel.invokeMethod<Map<dynamic, dynamic>>(
         'recognize',
@@ -118,5 +140,76 @@ class OcrService {
     } catch (e) {
       return Err(FailureKind.unknown, 'OCR failed.', cause: e);
     }
+  }
+
+  /// Android implementation via Google ML Kit Text Recognition (on-device,
+  /// no cloud — same privacy posture as the iOS Apple Vision path).
+  ///
+  /// Coordinates are normalised to 0..1 with origin top-left to match the
+  /// iOS Vision path's `OcrObservation` contract (downstream consumers
+  /// flip top/bottom origin themselves when composing the searchable PDF
+  /// text layer — see [PdfOcrComposeService]). Confidence is set to 1.0
+  /// because ML Kit does not expose per-line confidence on its line API.
+  Future<Result<OcrPageResult>> _recognizeAndroid(
+    File image,
+    List<String> languages,
+  ) async {
+    final script = _scriptForLanguages(languages);
+    final recognizer = mlkit.TextRecognizer(script: script);
+    try {
+      // ML Kit returns pixel boundingBoxes — we need image dimensions to
+      // normalise. Decoding via the `image` package keeps us off the
+      // platform channel for this measurement.
+      final bytes = await image.readAsBytes();
+      final decoded = img.decodeImage(bytes);
+      if (decoded == null) {
+        return Err(FailureKind.unknown,
+            "Couldn't decode image for OCR.");
+      }
+      final w = decoded.width.toDouble();
+      final h = decoded.height.toDouble();
+
+      final input = mlkit.InputImage.fromFile(image);
+      final result = await recognizer.processImage(input);
+
+      final observations = <OcrObservation>[];
+      for (final block in result.blocks) {
+        for (final line in block.lines) {
+          final box = line.boundingBox;
+          observations.add(OcrObservation(
+            text: line.text,
+            confidence: 1.0,
+            x: box.left / w,
+            y: box.top / h,
+            width: box.width / w,
+            height: box.height / h,
+          ));
+        }
+      }
+      return Ok(OcrPageResult(
+        imageWidth: w,
+        imageHeight: h,
+        observations: observations,
+      ));
+    } catch (e) {
+      return Err(FailureKind.unknown, 'OCR failed.', cause: e);
+    } finally {
+      await recognizer.close();
+    }
+  }
+
+  /// Map ISO-639 language hints to the ML Kit script enum. ML Kit ships
+  /// five script bundles; the first language whose script matches wins.
+  /// Anything not matching falls back to Latin (covers English + most
+  /// European languages including Turkish, Spanish, German, etc.).
+  mlkit.TextRecognitionScript _scriptForLanguages(List<String> languages) {
+    for (final lang in languages) {
+      final l = lang.toLowerCase();
+      if (l.startsWith('zh')) return mlkit.TextRecognitionScript.chinese;
+      if (l.startsWith('ja')) return mlkit.TextRecognitionScript.japanese;
+      if (l.startsWith('ko')) return mlkit.TextRecognitionScript.korean;
+      if (l.startsWith('hi')) return mlkit.TextRecognitionScript.devanagiri;
+    }
+    return mlkit.TextRecognitionScript.latin;
   }
 }

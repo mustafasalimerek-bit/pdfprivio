@@ -70,6 +70,13 @@ dependencies:
   url_launcher: ^6.2.6
   package_info_plus: ^8.0.0
 
+  # Android-only ML Kit (on-device, no cloud — same privacy posture as
+  # iOS Apple Vision). Bundled as a stub on iOS by the plugin itself;
+  # the OcrService and DocumentScannerService dispatch on Platform.isIOS
+  # so the iOS path keeps using Apple Vision / VNDocumentCameraViewController.
+  google_mlkit_text_recognition: ^0.15.0
+  google_mlkit_document_scanner: ^0.4.0
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
