@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Privio home-screen widget metadata.
+
+    Glance widgets still need a classic AppWidgetProviderInfo manifest —
+    Android uses it for the picker UI (preview, label, sizing) and the
+    resize handles.
+
+    Sizing rationale:
+      • Default 4x2 cells lines up with iOS WidgetKit's "medium" widget
+        — two columns wide, enough for "Privio" header + top-3 recent
+        files list without horizontal scrolling.
+      • Resizable horizontally + vertically so users can stretch to 4x3
+        or 5x2 on launchers that allow it.
+      • Min 3x2 prevents the list from collapsing into a useless single-
+        row strip.
+
+    updatePeriodMillis=0: we drive updates push-side via
+    HomeWidget.updateWidget() from the Dart layer, not on Android's
+    30-min minimum poll cadence.
+-->
+<appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
+    android:minWidth="250dp"
+    android:minHeight="110dp"
+    android:targetCellWidth="4"
+    android:targetCellHeight="2"
+    android:minResizeWidth="180dp"
+    android:minResizeHeight="110dp"
+    android:resizeMode="horizontal|vertical"
+    android:updatePeriodMillis="0"
+    android:initialLayout="@layout/privio_widget_loading"
+    android:widgetCategory="home_screen"
+    android:description="@string/privio_widget_description"
+    android:previewLayout="@layout/privio_widget_loading" />

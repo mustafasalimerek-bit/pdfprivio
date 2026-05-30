@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Shown in the Android widget picker under the Privio widget. -->
+    <string name="privio_widget_description">Your most recent PDF tools — scan, sign, redact at a tap.</string>
+</resources>

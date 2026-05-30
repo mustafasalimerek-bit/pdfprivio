@@ -24,7 +24,10 @@ class WidgetDataService {
   static final WidgetDataService instance = WidgetDataService._();
 
   static const String _appGroupId = 'group.com.erekstudio.pdfprivio';
-  static const String _widgetName = 'PDFPrivioWidget';
+  static const String _iosWidgetName = 'PDFPrivioWidget';
+  // Android Glance receiver class — matches PrivioWidgetReceiver under
+  // android/app/src/main/kotlin/com/erekstudio/pdfprivio/.
+  static const String _androidWidgetName = 'PrivioWidgetReceiver';
   static const String _dataKey = 'recent_files_json';
   static const int _maxRows = 3;
 
@@ -38,26 +41,28 @@ class WidgetDataService {
   StreamSubscription<void>? _sub;
   bool _inited = false;
 
-  /// Set the App Group, push the current state once, and subscribe to
-  /// future RecentFilesService changes. Safe to call multiple times.
-  /// On Android this is a no-op for now (Android widget = v1.1+).
+  /// Set the App Group (iOS), push the current state once, and subscribe
+  /// to future RecentFilesService changes. Safe to call multiple times.
+  /// Runs on both iOS (WidgetKit) and Android (Glance) — the platform
+  /// branch lives inside [_publishRecents].
   Future<void> init() async {
     if (_inited) return;
     _inited = true;
 
-    // Widget extension is iOS-only at this stage.
-    if (!Platform.isIOS) return;
-
-    try {
-      await HomeWidget.setAppGroupId(_appGroupId);
-    } catch (e) {
-      // App Group not configured yet (e.g. running before Xcode target
-      // setup is done). Bail silently — widget just won't update.
-      if (kDebugMode) {
-        debugPrint('WidgetDataService.init: setAppGroupId failed: $e');
+    if (Platform.isIOS) {
+      try {
+        await HomeWidget.setAppGroupId(_appGroupId);
+      } catch (e) {
+        // App Group not configured yet (e.g. running before Xcode target
+        // setup is done). Bail silently — widget just won't update.
+        if (kDebugMode) {
+          debugPrint('WidgetDataService.init: setAppGroupId failed: $e');
+        }
+        return;
       }
-      return;
     }
+
+    if (!Platform.isIOS && !Platform.isAndroid) return;
 
     await _publishRecents(allowEmptyOverwrite: false);
     _sub = RecentFilesService.instance.changes.listen((_) => _publishRecents());
@@ -89,16 +94,16 @@ class WidgetDataService {
   /// Real changes (record / clear) pass `true` so the widget tracks
   /// them faithfully.
   Future<void> _publishRecents({bool allowEmptyOverwrite = true}) async {
-    if (!Platform.isIOS) return;
+    if (!Platform.isIOS && !Platform.isAndroid) return;
 
     try {
       final files = await RecentFilesService.instance.getAll();
       if (files.isEmpty && !allowEmptyOverwrite) return;
 
       // Resolve the user's preference once per publish. Storing an empty
-      // string for name when names are hidden lets the Swift widget fall
-      // back to a generic "tool · time" row without needing its own copy
-      // of the toggle state.
+      // string for name when names are hidden lets the native widget
+      // fall back to a generic "tool · time" row without needing its own
+      // copy of the toggle state.
       final showNames = await showFileNames();
 
       final top = files.take(_maxRows).map((f) {
@@ -116,8 +121,8 @@ class WidgetDataService {
 
       await HomeWidget.saveWidgetData<String>(_dataKey, payload);
       await HomeWidget.updateWidget(
-        iOSName: _widgetName,
-        // androidName would go here once the Android widget ships.
+        iOSName: _iosWidgetName,
+        androidName: _androidWidgetName,
       );
     } catch (e) {
       if (kDebugMode) {

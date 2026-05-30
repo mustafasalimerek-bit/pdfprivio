@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Plain XML loading state for the Privio Glance widget. Android shows
+    this for the brief moment between widget pinning and the first
+    Glance composition rendering. Glance widgets need a non-Compose
+    initialLayout pointer in their AppWidgetProviderInfo, otherwise
+    the system shows a blank gray box during the first frame.
+-->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:gravity="center"
+    android:padding="16dp"
+    android:background="#FAF3E7">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Privio"
+        android:textColor="#0F766E"
+        android:textSize="18sp"
+        android:textStyle="bold" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:text="Loading…"
+        android:textColor="#5C6B6B"
+        android:textSize="12sp" />
+</LinearLayout>

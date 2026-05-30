@@ -66,3 +66,13 @@ android {
 flutter {
     source = "../.."
 }
+
+dependencies {
+    // Jetpack Glance — Compose-style home-screen widget framework. Backs
+    // the PrivioWidget that surfaces top-3 recent files on the user's
+    // home screen, mirroring the iOS WidgetKit extension. Data is read
+    // from the SharedPreferences blob that `home_widget` writes on the
+    // Dart side via WidgetDataService.
+    implementation("androidx.glance:glance-appwidget:1.1.1")
+    implementation("androidx.glance:glance-material3:1.1.1")
+}
