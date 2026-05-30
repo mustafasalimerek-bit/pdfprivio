@@ -24,6 +24,57 @@
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
+
+            <!-- "Share to Privio" — single PDF / image from another app
+                 (Drive, Gmail, Photos, WhatsApp, etc.). receive_sharing_intent
+                 picks the payload up via getMediaStream / getInitialMedia
+                 and ShareIntentService surfaces it to the action sheet. -->
+            <intent-filter>
+                <action android:name="android.intent.action.SEND" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="application/pdf" />
+                <data android:mimeType="image/*" />
+            </intent-filter>
+
+            <!-- Multi-select share (e.g. "Share 5 images to Privio" for
+                 Image-to-PDF batch flow). -->
+            <intent-filter>
+                <action android:name="android.intent.action.SEND_MULTIPLE" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="application/pdf" />
+                <data android:mimeType="image/*" />
+            </intent-filter>
+
+            <!-- "Open with Privio" — tapping a PDF / image file in a file
+                 manager (Files by Google, Drive viewer, etc.) routes here.
+                 VIEW + BROWSABLE so the app appears in the "Open with"
+                 chooser for compatible file types. -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="file" />
+                <data android:scheme="content" />
+                <data android:mimeType="application/pdf" />
+                <data android:mimeType="image/*" />
+            </intent-filter>
+
+            <!-- Custom URL scheme for cross-app deep links and Android
+                 App Actions / Google Assistant integration. Mirrors the
+                 iOS App Intent route table consumed by
+                 _handleIntentRoute in RootScaffold:
+                   • privio://tab/recent | settings | pro | tools
+                   • privio://tool/scan?auto=1
+                   • privio://tool/sign / redact / ocr / merge / split / etc.
+                 Phase 5 will layer Built-In Intents (shortcuts.xml +
+                 capability declarations) on top of this for full Google
+                 Assistant routing. -->
+            <intent-filter android:autoVerify="false">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="privio" />
+            </intent-filter>
         </activity>
         <!-- Don't delete the meta-data below.
              This is used by the Flutter tool to generate GeneratedPluginRegistrant.java -->
