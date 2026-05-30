@@ -21,9 +21,14 @@ class AppConstants {
   static const String appStoreUrl =
       'https://apps.apple.com/app/id6769985472';
 
-  // Google Play Store (Android target — not yet shipped).
+  // Google Play Store (Android target — not yet shipped, Draft state).
+  // Console URL: https://play.google.com/console/u/0/developers/6295759833093921807/app-list
+  // The previous value here (4976288492451327073) was wrong — that ID
+  // belongs to an abandoned "PDFKitsy" draft under the same developer
+  // account. Real Privio app ID confirmed via Play Console audit
+  // 2026-05-30.
   static const String playStorePackage = 'com.erekstudio.pdfprivio';
-  static const String playConsoleAppId = '4976288492451327073';
+  static const String playConsoleAppId = '4976081418847724439';
 
   // IAP product IDs — MUST match the App Store Connect product
   // identifiers exactly. The previous values here (`pdfprivio_pro_*`)
